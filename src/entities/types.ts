@@ -3,7 +3,8 @@
 // adding a field or a view is a metadata change, not a new page. Plain data only, so it can be
 // passed from server components to client components.
 
-export type EntityKey = "lead" | "account" | "contact" | "opportunity" | "product";
+export type EntityKey =
+  "lead" | "account" | "contact" | "opportunity" | "product" | "case" | "work_order";
 
 export type FieldType =
   | "text"
@@ -14,6 +15,7 @@ export type FieldType =
   | "select"
   | "money" // entered in dollars, stored as integer cents
   | "date"
+  | "datetime" // entered and shown in the business's time zone, stored in UTC
   | "number"
   | "checkbox"
   | "lookup";
@@ -32,6 +34,8 @@ export type FieldDef = {
   options?: Option[];
   /** Options are loaded from the database when the page renders (see withDynamicOptions). */
   dynamicOptions?: boolean;
+  /** Pre-selected on a new record. */
+  defaultValue?: string;
   lookup?: "account" | "contact";
   /** The domain rejects null for this field, so a blank is omitted rather than sent. */
   notNullable?: boolean;
@@ -41,7 +45,7 @@ export type FieldDef = {
 export type ColumnDef = {
   name: string;
   label: string;
-  type?: "text" | "money" | "date" | "badge";
+  type?: "text" | "money" | "date" | "badge" | "sla";
 };
 
 export type EntityMeta = {

@@ -29,6 +29,8 @@ import {
   reopenOpportunity,
 } from "@/server/domain/opportunities";
 import { OPS } from "@/server/entities/registry";
+import { tenantTimeZone } from "@/server/entities/tenant";
+import { zonedToUtc } from "@/lib/tz";
 
 export type CmdResult =
   | { ok: true; message?: string; redirectTo?: string }
@@ -66,6 +68,7 @@ export async function saveRecordAction(
   if (!isKey(key)) return { ok: false, message: "Unknown record type." };
   const meta = ENTITIES[key];
   const payload: Record<string, unknown> = {};
+  const tz = await tenantTimeZone((await requireUser()).tenantId);
   for (const f of meta.fields) {
     const v = values[f.name];
     if (v === undefined) continue;
@@ -89,6 +92,21 @@ export async function saveRecordAction(
         };
       }
       payload[f.name] = cents;
+    } else if (f.type === "datetime") {
+      const text = String(v).trim();
+      if (text === "") {
+        payload[f.name] = null;
+        continue;
+      }
+      const at = zonedToUtc(text, tz);
+      if (!at) {
+        return {
+          ok: false,
+          message: `${f.label} isn't a valid date and time.`,
+          issues: [{ path: f.name, message: "Not a valid date and time" }],
+        };
+      }
+      payload[f.name] = at.toISOString();
     } else if (v === "" && (f.type === "select" || f.type === "lookup")) {
       if (!f.notNullable) payload[f.name] = null;
     } else payload[f.name] = String(v);

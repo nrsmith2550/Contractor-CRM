@@ -9,6 +9,10 @@ import { formatDate, formatMoney, humanize } from "@/lib/format";
 import { requireUser } from "@/server/auth/http";
 import { timeline } from "@/server/domain/activities";
 import { buildCtx } from "@/server/domain/context";
+import { SlaBadge } from "@/components/grid/SlaBadge";
+import { CaseCommands, WorkOrderCommands } from "@/components/form/ServiceCommands";
+import { listWorkOrders } from "@/server/domain/work-orders";
+import type { WoStatus } from "@/server/domain/work-order-status";
 import { OpportunityLines } from "@/components/form/OpportunityLines";
 import { listProducts } from "@/server/domain/catalog";
 import { listOpportunityLines } from "@/server/domain/opportunity-lines";
@@ -39,6 +43,9 @@ export default async function RecordPage({
   }
 
   const hasTimeline = meta.key !== "product";
+  const woRes =
+    meta.key === "case" ? await listWorkOrders(ctx, { view: "all", incidentId: id }) : null;
+  const caseWorkOrders = woRes?.ok ? woRes.rows : null;
   const oppLinesRes = meta.key === "opportunity" ? await listOpportunityLines(ctx, id) : null;
   const oppLines = oppLinesRes?.ok ? oppLinesRes.lines : null;
   const productsRes = meta.key === "opportunity" ? await listProducts(ctx, { limit: 200 }) : null;
@@ -85,6 +92,24 @@ export default async function RecordPage({
           </Link>
         </p>
       )}
+      {meta.key === "case" && (
+        <p>
+          SLA:{" "}
+          <SlaBadge
+            status={status}
+            createdAt={row.createdAt as Date}
+            slaDueAt={(row.slaDueAt as Date | null) ?? null}
+            resolvedAt={(row.resolvedAt as Date | null) ?? null}
+          />
+        </p>
+      )}
+      {meta.key === "case" && <CaseCommands id={id} status={status} />}
+      {meta.key === "work_order" && <WorkOrderCommands id={id} status={status as WoStatus} />}
+      {meta.key === "work_order" && typeof row.incidentId === "string" && (
+        <p>
+          Case: <Link href={`/app/cases/${row.incidentId}`}>open the case</Link>
+        </p>
+      )}
       <RecordCommands
         entityKey={meta.key}
         id={id}
@@ -112,7 +137,25 @@ export default async function RecordPage({
         id={id}
         record={row}
         lookupLabels={lookupLabels}
+        tz={tz}
       />
+      {meta.key === "case" && caseWorkOrders && (
+        <section aria-label="Work orders">
+          <h2>Work orders</h2>
+          {caseWorkOrders.length === 0 ? (
+            <p>No work orders yet. Use Convert to work order to send someone out.</p>
+          ) : (
+            <ul>
+              {caseWorkOrders.map((w) => (
+                <li key={w.id}>
+                  <Link href={`/app/work-orders/${w.id}`}>{w.woNumber}</Link> · {w.title} ·{" "}
+                  <span className="crm-badge">{humanize(w.status)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
       {hasTimeline && (
         <>
           <h2>Timeline</h2>

@@ -10,7 +10,16 @@ const GROUPS = [
       ["Dashboard", "/app"],
       ["Leads", "/app/leads"],
       ["Opportunities", "/app/opportunities"],
+      ["Quotes", "/app/quotes"],
+      ["Orders", "/app/orders"],
       ["Pipeline", "/app/pipeline"],
+    ],
+  },
+  {
+    title: "Service",
+    links: [
+      ["Cases", "/app/cases"],
+      ["Work orders", "/app/work-orders"],
     ],
   },
   {
@@ -33,6 +42,7 @@ const GROUPS = [
       ["Users", "/app/settings/users"],
       ["Tax rates", "/app/settings/tax-rates"],
       ["Branding", "/app/settings/branding"],
+      ["Service settings", "/app/settings/service"],
     ],
   },
 ] as const;
