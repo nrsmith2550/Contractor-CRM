@@ -273,12 +273,75 @@
 }
 @media (max-width: 800px) {
   .crm-shell {
-    grid-template-columns: 1fr;
+    /* minmax(0, ...) lets the column shrink below its content's width, so nothing forces sideways scrolling */
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
   }
+  .crm-topbar {
+    grid-column: 1;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    min-height: 48px;
+  }
+  /* The site map becomes a compact, wrapping bar of links, so phones can still navigate. */
   .crm-sitemap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 6px;
+    border-right: 0;
+    border-bottom: 1px solid var(--crm-border);
+    padding: 6px 8px;
+  }
+  .crm-sitemap div {
+    display: contents;
+  }
+  .crm-sitemap h2 {
     display: none;
+  }
+  .crm-sitemap a {
+    padding: 8px 10px;
+    min-height: 36px;
+  }
+  .crm-sitemap a[aria-current="page"] {
+    border-left: 0;
+    border-bottom: 3px solid var(--crm-accent);
+    padding-left: 10px;
+  }
+  .crm-main {
+    padding: 12px;
   }
   .crm-board {
     grid-template-columns: 1fr;
   }
+}
+
+/* Technician (phone) view */
+.crm-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.crm-visit {
+  padding: 12px;
+  cursor: default;
+}
+.crm-visit address {
+  margin: 8px 0;
+}
+.crm-big {
+  min-height: 48px;
+  font-size: 16px;
+  width: 100%;
+}
+.crm-muted {
+  color: #605e5c;
+  font-size: 13px;
+}
+.crm-warn {
+  background: #fff4ce;
+  border: 1px solid #bc8b00;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 8px 0;
 }

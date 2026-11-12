@@ -12,6 +12,10 @@ import { buildCtx } from "@/server/domain/context";
 import { SlaBadge } from "@/components/grid/SlaBadge";
 import { CaseCommands, WorkOrderCommands } from "@/components/form/ServiceCommands";
 import { listWorkOrders } from "@/server/domain/work-orders";
+import { ScheduleWorkOrder, type WoBooking } from "@/components/form/ScheduleWorkOrder";
+import { listWorkOrderBookings } from "@/server/domain/bookings";
+import { listCharacteristics, listResources, listWorkOrderSkills } from "@/server/domain/resources";
+import { utcToZonedInput } from "@/lib/tz";
 import type { WoStatus } from "@/server/domain/work-order-status";
 import { OpportunityLines } from "@/components/form/OpportunityLines";
 import { listProducts } from "@/server/domain/catalog";
@@ -43,6 +47,16 @@ export default async function RecordPage({
   }
 
   const hasTimeline = meta.key !== "product";
+  const sched =
+    meta.key === "work_order"
+      ? await Promise.all([
+          listResources(ctx),
+          listCharacteristics(ctx),
+          listWorkOrderSkills(ctx, id),
+          listWorkOrderBookings(ctx, id),
+          tenantTimeZone(user.tenantId),
+        ])
+      : null;
   const woRes =
     meta.key === "case" ? await listWorkOrders(ctx, { view: "all", incidentId: id }) : null;
   const caseWorkOrders = woRes?.ok ? woRes.rows : null;
@@ -109,6 +123,23 @@ export default async function RecordPage({
         <p>
           Case: <Link href={`/app/cases/${row.incidentId}`}>open the case</Link>
         </p>
+      )}
+      {meta.key === "work_order" && sched && sched[0].ok && sched[3].ok && (
+        <ScheduleWorkOrder
+          workOrderId={id}
+          editable={status === "unscheduled" || status === "scheduled"}
+          resources={sched[0].rows.map((r) => ({ id: r.id, name: r.name }))}
+          skills={sched[1].ok ? sched[1].rows.map((x) => ({ id: x.id, name: x.name })) : []}
+          requiredSkillIds={sched[2].ok ? sched[2].skills.map((x) => x.id) : []}
+          bookings={sched[3].rows.map((b): WoBooking => ({
+            id: b.id,
+            status: b.status,
+            resourceName: b.resourceName,
+            when: `${utcToZonedInput(b.startAt, sched[4]).replace("T", " ")} – ${utcToZonedInput(b.endAt, sched[4]).slice(11)}`,
+            signedByName: b.signedByName,
+            hasSignature: Boolean(b.signatureDataUrl),
+          }))}
+        />
       )}
       <RecordCommands
         entityKey={meta.key}

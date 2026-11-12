@@ -20,6 +20,8 @@ const GROUPS = [
     links: [
       ["Cases", "/app/cases"],
       ["Work orders", "/app/work-orders"],
+      ["Resources", "/app/resources"],
+      ["My bookings", "/app/my-bookings"],
     ],
   },
   {

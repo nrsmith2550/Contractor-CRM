@@ -448,6 +448,9 @@ export type BookingRow = Booking & {
   resourceColor: string | null;
   woNumber: string | null;
   woTitle: string | null;
+  /** What the technician needs on site: the instructions and where the job is. */
+  woInstructions: string | null;
+  woAddress: string[];
 };
 
 const bookingSelect = {
@@ -456,19 +459,34 @@ const bookingSelect = {
   resourceColor: bookableResource.color,
   woNumber: workOrder.woNumber,
   woTitle: workOrder.title,
+  woInstructions: workOrder.instructions,
+  street: workOrder.addressStreet,
+  city: workOrder.addressCity,
+  region: workOrder.addressRegion,
+  postal: workOrder.addressPostalCode,
 };
-const flat = (r: {
+type Joined = {
   b: Booking;
   resourceName: string;
   resourceColor: string | null;
   woNumber: string | null;
   woTitle: string | null;
-}): BookingRow => ({
+  woInstructions: string | null;
+  street: string | null;
+  city: string | null;
+  region: string | null;
+  postal: string | null;
+};
+const flat = (r: Joined): BookingRow => ({
   ...r.b,
   resourceName: r.resourceName,
   resourceColor: r.resourceColor,
   woNumber: r.woNumber,
   woTitle: r.woTitle,
+  woInstructions: r.woInstructions,
+  woAddress: [r.street, [r.city, r.region, r.postal].filter(Boolean).join(", ")].filter(
+    (l): l is string => Boolean(l),
+  ),
 });
 
 export async function getBooking(ctx: Ctx, id: string): Promise<Result<{ booking: BookingRow }>> {
@@ -532,6 +550,26 @@ export async function listMyBookings(
           ne(resourceBooking.status, "cancelled"),
         ),
       )
+      .orderBy(asc(resourceBooking.startAt));
+    return { ok: true as const, rows: rows.map(flat) };
+  });
+}
+
+/** Every booking on one work order, cancelled ones included, oldest first. */
+export async function listWorkOrderBookings(
+  ctx: Ctx,
+  workOrderId: string,
+): Promise<Result<{ rows: BookingRow[] }>> {
+  if (!isUuid(workOrderId)) return NOT_FOUND;
+  const scope = readScope(ctx.subject, "booking", resourceBooking.ownerId);
+  if (!scope.allowed) return FORBIDDEN;
+  return withTenant(ctx.tenantId, async (tx) => {
+    const rows = await tx
+      .select(bookingSelect)
+      .from(resourceBooking)
+      .innerJoin(bookableResource, eq(bookableResource.id, resourceBooking.resourceId))
+      .leftJoin(workOrder, eq(workOrder.id, resourceBooking.workOrderId))
+      .where(and(scope.where, eq(resourceBooking.workOrderId, workOrderId)))
       .orderBy(asc(resourceBooking.startAt));
     return { ok: true as const, rows: rows.map(flat) };
   });

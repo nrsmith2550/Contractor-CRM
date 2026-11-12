@@ -482,7 +482,7 @@ Cases with queues, subjects, priority, simple SLA timer, resolve/cancel/reactiva
 
 - [x] Converting a case creates a linked Unscheduled work order
 - [x] SLA timer shows breached state past due
-- [ ] Technician can move a booking through Travelling → In Progress → Completed and capture a signature
+- [x] Technician can move a booking through Travelling → In Progress → Completed and capture a signature
 
 **Phase 4 status** (branch `claude/phase-4-service`, slice 1): the *domain layer* for cases and work orders, tested
 against Postgres as a restricted role. Subjects and queues (administrators configure them), cases (`CAS-01001`;
@@ -513,9 +513,16 @@ starts, Completed when the visit is completed; cancelling an unstarted booking s
 completing can capture the customer's signature (a PNG data URL under 100 KB plus the signer's name, validated by
 its bytes, never written to the audit log). A booking belongs to the technician it is for; only dispatchers can
 book or move one. Covered by 16 integration tests and 11 unit tests, including the acceptance flow.
-**Still to build in Phase 4:** the screens for resources, skills and booking from a work order, work order parts and
-labour, and the technician mobile view (`/app/my-bookings`) with the signature pad; the third box ticks when that
-view lets a technician do this from a phone.
+**Phase 4 booking screens** (branch `claude/phase-4-bookings-ui`): **My bookings** (`/app/my-bookings`), the
+technician's phone view: today's visits first, then the week, each with the time (in the business's zone), address,
+instructions and notes, and big tap-friendly buttons (I'm on my way / Start work / Finish visit) with a finger-drawn
+**signature pad**, notes and the customer's name; the site map stays reachable on a phone as a compact link bar.
+For dispatchers: **Resources** (add and edit with weekly working hours, colour, a sign-in and skills; administrators
+only), **Skills** under Settings -> Service settings, and a **Scheduling** panel on each work order (required skills,
+its bookings with status and who signed, a booking form entered in the business's zone, the warnings shown after
+booking, and Cancel booking). The third Phase 4 box is ticked.
+**Still to build in Phase 4:** work order parts and labour (`work_order_product`, `work_order_service`), and photos on
+a visit.
 
 ### Phase 5 — Calendar and Schedule Board
 
