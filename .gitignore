@@ -1,10 +1,11 @@
-!.env.example
 *.tsbuildinfo
 .DS_Store
 .dev-mail
 .dev-mail-e2e
 .env
 .env.*
+# Must come after `.env.*`: a later rule wins, so this re-includes the example file.
+!.env.example
 .next
 coverage
 next-env.d.ts
