@@ -65,3 +65,40 @@ export function invitationEmail(args: {
 <p><a href="${esc(url)}">Set your password and get started</a> — the link expires in 7 days.</p>`;
   return { to: args.to, subject: `You're invited to ${args.companyName}`, text, html };
 }
+
+/** A quote sent to a customer, with the PDF attached by the caller. */
+export function quoteEmail(args: {
+  to: string;
+  company: string;
+  quoteNumber: string;
+  quoteName: string;
+  totalFormatted: string;
+  senderName: string;
+  message?: string | null;
+  replyTo?: string;
+}): Email {
+  const note = args.message?.trim();
+  const text = [
+    `Hello,`,
+    "",
+    ...(note ? [note, ""] : []),
+    `Please find attached quote ${args.quoteNumber} (${args.quoteName}) from ${args.company}, for a total of ${args.totalFormatted}.`,
+    "",
+    `Reply to this email if you have any questions.`,
+    "",
+    `${args.senderName}`,
+    args.company,
+  ].join("\n");
+  const html = `<p>Hello,</p>
+${note ? `<p style="white-space:pre-wrap">${esc(note)}</p>` : ""}
+<p>Please find attached quote <strong>${esc(args.quoteNumber)}</strong> (${esc(args.quoteName)}) from ${esc(args.company)}, for a total of <strong>${esc(args.totalFormatted)}</strong>.</p>
+<p>Reply to this email if you have any questions.</p>
+<p>${esc(args.senderName)}<br>${esc(args.company)}</p>`;
+  return {
+    to: args.to,
+    subject: `Quote ${args.quoteNumber} from ${args.company}`,
+    text,
+    html,
+    replyTo: args.replyTo,
+  };
+}

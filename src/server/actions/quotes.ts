@@ -6,6 +6,7 @@ import { requireUser } from "@/server/auth/http";
 import { createPriceList, createTaxRate, setPriceListItem } from "@/server/domain/catalog";
 import { buildCtx, type Fail } from "@/server/domain/context";
 import { parseMoneyToCents } from "@/server/domain/lead-import";
+import { emailQuote } from "@/server/domain/quote-email";
 import {
   activateQuote,
   addLine,
@@ -179,4 +180,11 @@ export async function createTaxRateAction(v: V): Promise<CmdResult> {
   if (!r.ok) return failed(r);
   refresh();
   return { ok: true, message: "Tax rate added" };
+}
+
+export async function emailQuoteAction(quoteId: string, v: V): Promise<CmdResult> {
+  const r = await emailQuote(await ctx(), quoteId, { to: v.to, message: v.message });
+  if (!r.ok) return failed(r);
+  refresh();
+  return { ok: true, message: `Quote emailed to ${r.to}.` };
 }

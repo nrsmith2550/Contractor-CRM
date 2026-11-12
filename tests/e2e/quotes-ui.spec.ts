@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { readdir, readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { activateLicense } from "@/server/auth/activation";
 import { mintLicense } from "@/server/licensing/mint";
@@ -66,6 +67,7 @@ test.describe("quotes UI", () => {
     await expect(page.getByRole("table", { name: "Quote lines" })).toContainText("Widget");
 
     // Upload a logo (Settings -> Branding) before generating the PDF.
+    const quoteUrl = page.url();
     await page.goto("/app/settings/branding");
     await page.getByLabel(/^Logo/).setInputFiles({
       name: "logo.png",
@@ -74,8 +76,7 @@ test.describe("quotes UI", () => {
     });
     await expect(page.getByText("Logo saved.")).toBeVisible();
     await expect(page.getByRole("img", { name: "Current company logo" })).toBeVisible();
-    await page.goBack();
-    await page.goBack();
+    await page.goto(quoteUrl);
     await expect(page.getByLabel("Totals")).toContainText("$64.17");
 
     // Active quotes are read-only.
@@ -89,6 +90,36 @@ test.describe("quotes UI", () => {
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
     expect((await pdf.body()).subarray(0, 5).toString("latin1")).toBe("%PDF-");
+
+    // Email the quote: the dev mail transport keeps the message and its PDF attachment as files.
+    const buyer = `buyer-${id}@example.test`;
+    await page.getByRole("button", { name: "Email quote" }).click();
+    await page.getByRole("textbox", { name: "To", exact: true }).fill(buyer);
+    await page.getByLabel("Message (optional)").fill("Thanks for your time");
+    await page.getByRole("button", { name: "Send quote" }).click();
+    await expect(page.getByText(`Quote emailed to ${buyer}.`)).toBeVisible();
+    await expect(page.getByRole("list", { name: "Emails sent" })).toContainText(
+      "Quote QUO-01001 from",
+    );
+    const safe = buyer.replace(/[^a-z0-9@.]+/gi, "_");
+    let files: string[] = [];
+    await expect
+      .poll(async () => {
+        files = (await readdir(".dev-mail-e2e").catch(() => [] as string[])).filter((f) =>
+          f.includes(`-${safe}`),
+        );
+        return (
+          files.some((f) => f.endsWith("QUO-01001.pdf")) && files.some((f) => f.endsWith(".txt"))
+        );
+      })
+      .toBe(true);
+    const attachment = await readFile(
+      `.dev-mail-e2e/${files.find((f) => f.endsWith("QUO-01001.pdf"))!}`,
+    );
+    expect(attachment.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+    expect(
+      await readFile(`.dev-mail-e2e/${files.find((f) => f.endsWith(".txt"))!}`, "utf8"),
+    ).toContain("Thanks for your time");
 
     // Revise creates -R1 as a draft.
     await page.getByRole("button", { name: "Revise" }).click();
