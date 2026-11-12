@@ -15,19 +15,28 @@ import { useEffect, useState } from "react";
 import { useForm, type Path } from "react-hook-form";
 import {
   CURRENCIES,
+  acceptInviteSchema,
   activateFormSchema,
   changePasswordSchema,
+  forgotPasswordSchema,
   loginSchema,
+  resetPasswordSchema,
+  type AcceptInviteValues,
   type ActivateFormValues,
   type ChangePasswordValues,
+  type ForgotPasswordValues,
   type LoginValues,
+  type ResetPasswordValues,
 } from "@/lib/validation/auth";
 import {
+  acceptInviteAction,
   activateAction,
   changePasswordAction,
+  forgotPasswordAction,
   loginAction,
   logoutAction,
-  type ActionError,
+  resetPasswordAction,
+  type ActionResult,
 } from "@/server/actions/auth";
 
 const useStyles = makeStyles({
@@ -62,7 +71,7 @@ function useServerError<T extends Record<string, unknown>>(
   setError: (name: Path<T>, error: { message: string }) => void,
 ) {
   const [formError, setFormError] = useState<string | null>(null);
-  const apply = (res: ActionError | void) => {
+  const apply = (res: ActionResult | void) => {
     if (!res || res.ok) return;
     if (res.field) setError(res.field as Path<T>, { message: res.message });
     else setFormError(res.message);
@@ -260,6 +269,136 @@ export function SignOutButton() {
     <form action={logoutAction}>
       <Button type="submit" appearance="subtle">
         Sign out
+      </Button>
+    </form>
+  );
+}
+
+export function ForgotPasswordForm() {
+  const styles = useStyles();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ForgotPasswordValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  });
+  const { formError, setFormError, apply } = useServerError<ForgotPasswordValues>(setError);
+  const [sent, setSent] = useState(false);
+
+  const onSubmit = handleSubmit(async (values) => {
+    setFormError(null);
+    const res = await forgotPasswordAction(values);
+    if (res.ok) setSent(true);
+    else apply(res);
+  });
+
+  // Same message whether or not the address has an account.
+  if (sent) {
+    return (
+      <MessageBar intent="success" role="status">
+        <MessageBarBody>
+          If an account exists for that address, we&apos;ve emailed a link to reset the password. It
+          works once and expires in 30 minutes.
+        </MessageBarBody>
+      </MessageBar>
+    );
+  }
+  return (
+    <form onSubmit={onSubmit} className={styles.form} noValidate>
+      <Banner message={formError} />
+      <Field label="Email" required validationMessage={errors.email?.message}>
+        <Input type="email" {...register("email")} autoComplete="username" />
+      </Field>
+      <Button appearance="primary" type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Sending…" : "Email me a reset link"}
+      </Button>
+    </form>
+  );
+}
+
+export function ResetPasswordForm({ token }: { token: string }) {
+  const styles = useStyles();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetPasswordValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+  });
+  const { formError, setFormError, apply } = useServerError<ResetPasswordValues>(setError);
+
+  const onSubmit = handleSubmit(async (values) => {
+    setFormError(null);
+    apply(await resetPasswordAction(token, values));
+  });
+
+  return (
+    <form onSubmit={onSubmit} className={styles.form} noValidate>
+      <Banner message={formError} />
+      <Field
+        label="New password"
+        required
+        validationMessage={errors.password?.message}
+        hint="At least 12 characters"
+      >
+        <Input type="password" {...register("password")} autoComplete="new-password" />
+      </Field>
+      <Field
+        label="Confirm new password"
+        required
+        validationMessage={errors.confirmPassword?.message}
+      >
+        <Input type="password" {...register("confirmPassword")} autoComplete="new-password" />
+      </Field>
+      <Button appearance="primary" type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Saving…" : "Set new password"}
+      </Button>
+    </form>
+  );
+}
+
+export function AcceptInviteForm({ token }: { token: string }) {
+  const styles = useStyles();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<AcceptInviteValues>({
+    resolver: zodResolver(acceptInviteSchema),
+    defaultValues: { fullName: "", password: "", confirmPassword: "" },
+  });
+  const { formError, setFormError, apply } = useServerError<AcceptInviteValues>(setError);
+
+  const onSubmit = handleSubmit(async (values) => {
+    setFormError(null);
+    apply(await acceptInviteAction(token, values));
+  });
+
+  return (
+    <form onSubmit={onSubmit} className={styles.form} noValidate>
+      <Banner message={formError} />
+      <Field label="Your full name" required validationMessage={errors.fullName?.message}>
+        <Input {...register("fullName")} autoComplete="name" />
+      </Field>
+      <Field
+        label="Password"
+        required
+        validationMessage={errors.password?.message}
+        hint="At least 12 characters"
+      >
+        <Input type="password" {...register("password")} autoComplete="new-password" />
+      </Field>
+      <Field label="Confirm password" required validationMessage={errors.confirmPassword?.message}>
+        <Input type="password" {...register("confirmPassword")} autoComplete="new-password" />
+      </Field>
+      <Button appearance="primary" type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Joining…" : "Join"}
       </Button>
     </form>
   );

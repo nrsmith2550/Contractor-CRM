@@ -30,9 +30,11 @@ export async function sendEmail(email: Email): Promise<void> {
     return;
   }
 
-  if (process.env.NODE_ENV === "production") throw new Error("RESEND_API_KEY is not set");
-  outbox.push(email);
+  // EMAIL_DEV_DIR is an explicit opt-in file transport (development and end-to-end tests, which
+  // run a production build). Leave it unset in production so a missing provider is an error.
   const dir = process.env.EMAIL_DEV_DIR;
+  if (process.env.NODE_ENV === "production" && !dir) throw new Error("RESEND_API_KEY is not set");
+  outbox.push(email);
   if (dir) {
     const { mkdir, writeFile } = await import("node:fs/promises");
     await mkdir(dir, { recursive: true });

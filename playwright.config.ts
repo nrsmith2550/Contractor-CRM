@@ -14,6 +14,8 @@ export default defineConfig({
     command: process.env.CI ? "pnpm start" : "pnpm dev",
     url: "http://localhost:3000/",
     reuseExistingServer: !process.env.CI,
+    // Dev mail is written to files (never logged) so tests can follow the emailed links.
+    env: { EMAIL_DEV_DIR: ".dev-mail-e2e", APP_URL: "http://localhost:3000" },
     timeout: 120_000,
   },
 });

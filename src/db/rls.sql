@@ -87,7 +87,41 @@ language sql stable security definer set search_path = public, pg_temp as $$
    limit 1
 $$;
 
+-- Password-reset links are used while signed out, so the token must resolve to its tenant.
+create or replace function auth_find_reset_token(p_token_hash text)
+returns table (
+  token_id uuid, tenant_id uuid, user_id uuid, expires_at timestamptz, used_at timestamptz,
+  email text
+)
+language sql stable security definer set search_path = public, pg_temp as $$
+  select t.id, t.tenant_id, t.user_id, t.expires_at, t.used_at, u.email
+    from password_reset_token t
+    join "system_user" u on u.id = t.user_id
+   where t.token_hash = p_token_hash
+   limit 1
+$$;
+
+-- Invitation links are opened by someone who has no account yet.
+create or replace function auth_find_invitation(p_token_hash text)
+returns table (
+  invitation_id uuid, tenant_id uuid, email text, role_id uuid, expires_at timestamptz,
+  accepted_at timestamptz, tenant_name text, seat_limit integer, license_status text
+)
+language sql stable security definer set search_path = public, pg_temp as $$
+  select i.id, i.tenant_id, i.email, i.role_id, i.expires_at, i.accepted_at, t.name,
+         l.seat_limit, l.status::text
+    from invitation i
+    join tenant t on t.id = i.tenant_id
+    left join license l on l.tenant_id = i.tenant_id
+   where i.token_hash = p_token_hash
+   limit 1
+$$;
+
 revoke all on function auth_find_user_by_email(text) from public;
 revoke all on function auth_find_session(text) from public;
+revoke all on function auth_find_reset_token(text) from public;
+revoke all on function auth_find_invitation(text) from public;
 grant execute on function auth_find_user_by_email(text) to {{APP_ROLE}};
 grant execute on function auth_find_session(text) to {{APP_ROLE}};
+grant execute on function auth_find_reset_token(text) to {{APP_ROLE}};
+grant execute on function auth_find_invitation(text) to {{APP_ROLE}};

@@ -22,7 +22,15 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
           color: "#fff",
         }}
       >
-        <strong>CRM</strong>
+        <span style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <strong>CRM</strong>
+          <a href="/app" style={{ color: "#fff" }}>
+            Sales Hub
+          </a>
+          <a href="/app/settings/users" style={{ color: "#fff" }}>
+            Users
+          </a>
+        </span>
         <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span>{user.fullName}</span>
           <SignOutButton />
