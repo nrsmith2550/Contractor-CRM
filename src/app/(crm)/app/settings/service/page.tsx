@@ -1,5 +1,7 @@
 import { InlineForm } from "@/components/form/InlineForm";
+import { createSkillAction } from "@/server/actions/bookings";
 import { createQueueAction, createSubjectAction } from "@/server/actions/service";
+import { listCharacteristics } from "@/server/domain/resources";
 import { requireUser } from "@/server/auth/http";
 import { listQueues, listSubjects } from "@/server/domain/cases";
 import { buildCtx } from "@/server/domain/context";
@@ -7,7 +9,11 @@ import { buildCtx } from "@/server/domain/context";
 export default async function ServiceSettingsPage() {
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
-  const [subjects, queues] = await Promise.all([listSubjects(ctx), listQueues(ctx)]);
+  const [subjects, queues, skills] = await Promise.all([
+    listSubjects(ctx),
+    listQueues(ctx),
+    listCharacteristics(ctx),
+  ]);
   return (
     <>
       <h1>Service settings</h1>
@@ -40,6 +46,21 @@ export default async function ServiceSettingsPage() {
         submitLabel="Add queue"
         action={createQueueAction}
         fields={[{ name: "name", label: "Queue name" }]}
+      />
+      <h2>Skills</h2>
+      <p>Skills resources have and work orders can require, such as HVAC certified.</p>
+      {skills.ok && skills.rows.length === 0 && <p>No skills yet.</p>}
+      {skills.ok && (
+        <ul aria-label="Skills">
+          {skills.rows.map((x) => (
+            <li key={x.id}>{x.name}</li>
+          ))}
+        </ul>
+      )}
+      <InlineForm
+        submitLabel="Add skill"
+        action={createSkillAction}
+        fields={[{ name: "name", label: "Skill name" }]}
       />
     </>
   );

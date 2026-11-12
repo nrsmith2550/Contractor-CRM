@@ -33,7 +33,7 @@ import { tenantTimeZone } from "@/server/entities/tenant";
 import { zonedToUtc } from "@/lib/tz";
 
 export type CmdResult =
-  | { ok: true; message?: string; redirectTo?: string }
+  | { ok: true; message?: string; redirectTo?: string; warnings?: string[] }
   | {
       ok: false;
       message: string;
