@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { EntityMeta } from "@/entities/types";
+import { SlaBadge } from "@/components/grid/SlaBadge";
 import { formatDate, formatMoney, humanize } from "@/lib/format";
 import type { Row } from "@/server/entities/registry";
 
@@ -10,6 +11,16 @@ const cell = (col: EntityMeta["columns"][number], row: Row, tz: string) => {
   if (v === null || v === undefined || v === "") return "";
   if (col.type === "money") return formatMoney(v);
   if (col.type === "date") return formatDate(v, tz);
+  if (col.type === "sla") {
+    return (
+      <SlaBadge
+        status={String(row.status)}
+        createdAt={row.createdAt as Date}
+        slaDueAt={(row.slaDueAt as Date | null) ?? null}
+        resolvedAt={(row.resolvedAt as Date | null) ?? null}
+      />
+    );
+  }
   if (col.type === "badge") return <span className="crm-badge">{humanize(String(v))}</span>;
   return String(v);
 };

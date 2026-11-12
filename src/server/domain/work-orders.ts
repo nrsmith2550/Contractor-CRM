@@ -28,6 +28,7 @@ export const WO_VIEWS = [
   { id: "active", label: "Scheduled and In Progress" },
   { id: "completed", label: "Completed" },
   { id: "all_open", label: "All Open Work Orders" },
+  { id: "all", label: "All Work Orders" },
 ] as const;
 export type WoView = (typeof WO_VIEWS)[number]["id"];
 
@@ -129,6 +130,7 @@ export async function listWorkOrders(
     active: inArray(workOrder.status, ["scheduled", "in_progress"]),
     completed: inArray(workOrder.status, ["completed", "posted"]),
     all_open: inArray(workOrder.status, ["unscheduled", "scheduled", "in_progress"]),
+    all: undefined,
   };
   const q = opts.search?.trim();
   const where = and(

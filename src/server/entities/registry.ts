@@ -16,7 +16,23 @@ import {
   listTaxRates,
   updateProduct,
 } from "@/server/domain/catalog";
+import {
+  createCase,
+  getCase,
+  listCases,
+  listQueues,
+  listSubjects,
+  updateCase,
+  type CaseView,
+} from "@/server/domain/cases";
 import type { Ctx, Result } from "@/server/domain/context";
+import {
+  createWorkOrder,
+  getWorkOrder,
+  listWorkOrders,
+  updateWorkOrder,
+  type WoView,
+} from "@/server/domain/work-orders";
 import type { EntityMeta } from "@/entities/types";
 import { createLead, getLead, listLeads, updateLead, type LeadView } from "@/server/domain/leads";
 import {
@@ -48,6 +64,20 @@ const one =
 const many = (r: Result<{ rows: unknown[]; total: number }>): Listed => r as unknown as Listed;
 
 export const OPS: Record<EntityKey, Ops> = {
+  case: {
+    list: async (ctx, o) =>
+      many(await listCases(ctx, { ...o, view: (o.view ?? "my_active") as CaseView })),
+    get: async (ctx, id) => one("case")(await getCase(ctx, id)),
+    create: async (ctx, raw) => one("case")(await createCase(ctx, raw)),
+    update: async (ctx, id, raw) => one("case")(await updateCase(ctx, id, raw)),
+  },
+  work_order: {
+    list: async (ctx, o) =>
+      many(await listWorkOrders(ctx, { ...o, view: (o.view ?? "all_open") as WoView })),
+    get: async (ctx, id) => one("workOrder")(await getWorkOrder(ctx, id)),
+    create: async (ctx, raw) => one("workOrder")(await createWorkOrder(ctx, raw)),
+    update: async (ctx, id, raw) => one("workOrder")(await updateWorkOrder(ctx, id, raw)),
+  },
   product: {
     list: async (ctx, o) => many(await listProducts(ctx, o)),
     get: async (ctx, id) => one("product")(await getProduct(ctx, id)),
@@ -89,15 +119,33 @@ export const OPS: Record<EntityKey, Ops> = {
   },
 };
 
-/** Fills in options that come from the database (e.g. the tax rates a product can use). */
+/** Fills in options that come from the database (tax rates for products, subjects and queues for cases). */
 export async function withDynamicOptions(ctx: Ctx, meta: EntityMeta): Promise<EntityMeta> {
-  if (meta.key !== "product") return meta;
-  const rates = await listTaxRates(ctx);
-  const options = rates.ok
-    ? rates.rows.map((r) => ({ value: r.id, label: `${r.name} (${(r.rateBp / 100).toFixed(2)}%)` }))
-    : [];
-  return {
-    ...meta,
-    fields: meta.fields.map((f) => (f.name === "taxRateId" ? { ...f, options } : f)),
-  };
+  const load: Record<string, () => Promise<{ value: string; label: string }[]>> = {};
+  if (meta.key === "product") {
+    load.taxRateId = async () => {
+      const rates = await listTaxRates(ctx);
+      return rates.ok
+        ? rates.rows.map((r) => ({
+            value: r.id,
+            label: `${r.name} (${(r.rateBp / 100).toFixed(2)}%)`,
+          }))
+        : [];
+    };
+  }
+  if (meta.key === "case") {
+    load.subjectId = async () => {
+      const r = await listSubjects(ctx);
+      return r.ok ? r.rows.map((x) => ({ value: x.id, label: x.name })) : [];
+    };
+    load.queueId = async () => {
+      const r = await listQueues(ctx);
+      return r.ok ? r.rows.map((x) => ({ value: x.id, label: x.name })) : [];
+    };
+  }
+  if (Object.keys(load).length === 0) return meta;
+  const fields = await Promise.all(
+    meta.fields.map(async (f) => (load[f.name] ? { ...f, options: await load[f.name]!() } : f)),
+  );
+  return { ...meta, fields };
 }

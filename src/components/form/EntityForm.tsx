@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { EntityMeta, FieldDef } from "@/entities/types";
+import { utcToZonedInput } from "@/lib/tz";
 import { saveRecordAction, lookupAction, type CmdResult } from "@/server/actions/entities";
 
 type Values = Record<string, string | boolean>;
@@ -61,14 +62,16 @@ function Lookup(props: {
   );
 }
 
-const toInput = (f: FieldDef, raw: unknown): string | boolean => {
+const toInput = (f: FieldDef, raw: unknown, tz: string): string | boolean => {
   if (f.type === "checkbox") return raw === true;
   if (raw === null || raw === undefined) {
-    // A select that can't be blank starts on its first option.
+    // A new record starts on the field's default; a select that can't be blank on its first option.
+    if (f.defaultValue !== undefined) return f.defaultValue;
     return f.type === "select" && f.notNullable ? (f.options?.[0]?.value ?? "") : "";
   }
   if (f.type === "money") return typeof raw === "number" ? (raw / 100).toFixed(2) : "";
   if (f.type === "date") return String(raw).slice(0, 10);
+  if (f.type === "datetime") return utcToZonedInput(raw as Date | string, tz);
   return String(raw);
 };
 
@@ -76,13 +79,15 @@ export function EntityForm(props: {
   meta: EntityMeta;
   id: string | null;
   record: Record<string, unknown>;
+  /** The business's time zone, for date-time fields. */
+  tz?: string;
   /** Display names for lookup fields, keyed by field name. */
   lookupLabels?: Record<string, string>;
   readOnly?: boolean;
 }) {
   const { meta, id, record, readOnly } = props;
   const initial: Values = Object.fromEntries(
-    meta.fields.map((f) => [f.name, toInput(f, record[f.name])]),
+    meta.fields.map((f) => [f.name, toInput(f, record[f.name], props.tz ?? "UTC")]),
   );
   const [values, setValues] = useState<Values>(initial);
   const [labels, setLabels] = useState(props.lookupLabels ?? {});
@@ -219,7 +224,13 @@ export function EntityForm(props: {
                     ) : (
                       <input
                         {...common}
-                        type={f.type === "money" || f.type === "number" ? "text" : f.type}
+                        type={
+                          f.type === "money" || f.type === "number"
+                            ? "text"
+                            : f.type === "datetime"
+                              ? "datetime-local"
+                              : f.type
+                        }
                         inputMode={
                           f.type === "money" || f.type === "number" ? "decimal" : undefined
                         }
