@@ -1,42 +1,33 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { SiteMap } from "@/components/shell/SiteMap";
 import { requireUser } from "@/server/auth/http";
 import { SignOutButton } from "../../(auth)/auth-forms";
+import "../../crm.css";
 
-// Placeholder shell: the real Dynamics-style app shell (top bar, site map, area switcher)
-// arrives in Phase 2. What matters here is the gate: every request re-validates the session,
-// the user and the license, and a forced password change blocks everything else.
+// The app shell: top bar, site map and content area. Every request also re-validates the
+// session, user and license, and a forced password change blocks everything else.
 export default async function CrmLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   if (user.mustChangePassword) redirect("/change-password");
 
   return (
-    <div>
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "8px 16px",
-          background: "#1b1a19",
-          color: "#fff",
-        }}
-      >
-        <span style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <strong>CRM</strong>
-          <a href="/app" style={{ color: "#fff" }}>
-            Sales Hub
-          </a>
-          <a href="/app/settings/users" style={{ color: "#fff" }}>
-            Users
-          </a>
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <div className="crm-shell">
+      <header className="crm-topbar">
+        <Link href="/app">
+          <strong>CRM</strong> · Sales Hub
+        </Link>
+        <span className="crm-row">
+          <form action="/app/search" method="get" role="search">
+            <input type="search" name="q" placeholder="Search" aria-label="Search all records" />
+          </form>
           <span>{user.fullName}</span>
           <SignOutButton />
         </span>
       </header>
-      {children}
+      <SiteMap />
+      <main className="crm-main">{children}</main>
     </div>
   );
 }

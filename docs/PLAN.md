@@ -430,9 +430,12 @@ against Postgres as a restricted role — schema + RLS for lead/account/contact/
 saved_view, auto-numbering, field-level audit, duplicate detection, lead qualify/disqualify/reactivate, the
 opportunity business process flow with required-field enforcement, close as won/lost, notes/activities/timeline,
 and CSV import with column mapping. The four acceptance boxes above are covered by those tests.
-**Still to build in Phase 2:** the app shell (top bar, site map, area switcher), the metadata-driven `EntityGrid`
-and `EntityForm`, the list/form pages for Accounts, Contacts, Leads and Opportunities, the Kanban pipeline board,
-the BPF chevron bar and the import screen. See `docs/decisions/0007-sales-domain.md`.
+**Phase 2 UI** (branch `claude/phase-2-ui`): the app shell (top bar, site map, global search), metadata-driven
+`EntityGrid` / `EntityForm` (`src/entities/*`) with views, search, paging, lookups, dirty indicator and Ctrl+S,
+list/new/record pages for Accounts, Contacts, Leads and Opportunities, the BPF bar, record commands (qualify with
+duplicate choices, disqualify, move stage, close won/lost, reopen), notes + timeline, the Kanban pipeline and the
+CSV import screen. Covered by a metadata unit test and a Playwright journey (create lead, note, qualify, close
+won, account becomes a customer). Not yet: an area switcher (only the Sales area exists), saved personal views UI.
 
 ### Phase 3 — Product catalog, Quotes, Orders
 
