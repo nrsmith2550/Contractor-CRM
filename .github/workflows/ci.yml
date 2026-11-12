@@ -37,11 +37,12 @@ jobs:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           api_key: ${{ secrets.NEON_API_KEY }}
           branch_name: ci-${{ github.run_id }}-${{ github.run_attempt }}
-          role: ${{ secrets.NEON_APP_ROLE }}
+          username: ${{ secrets.NEON_APP_ROLE }}
           database: neondb
 
+      # No migrations exist until the first tables land in Phase 1.
       - name: Apply migrations (owner role)
-        if: steps.neon.outcome == 'success'
+        if: steps.neon.outcome == 'success' && hashFiles('src/db/migrations/meta/_journal.json') != ''
         run: pnpm db:migrate
         env:
           DATABASE_URL_OWNER: ${{ steps.neon.outputs.db_url }}
