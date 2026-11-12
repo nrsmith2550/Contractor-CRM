@@ -29,4 +29,8 @@ export const TENANT_TABLES = [
   "quote_detail",
   "sales_order",
   "sales_order_detail",
+  "subject",
+  "queue",
+  "incident",
+  "work_order",
 ] as const;

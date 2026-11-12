@@ -1,7 +1,17 @@
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { withTenant, type Tx } from "@/db/client";
-import { account, activity, annotation, contact, lead, opportunity, quote } from "@/db/schema";
+import {
+  account,
+  activity,
+  annotation,
+  contact,
+  incident,
+  lead,
+  opportunity,
+  quote,
+  workOrder,
+} from "@/db/schema";
 import { can, type Entity } from "@/server/security/roles";
 import { recordAudit } from "./audit";
 import { FORBIDDEN, NOT_FOUND, checkRecord, fail, type Ctx, type Result } from "./context";
@@ -10,11 +20,27 @@ import { invalid, text } from "./leads";
 export type Note = typeof annotation.$inferSelect;
 export type Activity = typeof activity.$inferSelect;
 
-export const REGARDING_TYPES = ["lead", "account", "contact", "opportunity", "quote"] as const;
+export const REGARDING_TYPES = [
+  "lead",
+  "account",
+  "contact",
+  "opportunity",
+  "quote",
+  "case",
+  "work_order",
+] as const;
 export type RegardingType = (typeof REGARDING_TYPES)[number];
 export const ACTIVITY_TYPES = ["task", "phone_call", "email", "appointment"] as const;
 
-const TABLES = { lead, account, contact, opportunity, quote } as const;
+const TABLES = {
+  lead,
+  account,
+  contact,
+  opportunity,
+  quote,
+  case: incident,
+  work_order: workOrder,
+} as const;
 
 /** The record a note/activity hangs off: it must exist and the user must be able to read it. */
 async function visibleRecord(tx: Tx, ctx: Ctx, type: RegardingType, id: string) {

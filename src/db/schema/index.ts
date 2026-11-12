@@ -3,3 +3,4 @@
 export * from "./platform";
 export * from "./identity";
 export * from "./sales";
+export * from "./service";
