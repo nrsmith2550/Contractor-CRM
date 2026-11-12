@@ -443,7 +443,7 @@ Products, units, price lists, discounts, tax; opportunity product lines; quote b
 
 - [x] Totals are correct to the cent across discount, freight and tax (unit tests with edge cases: 0 qty, 100% discount, rounding)
 - [x] Revise produces `-R1` as Draft and the original becomes Closed-Revised
-- [ ] Active quotes are read-only; PDF renders with tenant logo
+- [x] Active quotes are read-only; PDF renders with tenant logo
 - [x] Won quote creates an order and can close the opportunity as Won
 
 **Phase 3 status** (branch `claude/phase-3-quotes`, slice 1): the *domain layer* is built and tested against
@@ -458,9 +458,14 @@ prices), Tax rates (Settings), Quotes (list, new, and the builder: editable summ
 write-ins, live server totals, Activate / Revise / Close as won / Close as lost) and Orders (list, detail), all in the
 site map, plus "+ New quote" on an opportunity. Covered by a Playwright journey (tax rate -> product -> quote ->
 activate -> revise -R1 -> win -> order).
-**Still to build in Phase 3:** the quote PDF with tenant logo (`@react-pdf/renderer`, free) and its Generate PDF
-button, emailing a quote (logged as an Email activity), and opportunity product lines. The third box stays unticked
-until the PDF exists.
+**Phase 3 PDF** (branch `claude/phase-3-pdf`): `Download PDF` on an activated quote (`/app/quotes/[id]/pdf`),
+rendered server-side with `@react-pdf/renderer` (free, standard PDF fonts, no downloads): tenant logo and name,
+customer and address, lines, discount / freight / tax / total, payment terms and terms, page numbers. A draft is
+refused. The logo is a PNG/JPEG data URL under 200 KB stored on the tenant (Settings -> Branding, administrators
+only; the bytes are sniffed so a renamed file or SVG is refused), so it needs no storage service. This required
+upgrading to React 19 (the PDF library and Next's app router must share one React). All four Phase 3 boxes are ticked.
+**Still to build in Phase 3:** emailing a quote (PDF attached, logged as an Email activity) and opportunity product
+lines.
 
 ### Phase 4 — Service: Cases and Work Orders
 
