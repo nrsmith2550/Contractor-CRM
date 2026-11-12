@@ -15,6 +15,13 @@
       "when": 1794512137797,
       "tag": "0001_tranquil_captain_midlands",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794514422793,
+      "tag": "0002_dark_lyja",
+      "breakpoints": true
     }
   ]
 }

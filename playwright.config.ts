@@ -1,5 +1,9 @@
 import { defineConfig } from "@playwright/test";
 
+// Fixed test-only key so the test process and the server it starts can both encrypt/decrypt the
+// platform admins' authenticator secrets. Never used outside tests.
+process.env.ADMIN_TOTP_KEY ??= Buffer.alloc(32, 7).toString("base64");
+
 export default defineConfig({
   testDir: "tests/e2e",
   retries: process.env.CI ? 1 : 0,

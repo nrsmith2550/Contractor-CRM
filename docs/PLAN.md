@@ -379,11 +379,11 @@ Scaffold Next.js + TypeScript + pnpm, Fluent UI provider, ESLint/Prettier, Vites
 
 License table and key generator, `/activate`, `/login`, sessions, forgot/reset password, invitations with seat limit, security roles + `can()`, RLS + `withTenant`, Stripe webhook, `/admin` with TOTP, license list (mint / suspend / revoke / extend), tenant list, owner reset actions, admin audit log.
 
-- [ ] A minted key activates once, creates tenant + owner, and a second activation attempt redirects to login
-- [ ] Wrong or malformed keys are rejected; the 6th attempt in 15 min is rate-limited
-- [ ] Admin can send a reset link, issue a temp password (forced change on login) and change the owner email; each creates an audit row and kills existing sessions
-- [ ] Suspending a license signs out that tenant's users on their next request
-- [ ] Tenant-isolation e2e test passes (tenant A sees zero tenant B rows)
+- [x] A minted key activates once, creates tenant + owner, and a second activation attempt redirects to login
+- [x] Wrong or malformed keys are rejected; the 6th attempt in 15 min is rate-limited
+- [x] Admin can send a reset link, issue a temp password (forced change on login) and change the owner email; each creates an audit row and kills existing sessions
+- [x] Suspending a license signs out that tenant's users on their next request
+- [x] Tenant-isolation e2e test passes (tenant A sees zero tenant B rows) — integration tests against Postgres as a restricted role, run in CI
 - [ ] Stripe test-mode checkout produces an `issued` license and an email
 
 **Slice 1 status** (branch `claude/phase-1-licensing-auth`): the secure core is built and tested against a
@@ -408,6 +408,13 @@ error; sign-out; a suspended license signs the session out on its next request. 
 re-checked at accept), plus a first Users settings page, are built and tested (unit, 21 integration incl. races, and
 browser tests that follow the real emailed links). See `docs/decisions/0005-reset-and-invitations.md`.
 Remaining in Phase 1: the `/admin` console (TOTP 2FA, license list, owner resets) and the activation verification email.
+
+**Admin console status** (branch `claude/phase-1-admin`): `/admin` is built — separate cookie, mandatory password +
+TOTP (RFC 6238, replay-proof, secrets encrypted at rest), optional IP allowlist, license list with mint / suspend /
+revoke / reinstate / tier change, businesses list and detail, the four owner-recovery actions (reset link, temporary
+password, change owner email, re-activate), and an append-only audit log. See `docs/decisions/0006-admin-console.md`.
+**Phase 1 boxes ticked** are those covered by passing tests. Still open: *Stripe test-mode checkout produces an
+`issued` license and an email* (needs a real test-mode Stripe account and Resend), and the activation verification email.
 
 ### Phase 2 — App shell + core Sales
 

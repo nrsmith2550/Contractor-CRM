@@ -1,0 +1,1 @@
+ALTER TABLE "platform_admin" ADD COLUMN "totp_last_step" integer;
