@@ -32,6 +32,7 @@ const GROUPS = [
     links: [
       ["Users", "/app/settings/users"],
       ["Tax rates", "/app/settings/tax-rates"],
+      ["Branding", "/app/settings/branding"],
     ],
   },
 ] as const;

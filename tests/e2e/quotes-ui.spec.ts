@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { activateLicense } from "@/server/auth/activation";
 import { mintLicense } from "@/server/licensing/mint";
+import { PNG_1PX } from "../support/images";
 
 const PASSWORD = "violet-lantern-orbit-42";
 const rand = () => randomBytes(4).toString("hex");
@@ -64,10 +65,30 @@ test.describe("quotes UI", () => {
     await expect(page.getByLabel("Totals")).toContainText("$64.17");
     await expect(page.getByRole("table", { name: "Quote lines" })).toContainText("Widget");
 
+    // Upload a logo (Settings -> Branding) before generating the PDF.
+    await page.goto("/app/settings/branding");
+    await page.getByLabel(/^Logo/).setInputFiles({
+      name: "logo.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(PNG_1PX.split(",")[1]!, "base64"),
+    });
+    await expect(page.getByText("Logo saved.")).toBeVisible();
+    await expect(page.getByRole("img", { name: "Current company logo" })).toBeVisible();
+    await page.goBack();
+    await page.goBack();
+    await expect(page.getByLabel("Totals")).toContainText("$64.17");
+
     // Active quotes are read-only.
     await page.getByRole("button", { name: "Activate quote" }).click();
     await expect(page.getByText("This quote is active")).toBeVisible();
     await expect(page.getByRole("button", { name: "Add line" })).toHaveCount(0);
+
+    // The PDF downloads as a real PDF; a draft's would be refused.
+    const href = await page.getByRole("link", { name: "Download PDF" }).getAttribute("href");
+    const pdf = await page.request.get(href!);
+    expect(pdf.status()).toBe(200);
+    expect(pdf.headers()["content-type"]).toBe("application/pdf");
+    expect((await pdf.body()).subarray(0, 5).toString("latin1")).toBe("%PDF-");
 
     // Revise creates -R1 as a draft.
     await page.getByRole("button", { name: "Revise" }).click();

@@ -122,6 +122,11 @@ export function QuoteBuilder(props: {
             </button>
           </>
         )}
+        {!draft && (
+          <a className="crm-btn" href={`/app/quotes/${q.id}/pdf`} target="_blank" rel="noreferrer">
+            Download PDF
+          </a>
+        )}
         {q.opportunityId && <Link href={`/app/opportunities/${q.opportunityId}`}>Opportunity</Link>}
       </div>
       {res && !res.ok && (
