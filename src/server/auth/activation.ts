@@ -160,16 +160,24 @@ export async function activateLicense(raw: unknown): Promise<ActivationResult> {
         return fail("unavailable", "This license can't be used. Contact support.");
       }
 
-      const [t] = await tx
-        .insert(tenant)
-        .values({
-          name: input.companyName,
-          slug: slugify(input.companyName),
-          timeZone: input.timeZone,
-          currency: input.currency,
-        })
-        .returning({ id: tenant.id });
-      const tenantId = t!.id;
+      // A claimable license that is still bound to a tenant was re-activated by a platform admin:
+      // the business keeps its data and only gets a new owner. Otherwise create a new business.
+      const reclaim = lic.tenantId !== null;
+      let tenantId: string;
+      if (reclaim) {
+        tenantId = lic.tenantId!;
+      } else {
+        const [t] = await tx
+          .insert(tenant)
+          .values({
+            name: input.companyName,
+            slug: slugify(input.companyName),
+            timeZone: input.timeZone,
+            currency: input.currency,
+          })
+          .returning({ id: tenant.id });
+        tenantId = t!.id;
+      }
       await setTenant(tx, tenantId);
 
       let user: { id: string };
@@ -189,27 +197,36 @@ export async function activateLicense(raw: unknown): Promise<ActivationResult> {
         throw err;
       }
 
-      const roles = await tx
-        .insert(securityRole)
-        .values(DEFAULT_ROLES.map((r) => ({ tenantId, name: r.name, privileges: r.privileges })))
-        .returning({ id: securityRole.id, name: securityRole.name });
-      const adminRole = roles.find((r) => r.name === OWNER_ROLE_NAME)!;
-      await tx.insert(userRole).values({ tenantId, userId: user.id, roleId: adminRole.id });
-
-      await tx
-        .insert(sequence)
-        .values(SEQUENCES.map(([entity, prefix]) => ({ tenantId, entity, prefix })));
+      let adminRoleId: string;
+      if (reclaim) {
+        // Roles and numbering sequences already exist and are kept as they are.
+        const [existing] = await tx
+          .select({ id: securityRole.id })
+          .from(securityRole)
+          .where(eq(securityRole.name, OWNER_ROLE_NAME));
+        adminRoleId = existing!.id;
+      } else {
+        const roles = await tx
+          .insert(securityRole)
+          .values(DEFAULT_ROLES.map((r) => ({ tenantId, name: r.name, privileges: r.privileges })))
+          .returning({ id: securityRole.id, name: securityRole.name });
+        adminRoleId = roles.find((r) => r.name === OWNER_ROLE_NAME)!.id;
+        await tx
+          .insert(sequence)
+          .values(SEQUENCES.map(([entity, prefix]) => ({ tenantId, entity, prefix })));
+      }
+      await tx.insert(userRole).values({ tenantId, userId: user.id, roleId: adminRoleId });
 
       await tx
         .update(license)
-        .set({ status: "active", tenantId, activatedAt: new Date() })
+        .set({ status: "active", tenantId, activatedAt: lic.activatedAt ?? new Date() })
         .where(eq(license.id, lic.id));
 
       await tx.insert(auditLog).values({
         tenantId,
         entity: "license",
         recordId: lic.id,
-        action: "activate",
+        action: reclaim ? "reactivate" : "activate",
         changes: { keyLast5: licenseKeyLast5(normalized), tier: lic.tier },
         userId: user.id,
       });

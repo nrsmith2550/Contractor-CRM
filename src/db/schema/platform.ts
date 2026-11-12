@@ -47,6 +47,8 @@ export const platformAdmin = pgTable("platform_admin", {
   passwordHash: text("password_hash").notNull(),
   // AES-GCM encrypted TOTP secret (base64). Never stored in plain text.
   totpSecretEnc: text("totp_secret_enc"),
+  // Highest TOTP time step already accepted, so a code (even a valid one) can't be replayed.
+  totpLastStep: integer("totp_last_step"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -18,7 +18,9 @@
     "e2e": "playwright test --trace off",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate && tsx scripts/apply-rls.ts",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "admin:create": "tsx scripts/create-admin.ts",
+    "license:mint": "tsx scripts/mint-license.ts"
   },
   "dependencies": {
     "@fluentui/react-components": "^9.54.0",
