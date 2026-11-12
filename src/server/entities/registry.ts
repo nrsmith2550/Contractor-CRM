@@ -9,7 +9,15 @@ import {
   updateAccount,
   updateContact,
 } from "@/server/domain/accounts";
+import {
+  createProduct,
+  getProduct,
+  listProducts,
+  listTaxRates,
+  updateProduct,
+} from "@/server/domain/catalog";
 import type { Ctx, Result } from "@/server/domain/context";
+import type { EntityMeta } from "@/entities/types";
 import { createLead, getLead, listLeads, updateLead, type LeadView } from "@/server/domain/leads";
 import {
   createOpportunity,
@@ -40,6 +48,12 @@ const one =
 const many = (r: Result<{ rows: unknown[]; total: number }>): Listed => r as unknown as Listed;
 
 export const OPS: Record<EntityKey, Ops> = {
+  product: {
+    list: async (ctx, o) => many(await listProducts(ctx, o)),
+    get: async (ctx, id) => one("product")(await getProduct(ctx, id)),
+    create: async (ctx, raw) => one("product")(await createProduct(ctx, raw)),
+    update: async (ctx, id, raw) => one("product")(await updateProduct(ctx, id, raw)),
+  },
   lead: {
     list: async (ctx, o) =>
       many(await listLeads(ctx, { ...o, view: (o.view ?? "my_open") as LeadView })),
@@ -74,3 +88,16 @@ export const OPS: Record<EntityKey, Ops> = {
     update: async (ctx, id, raw) => one("opportunity")(await updateOpportunity(ctx, id, raw)),
   },
 };
+
+/** Fills in options that come from the database (e.g. the tax rates a product can use). */
+export async function withDynamicOptions(ctx: Ctx, meta: EntityMeta): Promise<EntityMeta> {
+  if (meta.key !== "product") return meta;
+  const rates = await listTaxRates(ctx);
+  const options = rates.ok
+    ? rates.rows.map((r) => ({ value: r.id, label: `${r.name} (${(r.rateBp / 100).toFixed(2)}%)` }))
+    : [];
+  return {
+    ...meta,
+    fields: meta.fields.map((f) => (f.name === "taxRateId" ? { ...f, options } : f)),
+  };
+}

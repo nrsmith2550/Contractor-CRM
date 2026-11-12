@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BusinessProcessFlow } from "@/components/form/BusinessProcessFlow";
 import { EntityForm } from "@/components/form/EntityForm";
@@ -8,7 +9,7 @@ import { formatDate, formatMoney, humanize } from "@/lib/format";
 import { requireUser } from "@/server/auth/http";
 import { timeline } from "@/server/domain/activities";
 import { buildCtx } from "@/server/domain/context";
-import { OPS } from "@/server/entities/registry";
+import { OPS, withDynamicOptions } from "@/server/entities/registry";
 import { tenantTimeZone } from "@/server/entities/tenant";
 
 export default async function RecordPage({
@@ -34,7 +35,11 @@ export default async function RecordPage({
     if (r.ok) lookupLabels[f.name] = recordTitle(entityBySlug(f.lookup! + "s")!, r.row);
   }
 
-  const [tl, tz] = await Promise.all([timeline(ctx, meta.key, id), tenantTimeZone(user.tenantId)]);
+  const hasTimeline = meta.key !== "product";
+  const [tl, tz] = await Promise.all([
+    hasTimeline ? timeline(ctx, meta.key as "lead", id) : Promise.resolve(null),
+    tenantTimeZone(user.tenantId),
+  ]);
   const status = typeof row.status === "string" ? row.status : "";
   const fieldByName = Object.fromEntries(meta.fields.map((f) => [f.name, f]));
   const show = (name: string) => {
@@ -64,16 +69,32 @@ export default async function RecordPage({
       {meta.key === "opportunity" && (
         <BusinessProcessFlow stage={String(row.stage)} status={status} />
       )}
+      {meta.key === "opportunity" && (
+        <p>
+          <Link className="crm-btn" href={`/app/quotes/new?opportunityId=${id}`}>
+            + New quote
+          </Link>
+        </p>
+      )}
       <RecordCommands
         entityKey={meta.key}
         id={id}
         status={status}
         stage={typeof row.stage === "string" ? row.stage : undefined}
       />
-      <EntityForm meta={meta} id={id} record={row} lookupLabels={lookupLabels} />
-      <h2>Timeline</h2>
-      <NoteForm entityKey={meta.key} id={id} />
-      {tl.ok && <Timeline items={tl.items} tz={tz} />}
+      <EntityForm
+        meta={await withDynamicOptions(ctx, meta)}
+        id={id}
+        record={row}
+        lookupLabels={lookupLabels}
+      />
+      {hasTimeline && (
+        <>
+          <h2>Timeline</h2>
+          <NoteForm entityKey={meta.key} id={id} />
+          {tl?.ok && <Timeline items={tl.items} tz={tz} />}
+        </>
+      )}
     </>
   );
 }

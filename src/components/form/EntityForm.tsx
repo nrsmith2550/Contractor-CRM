@@ -63,7 +63,10 @@ function Lookup(props: {
 
 const toInput = (f: FieldDef, raw: unknown): string | boolean => {
   if (f.type === "checkbox") return raw === true;
-  if (raw === null || raw === undefined) return "";
+  if (raw === null || raw === undefined) {
+    // A select that can't be blank starts on its first option.
+    return f.type === "select" && f.notNullable ? (f.options?.[0]?.value ?? "") : "";
+  }
   if (f.type === "money") return typeof raw === "number" ? (raw / 100).toFixed(2) : "";
   if (f.type === "date") return String(raw).slice(0, 10);
   return String(raw);

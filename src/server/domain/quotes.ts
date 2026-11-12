@@ -633,3 +633,24 @@ export async function getOrder(
     return { ok: true as const, order: row!, lines };
   });
 }
+
+export async function listOrders(
+  ctx: Ctx,
+  opts: { search?: string; limit?: number; offset?: number } = {},
+): Promise<Result<{ rows: SalesOrder[]; total: number }>> {
+  const scope = readScope(ctx.subject, "order", salesOrder.ownerId);
+  if (!scope.allowed) return FORBIDDEN;
+  const q = opts.search?.trim();
+  const where = and(scope.where, q ? ilike(salesOrder.name, `%${q}%`) : undefined);
+  return withTenant(ctx.tenantId, async (tx) => {
+    const rows = await tx
+      .select()
+      .from(salesOrder)
+      .where(where)
+      .orderBy(desc(salesOrder.createdAt))
+      .limit(Math.min(opts.limit ?? 50, 200))
+      .offset(opts.offset ?? 0);
+    const [total] = await tx.select({ n: count() }).from(salesOrder).where(where);
+    return { ok: true as const, rows, total: total!.n };
+  });
+}
