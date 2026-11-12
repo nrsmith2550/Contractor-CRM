@@ -503,8 +503,19 @@ Cancel, Reactivate), a work order panel on the case, work order status buttons t
 allows, and Settings -> Service settings for subjects and queues. Work order time windows are entered and shown in
 the business's time zone and stored in UTC (`src/lib/tz.ts`, tested across daylight-saving changes). The first two
 Phase 4 boxes are ticked.
-**Still to build in Phase 4:** bookable resources and skills (characteristics), bookings (Travelling -> In Progress ->
-Completed with a customer signature), work order parts and labour, and the technician mobile view.
+**Phase 4 bookings** (branch `claude/phase-4-bookings`, domain layer): skills ("characteristics"), bookable resources
+(people, crews, equipment; weekly working hours in the business's zone, default Mon-Fri 08:00-17:00; a "user"
+resource is tied to a sign-in so the technician sees their own bookings), skills a work order requires, and
+bookings. Creating a booking schedules the work order and returns **warnings** (not refusals) for overlap, outside
+working hours, a missing skill, and outside the customer's time window; cancelled bookings free their time. The
+technician's flow Scheduled -> Travelling -> In Progress -> Completed drives the work order (In Progress when work
+starts, Completed when the visit is completed; cancelling an unstarted booking sends it back to Unscheduled), and
+completing can capture the customer's signature (a PNG data URL under 100 KB plus the signer's name, validated by
+its bytes, never written to the audit log). A booking belongs to the technician it is for; only dispatchers can
+book or move one. Covered by 16 integration tests and 11 unit tests, including the acceptance flow.
+**Still to build in Phase 4:** the screens for resources, skills and booking from a work order, work order parts and
+labour, and the technician mobile view (`/app/my-bookings`) with the signature pad; the third box ticks when that
+view lets a technician do this from a phone.
 
 ### Phase 5 — Calendar and Schedule Board
 

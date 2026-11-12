@@ -11,8 +11,6 @@ import { FORBIDDEN, fail, type Ctx, type Result } from "./context";
 
 export const MAX_LOGO_BYTES = 200 * 1024;
 
-const DATA_URL = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/;
-
 /** The real file type from its first bytes, so a renamed file or a spoofed MIME type is refused. */
 function sniff(bytes: Buffer): "png" | "jpeg" | null {
   if (
@@ -26,21 +24,36 @@ function sniff(bytes: Buffer): "png" | "jpeg" | null {
   return null;
 }
 
-export function validateLogo(
+type ImageKind = "png" | "jpeg";
+
+/**
+ * Checks a base64 data URL really is one of the allowed image types (by its bytes, not its label)
+ * and is within the size limit. SVG and other formats are refused: they can carry scripts.
+ */
+export function validateImageDataUrl(
   dataUrl: unknown,
+  opts: { types: ImageKind[]; maxBytes: number; noun: string },
 ): { ok: true; dataUrl: string } | { ok: false; message: string } {
-  if (typeof dataUrl !== "string") return { ok: false, message: "Choose a PNG or JPEG image." };
-  const m = DATA_URL.exec(dataUrl);
-  if (!m) return { ok: false, message: "The logo must be a PNG or JPEG image." };
+  const names = opts.types.map((t) => t.toUpperCase()).join(" or ");
+  if (typeof dataUrl !== "string") return { ok: false, message: `Choose a ${names} image.` };
+  const m = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
+  if (!m || !opts.types.includes(m[1] as ImageKind))
+    return { ok: false, message: `The ${opts.noun} must be a ${names} image.` };
   const bytes = Buffer.from(m[2]!, "base64");
-  if (bytes.length > MAX_LOGO_BYTES) {
-    return { ok: false, message: `The logo must be under ${MAX_LOGO_BYTES / 1024} KB.` };
+  if (bytes.length > opts.maxBytes) {
+    return {
+      ok: false,
+      message: `The ${opts.noun} must be under ${Math.round(opts.maxBytes / 1024)} KB.`,
+    };
   }
   const kind = sniff(bytes);
   if (!kind || kind !== m[1])
-    return { ok: false, message: "That file isn't a valid PNG or JPEG image." };
+    return { ok: false, message: `That file isn't a valid ${names} image.` };
   return { ok: true, dataUrl };
 }
+
+export const validateLogo = (dataUrl: unknown) =>
+  validateImageDataUrl(dataUrl, { types: ["png", "jpeg"], maxBytes: MAX_LOGO_BYTES, noun: "logo" });
 
 /** Sets the logo, or clears it when `dataUrl` is null. */
 export async function setLogo(ctx: Ctx, dataUrl: string | null): Promise<Result> {
