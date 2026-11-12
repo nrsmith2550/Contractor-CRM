@@ -386,6 +386,12 @@ License table and key generator, `/activate`, `/login`, sessions, forgot/reset p
 - [ ] Tenant-isolation e2e test passes (tenant A sees zero tenant B rows)
 - [ ] Stripe test-mode checkout produces an `issued` license and an email
 
+**Slice 1 status** (branch `claude/phase-1-licensing-auth`): the secure core is built and tested against a
+real Postgres with a restricted role — schema + RLS + `withTenant`, license keys, password/token hashing,
+rate limiting, activation transaction, sessions, `can()` and the six seeded roles. Boxes above stay
+unticked until their UI/flows exist: `/activate` + `/login` pages, forgot/reset, invitations, Stripe
+webhook, and the `/admin` console (TOTP, reset actions). See `docs/decisions/0002-phase-1-auth.md`.
+
 ### Phase 2 — App shell + core Sales
 
 Shell (top bar, site map, area switcher), metadata-driven `EntityGrid` and `EntityForm`, views, Timeline, activities, notes; Accounts, Contacts, Leads, Opportunities, business process flow, Qualify / Disqualify, Close as Won / Lost, pipeline Kanban, CSV import, duplicate detection, auto-numbering, audit log.
