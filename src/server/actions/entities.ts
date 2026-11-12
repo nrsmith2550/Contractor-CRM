@@ -89,6 +89,8 @@ export async function saveRecordAction(
         };
       }
       payload[f.name] = cents;
+    } else if (v === "" && (f.type === "select" || f.type === "lookup")) {
+      if (!f.notNullable) payload[f.name] = null;
     } else payload[f.name] = String(v);
   }
 

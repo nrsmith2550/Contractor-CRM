@@ -14,7 +14,8 @@ describe("entity metadata", () => {
       const names = m.fields.map((f) => f.name);
       expect(new Set(names).size, m.key).toBe(names.length);
       for (const f of m.fields) {
-        if (f.type === "select") expect(f.options?.length, `${m.key}.${f.name}`).toBeGreaterThan(0);
+        if (f.type === "select" && !f.dynamicOptions)
+          expect(f.options?.length, `${m.key}.${f.name}`).toBeGreaterThan(0);
         if (f.type === "lookup") expect(f.lookup, `${m.key}.${f.name}`).toBeDefined();
       }
     }

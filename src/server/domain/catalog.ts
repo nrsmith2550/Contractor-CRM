@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, count, eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
 import { withTenant, type Tx } from "@/db/client";
 import { priceList, priceListItem, product, taxRate, unitOfMeasure } from "@/db/schema";
@@ -107,24 +107,77 @@ export async function updateProduct(
 export async function listProducts(
   ctx: Ctx,
   opts: { search?: string; limit?: number; offset?: number } = {},
-): Promise<Result<{ rows: Product[] }>> {
+): Promise<Result<{ rows: Product[]; total: number }>> {
   if (!can(ctx.subject, "product", "read")) return FORBIDDEN;
   const q = opts.search?.trim();
+  const where = and(
+    eq(product.stateCode, "active"),
+    q ? or(ilike(product.name, `%${q}%`), ilike(product.sku, `%${q}%`)) : undefined,
+  );
   return withTenant(ctx.tenantId, async (tx) => {
     const rows = await tx
       .select()
       .from(product)
-      .where(
-        and(
-          eq(product.stateCode, "active"),
-          q ? or(ilike(product.name, `%${q}%`), ilike(product.sku, `%${q}%`)) : undefined,
-        ),
-      )
+      .where(where)
       .orderBy(asc(product.name))
       .limit(Math.min(opts.limit ?? 50, 200))
       .offset(opts.offset ?? 0);
-    return { ok: true as const, rows };
+    const [total] = await tx.select({ n: count() }).from(product).where(where);
+    return { ok: true as const, rows, total: total!.n };
   });
+}
+
+export async function getProduct(ctx: Ctx, id: string): Promise<Result<{ product: Product }>> {
+  if (!isUuid(id)) return NOT_FOUND;
+  if (!can(ctx.subject, "product", "read")) return FORBIDDEN;
+  return withTenant(ctx.tenantId, async (tx) => {
+    const [row] = await tx.select().from(product).where(eq(product.id, id));
+    return row ? { ok: true as const, product: row } : NOT_FOUND;
+  });
+}
+
+export async function listTaxRates(ctx: Ctx): Promise<Result<{ rows: TaxRate[] }>> {
+  if (!can(ctx.subject, "product", "read")) return FORBIDDEN;
+  return withTenant(ctx.tenantId, async (tx) => ({
+    ok: true as const,
+    rows: await tx.select().from(taxRate).orderBy(asc(taxRate.name)),
+  }));
+}
+
+export async function listPriceLists(ctx: Ctx): Promise<Result<{ rows: PriceList[] }>> {
+  if (!can(ctx.subject, "price_list", "read")) return FORBIDDEN;
+  return withTenant(ctx.tenantId, async (tx) => ({
+    ok: true as const,
+    rows: await tx
+      .select()
+      .from(priceList)
+      .where(eq(priceList.stateCode, "active"))
+      .orderBy(asc(priceList.name)),
+  }));
+}
+
+export async function listPriceListItems(
+  ctx: Ctx,
+  priceListId: string,
+): Promise<
+  Result<{ rows: { productId: string; sku: string; name: string; amountCents: number }[] }>
+> {
+  if (!isUuid(priceListId)) return NOT_FOUND;
+  if (!can(ctx.subject, "price_list", "read")) return FORBIDDEN;
+  return withTenant(ctx.tenantId, async (tx) => ({
+    ok: true as const,
+    rows: await tx
+      .select({
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+        amountCents: priceListItem.amountCents,
+      })
+      .from(priceListItem)
+      .innerJoin(product, eq(product.id, priceListItem.productId))
+      .where(eq(priceListItem.priceListId, priceListId))
+      .orderBy(asc(product.name)),
+  }));
 }
 
 export async function createTaxRate(ctx: Ctx, raw: unknown): Promise<Result<{ taxRate: TaxRate }>> {

@@ -453,9 +453,14 @@ cents, half-up rounding, quote discount shared across lines before tax, freight 
 revise (`QUO-00001-R1`), and win (creates a sales order from the lines and optionally closes the opportunity as Won
 and makes its account a Customer). 9 new integration tests and 9 new unit tests cover the first, second and fourth
 boxes and the read-only rule from the third.
-**Still to build in Phase 3:** the UI (products, price lists, quotes with the line-item builder and totals panel,
-orders), quote PDF with tenant logo (`@react-pdf/renderer`, free), emailing a quote, and opportunity product lines.
-The third box stays unticked until the PDF exists.
+**Phase 3 UI** (branch `claude/phase-3-ui`): Products (generic grid and form, tax rate picker), Price lists (per-product
+prices), Tax rates (Settings), Quotes (list, new, and the builder: editable summary, line items from the catalog or
+write-ins, live server totals, Activate / Revise / Close as won / Close as lost) and Orders (list, detail), all in the
+site map, plus "+ New quote" on an opportunity. Covered by a Playwright journey (tax rate -> product -> quote ->
+activate -> revise -R1 -> win -> order).
+**Still to build in Phase 3:** the quote PDF with tenant logo (`@react-pdf/renderer`, free) and its Generate PDF
+button, emailing a quote (logged as an Email activity), and opportunity product lines. The third box stays unticked
+until the PDF exists.
 
 ### Phase 4 — Service: Cases and Work Orders
 

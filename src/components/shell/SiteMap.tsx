@@ -20,7 +20,20 @@ const GROUPS = [
       ["Contacts", "/app/contacts"],
     ],
   },
-  { title: "Settings", links: [["Users", "/app/settings/users"]] },
+  {
+    title: "Collateral",
+    links: [
+      ["Products", "/app/products"],
+      ["Price lists", "/app/price-lists"],
+    ],
+  },
+  {
+    title: "Settings",
+    links: [
+      ["Users", "/app/settings/users"],
+      ["Tax rates", "/app/settings/tax-rates"],
+    ],
+  },
 ] as const;
 
 export function SiteMap() {

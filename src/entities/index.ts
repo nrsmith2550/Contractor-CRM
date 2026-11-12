@@ -243,7 +243,54 @@ export const OPPORTUNITY: EntityMeta = {
   ],
 };
 
+export const PRODUCT: EntityMeta = {
+  key: "product",
+  slug: "products",
+  singular: "Product",
+  plural: "Products",
+  numberField: "sku",
+  titleFields: ["name"],
+  columns: [
+    { name: "sku", label: "SKU" },
+    { name: "name", label: "Name" },
+    { name: "productType", label: "Type", type: "badge" },
+    { name: "listPriceCents", label: "List price", type: "money" },
+  ],
+  views: [{ id: "all", label: "Active Products" }],
+  defaultView: "all",
+  headerFields: ["productType", "listPriceCents", "standardCostCents"],
+  fields: [
+    { name: "sku", label: "SKU", type: "text", section: "Summary", required: true },
+    { name: "name", label: "Name", type: "text", section: "Summary", required: true },
+    {
+      name: "productType",
+      label: "Type",
+      type: "select",
+      section: "Summary",
+      options: opts(["product", "service"]),
+      notNullable: true,
+    },
+    { name: "description", label: "Description", type: "textarea", section: "Summary" },
+    {
+      name: "listPriceCents",
+      label: "List price",
+      type: "money",
+      section: "Pricing",
+      notNullable: true,
+    },
+    { name: "standardCostCents", label: "Standard cost", type: "money", section: "Pricing" },
+    {
+      name: "taxRateId",
+      label: "Tax rate",
+      type: "select",
+      section: "Pricing",
+      dynamicOptions: true,
+    },
+  ],
+};
+
 export const ENTITIES: Record<EntityKey, EntityMeta> = {
+  product: PRODUCT,
   lead: LEAD,
   account: ACCOUNT,
   contact: CONTACT,
