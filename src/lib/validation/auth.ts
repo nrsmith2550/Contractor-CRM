@@ -52,3 +52,27 @@ export const changePasswordSchema = z
   })
   .refine(passwordsMatch, { message: "Passwords do not match", path: ["confirmPassword"] });
 export type ChangePasswordValues = z.input<typeof changePasswordSchema>;
+
+export const forgotPasswordSchema = z.object({ email: emailField });
+export type ForgotPasswordValues = z.input<typeof forgotPasswordSchema>;
+
+// The reset / invitation token comes from the link, not from the form.
+export const resetPasswordSchema = z
+  .object({ password: z.string().max(256), confirmPassword: z.string().max(256) })
+  .refine(passwordsMatch, { message: "Passwords do not match", path: ["confirmPassword"] });
+export type ResetPasswordValues = z.input<typeof resetPasswordSchema>;
+
+export const acceptInviteSchema = z
+  .object({
+    fullName: z.string().trim().min(1, "Enter your full name").max(120),
+    password: z.string().max(256),
+    confirmPassword: z.string().max(256),
+  })
+  .refine(passwordsMatch, { message: "Passwords do not match", path: ["confirmPassword"] });
+export type AcceptInviteValues = z.input<typeof acceptInviteSchema>;
+
+export const inviteUserSchema = z.object({
+  email: emailField,
+  roleId: z.string().uuid("Choose a role"),
+});
+export type InviteUserValues = z.input<typeof inviteUserSchema>;

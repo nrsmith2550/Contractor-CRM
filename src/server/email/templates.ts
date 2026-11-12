@@ -28,3 +28,40 @@ export function licenseKeyEmail(args: {
 <p>Keep this email: for security we only store a fingerprint of the key, so we can't show it again.</p>`;
   return { to: args.to, subject: `Your ${t.label} license key`, text, html };
 }
+
+const link = (appUrl: string, path: string, token: string) =>
+  `${appUrl.replace(/\/$/, "")}${path}?token=${encodeURIComponent(token)}`;
+
+/** Single-use link, valid for 30 minutes. The token itself is never stored, only its hash. */
+export function passwordResetEmail(args: { to: string; token: string; appUrl: string }): Email {
+  const url = link(args.appUrl, "/reset-password", args.token);
+  const text = [
+    "We received a request to reset your password.",
+    "",
+    `Choose a new password here (the link works once and expires in 30 minutes): ${url}`,
+    "",
+    "If you didn't ask for this, you can ignore this email — your password hasn't changed.",
+  ].join("\n");
+  const html = `<p>We received a request to reset your password.</p>
+<p><a href="${esc(url)}">Choose a new password</a> — the link works once and expires in 30 minutes.</p>
+<p>If you didn't ask for this, you can ignore this email — your password hasn't changed.</p>`;
+  return { to: args.to, subject: "Reset your password", text, html };
+}
+
+export function invitationEmail(args: {
+  to: string;
+  token: string;
+  appUrl: string;
+  companyName: string;
+  inviterName: string;
+}): Email {
+  const url = link(args.appUrl, "/accept-invite", args.token);
+  const text = [
+    `${args.inviterName} invited you to join ${args.companyName}.`,
+    "",
+    `Set your password and get started (the link expires in 7 days): ${url}`,
+  ].join("\n");
+  const html = `<p>${esc(args.inviterName)} invited you to join <strong>${esc(args.companyName)}</strong>.</p>
+<p><a href="${esc(url)}">Set your password and get started</a> — the link expires in 7 days.</p>`;
+  return { to: args.to, subject: `You're invited to ${args.companyName}`, text, html };
+}

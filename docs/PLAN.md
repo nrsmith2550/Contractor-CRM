@@ -403,6 +403,12 @@ guarded `/app` placeholder are built and covered by unit, integration and browse
 once → signed in; a second attempt redirects to `/login` with a masked email hint; wrong password gives a generic
 error; sign-out; a suspended license signs the session out on its next request. See `docs/decisions/0004-auth-pages.md`.
 
+**Reset + invitations status** (branch `claude/phase-1-reset-invites`): forgot/reset password (single-use hashed
+30-minute links, no account enumeration) and invitations with the seat limit ("Upgrade your license" at invite time,
+re-checked at accept), plus a first Users settings page, are built and tested (unit, 21 integration incl. races, and
+browser tests that follow the real emailed links). See `docs/decisions/0005-reset-and-invitations.md`.
+Remaining in Phase 1: the `/admin` console (TOTP 2FA, license list, owner resets) and the activation verification email.
+
 ### Phase 2 — App shell + core Sales
 
 Shell (top bar, site map, area switcher), metadata-driven `EntityGrid` and `EntityForm`, views, Timeline, activities, notes; Accounts, Contacts, Leads, Opportunities, business process flow, Qualify / Disqualify, Close as Won / Lost, pipeline Kanban, CSV import, duplicate detection, auto-numbering, audit log.

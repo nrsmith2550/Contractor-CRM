@@ -151,6 +151,28 @@ describe("mailer", () => {
     );
   });
 
+  it("EMAIL_DEV_DIR is an explicit file transport that works even in a production build", async () => {
+    const { mkdtemp, readdir, readFile, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(`${tmpdir()}/crm-mail-`);
+    try {
+      vi.stubEnv("RESEND_API_KEY", "");
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("EMAIL_DEV_DIR", dir);
+      await sendEmail({
+        to: "dev@example.test",
+        subject: "Hi",
+        text: "body https://x.test?token=abc",
+      });
+      const files = await readdir(dir);
+      expect(files).toHaveLength(1);
+      expect(files[0]).toMatch(/-dev@example\.test\.txt$/);
+      expect(await readFile(`${dir}/${files[0]}`, "utf8")).toContain("token=abc");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("requires EMAIL_FROM when a provider key is set, and surfaces provider errors", async () => {
     vi.stubEnv("RESEND_API_KEY", "re_test");
     vi.stubEnv("EMAIL_FROM", "");
