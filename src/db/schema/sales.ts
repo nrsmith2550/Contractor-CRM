@@ -20,7 +20,7 @@ import { tenant } from "./platform";
 // other (lead <-> opportunity, account <-> contact) are plain uuids without foreign keys, to
 // avoid circular constraints; the domain layer keeps them consistent and every read is RLS-fenced.
 
-const standard = () => ({
+export const standard = () => ({
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id")
     .notNull()
@@ -35,7 +35,7 @@ const standard = () => ({
   stateCode: text("state_code").notNull().default("active"), // active | inactive
 });
 
-const address = () => ({
+export const address = () => ({
   addressStreet: text("address_street"),
   addressCity: text("address_city"),
   addressRegion: text("address_region"),
@@ -44,7 +44,7 @@ const address = () => ({
 });
 
 /** Money is always integer cents. */
-const cents = (name: string) => bigint(name, { mode: "number" });
+export const cents = (name: string) => bigint(name, { mode: "number" });
 
 export const lead = pgTable(
   "lead",

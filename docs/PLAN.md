@@ -480,9 +480,22 @@ lines into the quote with each product's tax rate. Phase 3 is complete.
 
 Cases with queues, subjects, priority, simple SLA timer, resolve/cancel/reactivate; work orders with products/services, required skills, time windows; bookable resources and working hours; technician mobile view.
 
-- [ ] Converting a case creates a linked Unscheduled work order
+- [x] Converting a case creates a linked Unscheduled work order
 - [ ] SLA timer shows breached state past due
 - [ ] Technician can move a booking through Travelling → In Progress → Completed and capture a signature
+
+**Phase 4 status** (branch `claude/phase-4-service`, slice 1): the *domain layer* for cases and work orders, tested
+against Postgres as a restricted role. Subjects and queues (administrators configure them), cases (`CAS-01001`;
+types, priority, origin; In Progress / On Hold / Waiting on Customer / Resolved / Cancelled), the simple SLA
+(`sla.ts`: due time by priority, countdown, due-soon, breached, met / missed, with the verdict fixed once resolved),
+resolve (resolution + billable minutes), cancel, reactivate (restarts the SLA clock), and **Convert to Work Order**
+(a linked Unscheduled work order with the case's account, address, priority and notes; a case can have several).
+A case with open work orders can't be resolved or cancelled. Work orders (`WO-01001`) with the status flow in
+`work-order-status.ts`, a validated time window, and read-only once completed. Notes and the timeline now work on
+cases and work orders. The first box is covered; the SLA box is covered at the domain level and ticks when the UI
+shows the countdown.
+**Still to build in Phase 4:** the case and work order screens, bookable resources and skills, bookings (Travelling
+-> In Progress -> Completed with a customer signature), work order parts and labour, and the technician mobile view.
 
 ### Phase 5 — Calendar and Schedule Board
 
