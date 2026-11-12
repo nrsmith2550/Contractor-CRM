@@ -12,4 +12,11 @@ export const TENANT_TABLES = [
   "user_role",
   "audit_log",
   "sequence",
+  "lead",
+  "account",
+  "contact",
+  "opportunity",
+  "activity",
+  "annotation",
+  "saved_view",
 ] as const;

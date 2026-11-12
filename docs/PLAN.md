@@ -420,10 +420,19 @@ password, change owner email, re-activate), and an append-only audit log. See `d
 
 Shell (top bar, site map, area switcher), metadata-driven `EntityGrid` and `EntityForm`, views, Timeline, activities, notes; Accounts, Contacts, Leads, Opportunities, business process flow, Qualify / Disqualify, Close as Won / Lost, pipeline Kanban, CSV import, duplicate detection, auto-numbering, audit log.
 
-- [ ] Qualify a lead creates Account + Contact + Opportunity linked to the lead, which becomes read-only
-- [ ] BPF stage advance enforces required stage fields
-- [ ] Closing an opportunity as Won sets the account to Customer
-- [ ] A salesperson with User-level read cannot open another user's lead
+- [x] Qualify a lead creates Account + Contact + Opportunity linked to the lead, which becomes read-only
+- [x] BPF stage advance enforces required stage fields
+- [x] Closing an opportunity as Won sets the account to Customer
+- [x] A salesperson with User-level read cannot open another user's lead
+
+**Phase 2 status** (branch `claude/phase-2-sales-core`, slice 1): the sales *domain layer* is built and tested
+against Postgres as a restricted role — schema + RLS for lead/account/contact/opportunity/activity/annotation/
+saved_view, auto-numbering, field-level audit, duplicate detection, lead qualify/disqualify/reactivate, the
+opportunity business process flow with required-field enforcement, close as won/lost, notes/activities/timeline,
+and CSV import with column mapping. The four acceptance boxes above are covered by those tests.
+**Still to build in Phase 2:** the app shell (top bar, site map, area switcher), the metadata-driven `EntityGrid`
+and `EntityForm`, the list/form pages for Accounts, Contacts, Leads and Opportunities, the Kanban pipeline board,
+the BPF chevron bar and the import screen. See `docs/decisions/0007-sales-domain.md`.
 
 ### Phase 3 — Product catalog, Quotes, Orders
 
