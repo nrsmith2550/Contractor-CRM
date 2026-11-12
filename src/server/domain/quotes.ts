@@ -4,6 +4,7 @@ import { withTenant, type Tx } from "@/db/client";
 import {
   account,
   opportunity,
+  opportunityProduct,
   product,
   quote,
   quoteDetail,
@@ -192,6 +193,31 @@ export async function createQuote(ctx: Ctx, raw: unknown): Promise<Result<{ quot
         baseNumber: base,
       })
       .returning();
+    // A quote started from an opportunity starts with that opportunity's product lines.
+    if (p.data.opportunityId) {
+      const oppLines = await tx
+        .select({ l: opportunityProduct, rate: taxRate.rateBp })
+        .from(opportunityProduct)
+        .leftJoin(product, eq(product.id, opportunityProduct.productId))
+        .leftJoin(taxRate, eq(taxRate.id, product.taxRateId))
+        .where(eq(opportunityProduct.opportunityId, p.data.opportunityId))
+        .orderBy(asc(opportunityProduct.lineNumber));
+      if (oppLines.length > 0) {
+        await tx.insert(quoteDetail).values(
+          oppLines.map(({ l, rate }) => ({
+            tenantId: ctx.tenantId,
+            quoteId: row!.id,
+            lineNumber: l.lineNumber,
+            productId: l.productId,
+            description: l.description,
+            quantityMilli: l.quantityMilli,
+            unitPriceCents: l.unitPriceCents,
+            discountCents: l.discountCents,
+            taxRateBp: rate ?? 0,
+          })),
+        );
+      }
+    }
     const q = await recalc(tx, row!.id);
     await recordAudit(tx, {
       tenantId: ctx.tenantId,

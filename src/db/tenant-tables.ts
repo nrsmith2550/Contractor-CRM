@@ -16,6 +16,7 @@ export const TENANT_TABLES = [
   "account",
   "contact",
   "opportunity",
+  "opportunity_product",
   "activity",
   "annotation",
   "saved_view",

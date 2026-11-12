@@ -9,6 +9,9 @@ import { formatDate, formatMoney, humanize } from "@/lib/format";
 import { requireUser } from "@/server/auth/http";
 import { timeline } from "@/server/domain/activities";
 import { buildCtx } from "@/server/domain/context";
+import { OpportunityLines } from "@/components/form/OpportunityLines";
+import { listProducts } from "@/server/domain/catalog";
+import { listOpportunityLines } from "@/server/domain/opportunity-lines";
 import { OPS, withDynamicOptions } from "@/server/entities/registry";
 import { tenantTimeZone } from "@/server/entities/tenant";
 
@@ -36,6 +39,12 @@ export default async function RecordPage({
   }
 
   const hasTimeline = meta.key !== "product";
+  const oppLinesRes = meta.key === "opportunity" ? await listOpportunityLines(ctx, id) : null;
+  const oppLines = oppLinesRes?.ok ? oppLinesRes.lines : null;
+  const productsRes = meta.key === "opportunity" ? await listProducts(ctx, { limit: 200 }) : null;
+  const catalog = productsRes?.ok
+    ? productsRes.rows.map((p) => ({ id: p.id, label: `${p.name} (${p.sku})` }))
+    : [];
   const [tl, tz] = await Promise.all([
     hasTimeline ? timeline(ctx, meta.key as "lead", id) : Promise.resolve(null),
     tenantTimeZone(user.tenantId),
@@ -82,6 +91,22 @@ export default async function RecordPage({
         status={status}
         stage={typeof row.stage === "string" ? row.stage : undefined}
       />
+      {meta.key === "opportunity" && oppLines && (
+        <OpportunityLines
+          opportunityId={id}
+          editable={status === "open"}
+          lines={oppLines.map((l) => ({
+            id: l.id,
+            lineNumber: l.lineNumber,
+            description: l.description,
+            quantityMilli: l.quantityMilli,
+            unitPriceCents: l.unitPriceCents,
+            discountCents: l.discountCents,
+            extendedCents: l.extendedCents,
+          }))}
+          products={catalog}
+        />
+      )}
       <EntityForm
         meta={await withDynamicOptions(ctx, meta)}
         id={id}
