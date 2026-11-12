@@ -1,9 +1,7 @@
-import { eq } from "drizzle-orm";
-import { withPlatform } from "@/db/client";
-import { tenant } from "@/db/schema";
 import { getAccount, getContact } from "@/server/domain/accounts";
 import { fail, type Ctx, type Result } from "@/server/domain/context";
 import { getQuote } from "@/server/domain/quotes";
+import { getCompany } from "./company";
 import { renderQuotePdf } from "./quote-pdf";
 
 /**
@@ -21,17 +19,7 @@ export async function buildQuotePdf(
     return fail("read_only", "Activate the quote before generating its PDF.");
   }
 
-  const [t] = await withPlatform((tx) =>
-    tx
-      .select({
-        name: tenant.name,
-        logo: tenant.logoUrl,
-        currency: tenant.currency,
-        tz: tenant.timeZone,
-      })
-      .from(tenant)
-      .where(eq(tenant.id, ctx.tenantId)),
-  );
+  const t = await getCompany(ctx.tenantId);
 
   // Customer details are best-effort: a user who can read the quote but not its account just
   // gets a PDF without the account's address.
@@ -48,9 +36,9 @@ export async function buildQuotePdf(
     : [];
 
   const pdf = await renderQuotePdf({
-    currency: t?.currency ?? "USD",
-    timeZone: t?.tz ?? "UTC",
-    company: { name: t?.name ?? "", logoDataUrl: t?.logo ?? null },
+    currency: t.currency,
+    timeZone: t.timeZone,
+    company: { name: t.name, logoDataUrl: t.logo },
     quote: {
       number: q.quoteNumber,
       name: q.name,

@@ -7,6 +7,7 @@ import { formatMoney, humanize } from "@/lib/format";
 import type { CmdResult } from "@/server/actions/entities";
 import {
   addLineAction,
+  emailQuoteAction,
   quoteCommandAction,
   removeLineAction,
   updateQuoteAction,
@@ -48,8 +49,10 @@ export function QuoteBuilder(props: {
   quote: QuoteView;
   lines: LineView[];
   products: ProductOption[];
+  defaultTo?: string;
 }) {
   const { quote: q, lines, products } = props;
+  const [emailing, setEmailing] = useState(false);
   const router = useRouter();
   const draft = q.status === "draft";
   const [pending, start] = useTransition();
@@ -122,6 +125,16 @@ export function QuoteBuilder(props: {
             </button>
           </>
         )}
+        {!draft && q.status !== "revised" && (
+          <button
+            className="crm-btn"
+            type="button"
+            aria-expanded={emailing}
+            onClick={() => setEmailing((v) => !v)}
+          >
+            Email quote
+          </button>
+        )}
         {!draft && (
           <a className="crm-btn" href={`/app/quotes/${q.id}/pdf`} target="_blank" rel="noreferrer">
             Download PDF
@@ -138,6 +151,27 @@ export function QuoteBuilder(props: {
         <div role="status" className="crm-ok">
           {res.message}
         </div>
+      )}
+      {emailing && (
+        <InlineForm
+          submitLabel="Send quote"
+          resetOnSuccess={false}
+          action={(v) => emailQuoteAction(q.id, v)}
+          fields={[
+            {
+              name: "to",
+              label: "To",
+              placeholder: "customer@example.com",
+              defaultValue: props.defaultTo ?? "",
+            },
+            {
+              name: "message",
+              label: "Message (optional)",
+              type: "textarea",
+              placeholder: "Added above the standard text",
+            },
+          ]}
+        />
       )}
       {!draft && (
         <p>This quote is {q.status}, so it can&apos;t be edited. Revise it to make changes.</p>

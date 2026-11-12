@@ -7,7 +7,7 @@ import type { CmdResult } from "@/server/actions/entities";
 export type InlineField = {
   name: string;
   label: string;
-  type?: "text" | "select";
+  type?: "text" | "select" | "textarea";
   placeholder?: string;
   options?: { value: string; label: string }[];
   defaultValue?: string;
@@ -54,6 +54,13 @@ export function InlineForm(props: {
                 </option>
               ))}
             </select>
+          ) : f.type === "textarea" ? (
+            <textarea
+              rows={3}
+              value={v[f.name]}
+              placeholder={f.placeholder}
+              onChange={(e) => setV({ ...v, [f.name]: e.target.value })}
+            />
           ) : (
             <input
               value={v[f.name]}

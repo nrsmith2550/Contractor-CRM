@@ -16,7 +16,9 @@ export type ErrorCode =
   | "read_only"
   | "missing_fields"
   | "duplicates"
-  | "conflict";
+  | "conflict"
+  | "rate_limited"
+  | "unavailable";
 
 export type Fail = { ok: false; code: ErrorCode; message: string } & Record<string, unknown>;
 export type Result<T extends object = object> = ({ ok: true } & T) | Fail;

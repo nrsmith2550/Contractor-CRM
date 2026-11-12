@@ -464,8 +464,13 @@ customer and address, lines, discount / freight / tax / total, payment terms and
 refused. The logo is a PNG/JPEG data URL under 200 KB stored on the tenant (Settings -> Branding, administrators
 only; the bytes are sniffed so a renamed file or SVG is refused), so it needs no storage service. This required
 upgrading to React 19 (the PDF library and Next's app router must share one React). All four Phase 3 boxes are ticked.
-**Still to build in Phase 3:** emailing a quote (PDF attached, logged as an Email activity) and opportunity product
-lines.
+**Phase 3 email** (branch `claude/phase-3-email`): **Email quote** on any non-draft, non-revised quote. The PDF is
+attached, replies go to the sender, and an outgoing Email activity is logged on the quote (shown under "Emails sent"
+and on the quote's timeline; activities can now point at quotes). Nothing is logged if the send fails, and the
+provider's error text is never passed on. At most 20 quote emails per user per hour. The mailer gained attachment and
+reply-to support (Resend, and the dev file transport writes the PDF beside the message). Real delivery needs a
+Resend key and a verified sending domain; until then production refuses to send.
+**Still to build in Phase 3:** opportunity product lines (the plan's `opportunity_product`).
 
 ### Phase 4 — Service: Cases and Work Orders
 
