@@ -117,3 +117,18 @@ export function allocate(amount: number, weights: number[]): number[] {
   }
   return base;
 }
+
+/** Cost of parts: quantity (in thousandths) x unit price, rounded half-up to the cent. */
+export function partAmountCents(quantityMilli: number, unitPriceCents: number): number {
+  if (!Number.isSafeInteger(quantityMilli) || quantityMilli < 0)
+    throw new RangeError("Invalid quantity");
+  if (!isCents(unitPriceCents)) throw new RangeError("Invalid unit price");
+  return mulDiv(quantityMilli, unitPriceCents, 1000);
+}
+
+/** Cost of labour: minutes x hourly rate / 60, rounded half-up to the cent. */
+export function labourAmountCents(minutes: number, hourlyRateCents: number): number {
+  if (!Number.isSafeInteger(minutes) || minutes < 0) throw new RangeError("Invalid minutes");
+  if (!isCents(hourlyRateCents)) throw new RangeError("Invalid hourly rate");
+  return mulDiv(minutes, hourlyRateCents, 60);
+}

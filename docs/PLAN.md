@@ -521,8 +521,15 @@ For dispatchers: **Resources** (add and edit with weekly working hours, colour, 
 only), **Skills** under Settings -> Service settings, and a **Scheduling** panel on each work order (required skills,
 its bookings with status and who signed, a booking form entered in the business's zone, the warnings shown after
 booking, and Cancel booking). The third Phase 4 box is ticked.
-**Still to build in Phase 4:** work order parts and labour (`work_order_product`, `work_order_service`), and photos on
-a visit.
+**Phase 4 parts and labour** (branch `claude/phase-4-parts-labour`): `work_order_product` and `work_order_service`.
+Parts (a catalogue product priced from its list price, or a write-in with a price; quantity to three decimals) and
+labour (minutes x hourly rate, rounded half-up to the cent, optionally tied to a resource) with totals, on the work
+order page. They can be recorded from booking until the work order is **posted** (final, feeds an invoice) or
+cancelled. Dispatchers manage both; a technician booked on the job can record parts from the My bookings view (from a
+name-only product list, priced by the catalogue, never seeing prices) and remove only their own, but never sets
+labour rates. Covered by 6 integration tests and 3 unit tests.
+**Still to build in Phase 4:** photos on a visit (needs file storage; to be done with a free option), and the
+invoice that parts and labour will feed (a later phase).
 
 ### Phase 5 — Calendar and Schedule Board
 

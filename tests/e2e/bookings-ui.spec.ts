@@ -6,6 +6,8 @@ import { resourceBooking, securityRole, workOrder } from "@/db/schema";
 import { activateLicense } from "@/server/auth/activation";
 import { acceptInvitation, inviteUser } from "@/server/auth/invitations";
 import { createBooking } from "@/server/domain/bookings";
+import { createProduct } from "@/server/domain/catalog";
+import { listWorkOrderLines } from "@/server/domain/work-order-lines";
 import { buildCtx } from "@/server/domain/context";
 import { createResource } from "@/server/domain/resources";
 import { createWorkOrder } from "@/server/domain/work-orders";
@@ -114,6 +116,20 @@ test.describe("bookings UI", () => {
     const again = page.getByRole("group", { name: "Booking warnings" });
     await expect(again).toContainText("doesn't have: HVAC certified");
     await expect(again).not.toContainText("working hours");
+
+    // Parts and labour: a write-in part ($89.50) and 90 minutes at $95/hour ($142.50).
+    const lines = page.getByRole("region", { name: "Parts and labour" });
+    await lines.getByLabel("Description").fill("Igniter (special order)");
+    await lines.getByLabel("Price ($)").fill("89.50");
+    await lines.getByRole("button", { name: "Add part" }).click();
+    await expect(lines.getByRole("table", { name: "Parts used" })).toContainText("$89.50");
+    await lines.getByLabel("Minutes").fill("90");
+    await lines.getByLabel("Hourly rate ($)").fill("95");
+    await lines.getByRole("button", { name: "Add labour" }).click();
+    await expect(lines.getByRole("table", { name: "Labour" })).toContainText("$142.50");
+    await expect(lines.getByLabel("Work order totals")).toContainText("$232.00");
+    await lines.getByRole("button", { name: "Remove part 1" }).click();
+    await expect(lines.getByLabel("Work order totals")).toContainText("$142.50");
   });
 
   test("a technician runs a visit from their phone and captures a signature", async ({
@@ -145,6 +161,12 @@ test.describe("bookings UI", () => {
     });
     if (!accepted.ok) throw new Error(`accept failed: ${accepted.code}`);
 
+    const filter = await createProduct(admin, {
+      sku: `F-${biz.id}`,
+      name: "Furnace filter",
+      listPriceCents: 2499,
+    });
+    if (!filter.ok) throw new Error(filter.message);
     const resource = await createResource(admin, { name: "Tess", userId: accepted.userId });
     if (!resource.ok) throw new Error(resource.message);
     const wo = await createWorkOrder(admin, {
@@ -207,6 +229,20 @@ test.describe("bookings UI", () => {
     await expect(card).toContainText("Travelling");
     await card.getByRole("button", { name: "Start work" }).click();
     await expect(card).toContainText("In progress");
+
+    // Record the parts used: picked from the catalogue by name, priced by the catalogue.
+    const parts = card.getByRole("region", { name: "Parts used" });
+    await parts
+      .getByRole("combobox", { name: "Part" })
+      .selectOption({ label: `Furnace filter (F-${biz.id})` });
+    await parts.getByLabel("Quantity").fill("2");
+    await parts.getByRole("button", { name: "Add part" }).click();
+    await expect(parts).toContainText("2 × Furnace filter");
+    const recorded = await listWorkOrderLines(admin, wo.workOrder.id);
+    if (!recorded.ok) throw new Error(recorded.message);
+    expect(recorded.parts).toHaveLength(1);
+    expect(recorded.parts[0]).toMatchObject({ unitPriceCents: 2499, extendedCents: 4998 });
+    expect(JSON.stringify(await page.content())).not.toContain("24.99"); // technicians don't see prices
 
     // Finish: sign without a name is refused; with a name it completes.
     await card.getByRole("button", { name: "Finish visit" }).click();

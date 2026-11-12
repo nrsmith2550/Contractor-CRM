@@ -5,10 +5,14 @@ import { useState, useTransition } from "react";
 import { humanize } from "@/lib/format";
 import type { CmdResult } from "@/server/actions/entities";
 import { bookingStatusAction, type BookingCommand } from "@/server/actions/bookings";
+import { addPartAction } from "@/server/actions/work-order-lines";
+import { InlineForm } from "./InlineForm";
 import { SignaturePad } from "./SignaturePad";
 
 export type MyBooking = {
   id: string;
+  workOrderId: string | null;
+  parts: { id: string; description: string; quantityMilli: number }[];
   status: string;
   when: string; // already formatted in the business's time zone
   woNumber: string | null;
@@ -19,7 +23,7 @@ export type MyBooking = {
   signedByName: string | null;
 };
 
-function Card({ b }: { b: MyBooking }) {
+function Card({ b, products }: { b: MyBooking; products: { id: string; label: string }[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [res, setRes] = useState<CmdResult | null>(null);
@@ -121,6 +125,38 @@ function Card({ b }: { b: MyBooking }) {
           </p>
         </div>
       )}
+      {b.workOrderId && (b.status === "in_progress" || b.status === "completed") && (
+        <section aria-label="Parts used">
+          <h3>Parts used</h3>
+          {b.parts.length === 0 ? (
+            <p className="crm-muted">None recorded.</p>
+          ) : (
+            <ul>
+              {b.parts.map((p) => (
+                <li key={p.id}>
+                  {p.quantityMilli / 1000} × {p.description}
+                </li>
+              ))}
+            </ul>
+          )}
+          <InlineForm
+            submitLabel="Add part"
+            action={(v) => addPartAction(b.workOrderId!, { ...v, description: "", unitPrice: "" })}
+            fields={[
+              {
+                name: "productId",
+                label: "Part",
+                type: "select",
+                options: [
+                  { value: "", label: "Choose a part" },
+                  ...products.map((p) => ({ value: p.id, label: p.label })),
+                ],
+              },
+              { name: "quantity", label: "Quantity", defaultValue: "1", inputMode: "decimal" },
+            ]}
+          />
+        </section>
+      )}
       {b.status === "completed" && (
         <p>Completed{b.signedByName ? `. Signed by ${b.signedByName}.` : "."}</p>
       )}
@@ -133,7 +169,13 @@ function Card({ b }: { b: MyBooking }) {
   );
 }
 
-export function TechnicianBookings({ days }: { days: { label: string; bookings: MyBooking[] }[] }) {
+export function TechnicianBookings({
+  days,
+  products,
+}: {
+  days: { label: string; bookings: MyBooking[] }[];
+  products: { id: string; label: string }[];
+}) {
   if (days.length === 0) return <p>You have no visits booked in the next week.</p>;
   return (
     <div>
@@ -142,7 +184,7 @@ export function TechnicianBookings({ days }: { days: { label: string; bookings: 
           <h2>{d.label}</h2>
           <div className="crm-stack">
             {d.bookings.map((b) => (
-              <Card key={b.id} b={b} />
+              <Card key={b.id} b={b} products={products} />
             ))}
           </div>
         </section>
