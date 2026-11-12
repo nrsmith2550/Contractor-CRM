@@ -203,3 +203,167 @@ export const savedView = pgTable(
   },
   (t) => [index("saved_view_entity_idx").on(t.tenantId, t.entity)],
 );
+
+// ---- Phase 3: product catalog, quotes, orders -------------------------------------------------
+
+export const unitOfMeasure = pgTable(
+  "unit_of_measure",
+  {
+    ...standard(),
+    name: text("name").notNull(),
+    abbreviation: text("abbreviation").notNull(),
+  },
+  (t) => [uniqueIndex("uom_name_uq").on(t.tenantId, t.name)],
+);
+
+/** Tax rate in basis points (825 = 8.25%). */
+export const taxRate = pgTable(
+  "tax_rate",
+  {
+    ...standard(),
+    name: text("name").notNull(),
+    rateBp: integer("rate_bp").notNull(),
+  },
+  (t) => [uniqueIndex("tax_rate_name_uq").on(t.tenantId, t.name)],
+);
+
+export const product = pgTable(
+  "product",
+  {
+    ...standard(),
+    sku: text("sku").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    productType: text("product_type").notNull().default("product"), // product | service
+    uomId: uuid("uom_id").references(() => unitOfMeasure.id),
+    standardCostCents: cents("standard_cost_cents"),
+    listPriceCents: cents("list_price_cents").notNull().default(0),
+    taxRateId: uuid("tax_rate_id").references(() => taxRate.id),
+  },
+  (t) => [uniqueIndex("product_sku_uq").on(t.tenantId, t.sku)],
+);
+
+export const priceList = pgTable(
+  "price_list",
+  {
+    ...standard(),
+    name: text("name").notNull(),
+    currency: text("currency").notNull().default("USD"),
+    beginDate: date("begin_date"),
+    endDate: date("end_date"),
+  },
+  (t) => [uniqueIndex("price_list_name_uq").on(t.tenantId, t.name)],
+);
+
+export const priceListItem = pgTable(
+  "price_list_item",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    priceListId: uuid("price_list_id")
+      .notNull()
+      .references(() => priceList.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => product.id),
+    amountCents: cents("amount_cents").notNull(),
+  },
+  (t) => [uniqueIndex("price_list_item_uq").on(t.priceListId, t.productId)],
+);
+
+export const quote = pgTable(
+  "quote",
+  {
+    ...standard(),
+    quoteNumber: text("quote_number").notNull(), // QUO-00001, revisions QUO-00001-R1
+    baseNumber: text("base_number").notNull(), // QUO-00001 (shared by all revisions)
+    revisionNumber: integer("revision_number").notNull().default(0),
+    name: text("name").notNull(),
+    opportunityId: uuid("opportunity_id"),
+    customerAccountId: uuid("customer_account_id"),
+    customerContactId: uuid("customer_contact_id"),
+    priceListId: uuid("price_list_id").references(() => priceList.id),
+    effectiveFrom: date("effective_from"),
+    effectiveTo: date("effective_to"),
+    paymentTerms: text("payment_terms"),
+    termsText: text("terms_text"),
+    freightCents: cents("freight_cents").notNull().default(0),
+    discountPercentBp: integer("discount_percent_bp"), // percent OR amount, never both
+    discountAmountCents: cents("discount_amount_cents"),
+    subtotalCents: cents("subtotal_cents").notNull().default(0),
+    discountCents: cents("discount_cents").notNull().default(0),
+    taxCents: cents("tax_cents").notNull().default(0),
+    totalCents: cents("total_cents").notNull().default(0),
+    status: text("status").notNull().default("draft"), // draft | active | won | lost | revised
+    ...address(),
+  },
+  (t) => [
+    uniqueIndex("quote_number_uq").on(t.tenantId, t.quoteNumber),
+    index("quote_opportunity_idx").on(t.tenantId, t.opportunityId),
+  ],
+);
+
+export const quoteDetail = pgTable(
+  "quote_detail",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    quoteId: uuid("quote_id")
+      .notNull()
+      .references(() => quote.id, { onDelete: "cascade" }),
+    lineNumber: integer("line_number").notNull(),
+    productId: uuid("product_id").references(() => product.id),
+    description: text("description").notNull(), // product name, or a write-in
+    quantityMilli: bigint("quantity_milli", { mode: "number" }).notNull(), // 1000 = 1
+    unitPriceCents: cents("unit_price_cents").notNull(),
+    discountCents: cents("discount_cents").notNull().default(0),
+    taxRateBp: integer("tax_rate_bp").notNull().default(0),
+    extendedCents: cents("extended_cents").notNull().default(0),
+  },
+  (t) => [uniqueIndex("quote_detail_line_uq").on(t.quoteId, t.lineNumber)],
+);
+
+export const salesOrder = pgTable(
+  "sales_order",
+  {
+    ...standard(),
+    orderNumber: text("order_number").notNull(),
+    quoteId: uuid("quote_id"),
+    opportunityId: uuid("opportunity_id"),
+    customerAccountId: uuid("customer_account_id"),
+    customerContactId: uuid("customer_contact_id"),
+    name: text("name").notNull(),
+    subtotalCents: cents("subtotal_cents").notNull().default(0),
+    discountCents: cents("discount_cents").notNull().default(0),
+    freightCents: cents("freight_cents").notNull().default(0),
+    taxCents: cents("tax_cents").notNull().default(0),
+    totalCents: cents("total_cents").notNull().default(0),
+    fulfillmentStatus: text("fulfillment_status").notNull().default("new"), // new | processing | fulfilled | canceled
+  },
+  (t) => [
+    uniqueIndex("sales_order_number_uq").on(t.tenantId, t.orderNumber),
+    uniqueIndex("sales_order_quote_uq").on(t.tenantId, t.quoteId),
+  ],
+);
+
+export const salesOrderDetail = pgTable("sales_order_detail", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenant.id),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => salesOrder.id, { onDelete: "cascade" }),
+  lineNumber: integer("line_number").notNull(),
+  productId: uuid("product_id").references(() => product.id),
+  description: text("description").notNull(),
+  quantityMilli: bigint("quantity_milli", { mode: "number" }).notNull(),
+  unitPriceCents: cents("unit_price_cents").notNull(),
+  discountCents: cents("discount_cents").notNull().default(0),
+  taxRateBp: integer("tax_rate_bp").notNull().default(0),
+  extendedCents: cents("extended_cents").notNull().default(0),
+});

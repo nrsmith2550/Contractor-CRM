@@ -441,10 +441,21 @@ won, account becomes a customer). Not yet: an area switcher (only the Sales area
 
 Products, units, price lists, discounts, tax; opportunity product lines; quote builder, activate, revise, PDF, email, close won → sales order.
 
-- [ ] Totals are correct to the cent across discount, freight and tax (unit tests with edge cases: 0 qty, 100% discount, rounding)
-- [ ] Revise produces `-R1` as Draft and the original becomes Closed-Revised
+- [x] Totals are correct to the cent across discount, freight and tax (unit tests with edge cases: 0 qty, 100% discount, rounding)
+- [x] Revise produces `-R1` as Draft and the original becomes Closed-Revised
 - [ ] Active quotes are read-only; PDF renders with tenant logo
-- [ ] Won quote creates an order and can close the opportunity as Won
+- [x] Won quote creates an order and can close the opportunity as Won
+
+**Phase 3 status** (branch `claude/phase-3-quotes`, slice 1): the *domain layer* is built and tested against
+Postgres as a restricted role: units of measure, tax rates (basis points), products, price lists with per-product
+prices, and quotes (draft -> active -> won / lost / revised) with lines, server-side totals (`quote-math.ts`, integer
+cents, half-up rounding, quote discount shared across lines before tax, freight untaxed), activate (read-only),
+revise (`QUO-00001-R1`), and win (creates a sales order from the lines and optionally closes the opportunity as Won
+and makes its account a Customer). 9 new integration tests and 9 new unit tests cover the first, second and fourth
+boxes and the read-only rule from the third.
+**Still to build in Phase 3:** the UI (products, price lists, quotes with the line-item builder and totals panel,
+orders), quote PDF with tenant logo (`@react-pdf/renderer`, free), emailing a quote, and opportunity product lines.
+The third box stays unticked until the PDF exists.
 
 ### Phase 4 — Service: Cases and Work Orders
 

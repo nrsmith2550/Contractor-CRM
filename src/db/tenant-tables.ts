@@ -19,4 +19,13 @@ export const TENANT_TABLES = [
   "activity",
   "annotation",
   "saved_view",
+  "unit_of_measure",
+  "tax_rate",
+  "product",
+  "price_list",
+  "price_list_item",
+  "quote",
+  "quote_detail",
+  "sales_order",
+  "sales_order_detail",
 ] as const;
