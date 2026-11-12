@@ -88,6 +88,14 @@ export const authEvent = pgTable(
   (t) => [index("auth_event_created_idx").on(t.createdAt)],
 );
 
+// Stripe events already handled. Stripe delivers at least once, so the webhook inserts the
+// event id here in the same transaction as its effects; a duplicate delivery is a no-op.
+export const stripeEvent = pgTable("stripe_event", {
+  id: text("id").primaryKey(), // evt_...
+  type: text("type").notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // Postgres-backed fixed-window rate limit counters.
 export const rateLimit = pgTable("rate_limit", {
   key: text("key").primaryKey(),

@@ -7,15 +7,9 @@ import {
   normalizeLicenseKey,
 } from "@/server/auth/license-key";
 
-export type Tier = "starter" | "team" | "business" | "enterprise";
+import { TIERS, type Tier } from "@/lib/tiers";
 
-/** One-time prices in cents and seat limits. Placeholders until the pricing decision is made. */
-export const TIERS: Record<Tier, { seatLimit: number; priceCents: number; label: string }> = {
-  starter: { seatLimit: 5, priceCents: 49_900, label: "Starter (1–5 users)" },
-  team: { seatLimit: 15, priceCents: 129_900, label: "Team (6–15 users)" },
-  business: { seatLimit: 40, priceCents: 299_900, label: "Business (16–40 users)" },
-  enterprise: { seatLimit: 100, priceCents: 599_900, label: "Enterprise (41–100 users)" },
-};
+export { TIERS, upgradePriceCents, type Tier } from "@/lib/tiers";
 
 export type MintArgs = {
   tier: Tier;
@@ -27,14 +21,21 @@ export type MintArgs = {
   seatLimit?: number;
 };
 
+export type Minted = { key: string; licenseId: string; last5: string };
+
 /**
  * Creates an `issued` license and returns the full key, which exists only in this return
  * value: show it once and email it. Only its hash is stored.
+ *
+ * If `args.stripePaymentIntentId` already has a license, nothing is created and `null` is
+ * returned, so a repeated payment event can never mint a second key.
  */
+export async function mintLicense(args: MintArgs, tx?: Tx): Promise<Minted>;
 export async function mintLicense(
-  args: MintArgs,
+  args: MintArgs & { stripePaymentIntentId: string },
   tx?: Tx,
-): Promise<{ key: string; licenseId: string; last5: string }> {
+): Promise<Minted | null>;
+export async function mintLicense(args: MintArgs, tx?: Tx): Promise<Minted | null> {
   const key = generateLicenseKey();
   const normalized = normalizeLicenseKey(key)!;
   const run = async (t: Tx) => {
@@ -50,9 +51,11 @@ export async function mintLicense(
         stripeCustomerId: args.stripeCustomerId,
         stripePaymentIntentId: args.stripePaymentIntentId,
       })
+      .onConflictDoNothing({ target: license.stripePaymentIntentId })
       .returning({ id: license.id });
-    return row!.id;
+    return row?.id ?? null;
   };
   const licenseId = tx ? await run(tx) : await withPlatform(run);
+  if (!licenseId) return null;
   return { key, licenseId, last5: licenseKeyLast5(normalized) };
 }

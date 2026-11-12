@@ -392,6 +392,12 @@ rate limiting, activation transaction, sessions, `can()` and the six seeded role
 unticked until their UI/flows exist: `/activate` + `/login` pages, forgot/reset, invitations, Stripe
 webhook, and the `/admin` console (TOTP, reset actions). See `docs/decisions/0002-phase-1-auth.md`.
 
+**Stripe status** (branch `claude/phase-1-stripe`): Checkout (inline one-time prices), the signature-verified
+webhook that mints and emails the license key, upgrade payments, and refund/chargeback handling are built and
+tested with fabricated events. The "Stripe test-mode checkout produces an `issued` license and an email" box
+stays unticked until it has been run once against a real test-mode Stripe account and Resend. See
+`docs/decisions/0003-stripe-billing.md`.
+
 ### Phase 2 — App shell + core Sales
 
 Shell (top bar, site map, area switcher), metadata-driven `EntityGrid` and `EntityForm`, views, Timeline, activities, notes; Accounts, Contacts, Leads, Opportunities, business process flow, Qualify / Disqualify, Close as Won / Lost, pipeline Kanban, CSV import, duplicate detection, auto-numbering, audit log.
