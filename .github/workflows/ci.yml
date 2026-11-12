@@ -12,6 +12,16 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Throwaway Postgres for integration tests (RLS needs a restricted role, which we create).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
     steps:
@@ -26,6 +36,18 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm format:check
       - run: pnpm test
+
+      - name: Integration tests (migrations + RLS as a restricted role)
+        run: |
+          psql "postgres://postgres:postgres@localhost:5432/postgres" \
+            -c "create role crm_owner login password 'owner_pw' createdb" \
+            -c "create role crm_app login password 'app_pw' nosuperuser nobypassrls" \
+            -c "create database crm owner crm_owner"
+          pnpm db:migrate
+          pnpm test:integration
+        env:
+          DATABASE_URL_OWNER: postgres://crm_owner:owner_pw@localhost:5432/crm
+          DATABASE_URL: postgres://crm_app:app_pw@localhost:5432/crm
       - run: pnpm audit --prod --audit-level=high
 
       # A fresh Neon branch per run so tests never touch the main database.
@@ -46,6 +68,8 @@ jobs:
         run: pnpm db:migrate
         env:
           DATABASE_URL_OWNER: ${{ steps.neon.outputs.db_url }}
+          # The Neon CI branch only serves the health check, so the branch role doubles as app role.
+          APP_DB_ROLE: ${{ secrets.NEON_APP_ROLE }}
 
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm build
