@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm format:check
+      - run: pnpm test
+      - run: pnpm audit --prod --audit-level=high
+
+      # A fresh Neon branch per run so tests never touch the main database.
+      - name: Create Neon branch
+        id: neon
+        if: env.NEON_PROJECT_ID != ''
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch_name: ci-${{ github.run_id }}-${{ github.run_attempt }}
+          role: ${{ secrets.NEON_APP_ROLE }}
+          database: neondb
+
+      - name: Apply migrations (owner role)
+        if: steps.neon.outcome == 'success'
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL_OWNER: ${{ steps.neon.outputs.db_url }}
+
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+      - run: pnpm e2e
+        env:
+          CI: "true"
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+
+      - name: Delete Neon branch
+        if: always() && steps.neon.outcome == 'success'
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch: ${{ steps.neon.outputs.branch_id }}
