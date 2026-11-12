@@ -470,7 +470,11 @@ and on the quote's timeline; activities can now point at quotes). Nothing is log
 provider's error text is never passed on. At most 20 quote emails per user per hour. The mailer gained attachment and
 reply-to support (Resend, and the dev file transport writes the PDF beside the message). Real delivery needs a
 Resend key and a verified sending domain; until then production refuses to send.
-**Still to build in Phase 3:** opportunity product lines (the plan's `opportunity_product`).
+**Phase 3 opportunity product lines** (branch `claude/phase-3-opp-lines`): an opportunity can carry product lines
+(catalog product or write-in, quantity, price, discount; table `opportunity_product`). While it has lines its
+estimated revenue is calculated from them (a typed-in figure is ignored; with no lines it is editable by hand again),
+lines can only be changed while the opportunity is open and by someone who can edit it, and **+ New quote** copies the
+lines into the quote with each product's tax rate. Phase 3 is complete.
 
 ### Phase 4 — Service: Cases and Work Orders
 

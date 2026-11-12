@@ -149,6 +149,31 @@ export const opportunity = pgTable(
   ],
 );
 
+/**
+ * Products on an opportunity. While an opportunity has lines its estimated revenue is the sum of
+ * their amounts (calculated by the domain layer); with no lines the user enters it by hand.
+ */
+export const opportunityProduct = pgTable(
+  "opportunity_product",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    opportunityId: uuid("opportunity_id")
+      .notNull()
+      .references(() => opportunity.id, { onDelete: "cascade" }),
+    lineNumber: integer("line_number").notNull(),
+    productId: uuid("product_id").references(() => product.id),
+    description: text("description").notNull(), // product name, or a write-in
+    quantityMilli: bigint("quantity_milli", { mode: "number" }).notNull(), // 1000 = 1
+    unitPriceCents: cents("unit_price_cents").notNull(),
+    discountCents: cents("discount_cents").notNull().default(0),
+    extendedCents: cents("extended_cents").notNull().default(0),
+  },
+  (t) => [uniqueIndex("opportunity_product_line_uq").on(t.opportunityId, t.lineNumber)],
+);
+
 /** Tasks, phone calls, emails (logged) and appointments, attached to any record. */
 export const activity = pgTable(
   "activity",

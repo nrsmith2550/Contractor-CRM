@@ -23,6 +23,7 @@ import {
 } from "./bpf";
 import { invalid, text } from "./leads";
 import { nextNumber } from "./numbering";
+import { hasLines } from "./opportunity-lines";
 
 export type Opportunity = typeof opportunity.$inferSelect;
 
@@ -203,6 +204,9 @@ export async function updateOpportunity(
     if (row.status !== "open")
       return fail("read_only", `This opportunity is ${row.status}. Reopen it to make changes.`);
     const patch = defined(p.data);
+    // While product lines exist the estimated revenue is calculated from them, so a typed-in
+    // figure is ignored rather than allowed to disagree with the lines.
+    if ("estRevenueCents" in patch && (await hasLines(tx, id))) delete patch.estRevenueCents;
     const changes = diffChanges(row as never, { ...row, ...patch } as never, Object.keys(patch));
     if (Object.keys(changes).length === 0) return { ok: true, opportunity: row };
     const [updated] = await tx

@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
-import { expect, test } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 import { activateLicense } from "@/server/auth/activation";
 import { mintLicense } from "@/server/licensing/mint";
 import { PNG_1PX } from "../support/images";
@@ -12,32 +12,37 @@ const fakeIp = () => {
   return `10.${o()}.${o()}.${o()}`;
 };
 
+async function signInNewBusiness(page: Page, context: BrowserContext) {
+  await context.setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
+  const id = rand();
+  const { key } = await mintLicense({ tier: "team" });
+  const email = `owner-${id}@example.test`;
+  const res = await activateLicense({
+    licenseKey: key,
+    companyName: `Quote Co ${id}`,
+    ownerName: "Jordan Rivers",
+    ownerEmail: email,
+    password: PASSWORD,
+    confirmPassword: PASSWORD,
+    timeZone: "UTC",
+    currency: "USD",
+    ip: `ip-${id}`,
+  });
+  if (!res.ok) throw new Error(`activation failed: ${res.code}`);
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Sales Hub" })).toBeVisible();
+  return { id, email };
+}
+
 test.describe("quotes UI", () => {
   test.skip(!process.env.DATABASE_URL, "DATABASE_URL not set");
 
   test("catalog, quote builder, activate, revise, win and order", async ({ page, context }) => {
-    await context.setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
-    const id = rand();
-    const { key } = await mintLicense({ tier: "team" });
-    const email = `owner-${id}@example.test`;
-    const res = await activateLicense({
-      licenseKey: key,
-      companyName: `Quote Co ${id}`,
-      ownerName: "Jordan Rivers",
-      ownerEmail: email,
-      password: PASSWORD,
-      confirmPassword: PASSWORD,
-      timeZone: "UTC",
-      currency: "USD",
-      ip: `ip-${id}`,
-    });
-    if (!res.ok) throw new Error(`activation failed: ${res.code}`);
-
-    await page.goto("/login");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill(PASSWORD);
-    await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByRole("heading", { name: "Sales Hub" })).toBeVisible();
+    const { id } = await signInNewBusiness(page, context);
 
     // A tax rate, then a product that uses it.
     await page.goto("/app/settings/tax-rates");
@@ -60,7 +65,9 @@ test.describe("quotes UI", () => {
     await page.getByLabel("Name").fill("Fence job");
     await page.getByRole("button", { name: "Create quote" }).click();
     await expect(page).toHaveURL(/\/app\/quotes\/[0-9a-f-]{36}$/);
-    await page.getByLabel("Product").selectOption({ label: `Widget (${sku})` });
+    await page
+      .getByRole("combobox", { name: "Product", exact: true })
+      .selectOption({ label: `Widget (${sku})` });
     await page.getByLabel("Quantity").fill("3");
     await page.getByRole("button", { name: "Add line" }).click();
     await expect(page.getByLabel("Totals")).toContainText("$64.17");
@@ -132,5 +139,76 @@ test.describe("quotes UI", () => {
     await expect(page).toHaveURL(/\/app\/orders\/[0-9a-f-]{36}$/);
     await expect(page.getByText("Order ORD-01001")).toBeVisible();
     await expect(page.getByRole("table", { name: "Order lines" })).toContainText("Widget");
+  });
+
+  test("opportunity product lines calculate revenue and copy into a new quote", async ({
+    page,
+    context,
+  }) => {
+    const { id } = await signInNewBusiness(page, context);
+
+    const sku = `P-${id}`;
+    await page.goto("/app/products/new");
+    await page.getByLabel("SKU").fill(sku);
+    await page.getByLabel("Name").fill("Gutter guard");
+    await page.getByLabel("List price").fill("12.50");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page).toHaveURL(/\/app\/products\/[0-9a-f-]{36}$/);
+
+    // An opportunity via a qualified lead.
+    await page.goto("/app/leads/new");
+    await page.getByLabel("Last name").fill(`Lines${id}`);
+    await page.getByLabel("Company").fill(`Roofers ${id}`);
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page).toHaveURL(/\/app\/leads\/[0-9a-f-]{36}$/);
+    await page.getByRole("button", { name: "Qualify", exact: true }).click();
+    await expect(page).toHaveURL(/\/app\/opportunities\/[0-9a-f-]{36}$/);
+
+    // Products: 4 x $12.50 = $50.00, plus a $30.00 write-in with a $5.00 discount.
+    await page
+      .getByRole("combobox", { name: "Product", exact: true })
+      .selectOption({ label: `Gutter guard (${sku})` });
+    await page.getByLabel("Quantity").fill("4");
+    await page.getByRole("button", { name: "Add product" }).click();
+    await expect(
+      page.getByText("Estimated revenue is calculated from these lines: $50.00."),
+    ).toBeVisible();
+    await page
+      .getByRole("combobox", { name: "Product", exact: true })
+      .selectOption({ label: "Write-in (no product)" });
+    await page.getByLabel("Description").fill("Install");
+    await page.getByLabel("Quantity").fill("1");
+    await page.getByLabel("Unit price ($)").fill("30");
+    await page.getByLabel("Discount ($)").fill("5");
+    await page.getByRole("button", { name: "Add product" }).click();
+    await expect(
+      page.getByText("Estimated revenue is calculated from these lines: $75.00."),
+    ).toBeVisible();
+    await expect(page.getByRole("table", { name: "Opportunity products" })).toContainText(
+      "Install",
+    );
+
+    // The header shows the calculated revenue; remove a line and it follows.
+    await expect(page.getByText("$75.00").first()).toBeVisible();
+    await page.getByRole("button", { name: "Remove product 2" }).click();
+    await expect(
+      page.getByText("Estimated revenue is calculated from these lines: $50.00."),
+    ).toBeVisible();
+    await page.getByLabel("Description").fill("Install");
+    await page.getByLabel("Quantity").fill("1");
+    await page.getByLabel("Unit price ($)").fill("30");
+    await page.getByLabel("Discount ($)").fill("5");
+    await page.getByRole("button", { name: "Add product" }).click();
+    await expect(page.getByText("calculated from these lines: $75.00.")).toBeVisible();
+
+    // + New quote copies the lines.
+    await page.getByRole("link", { name: "+ New quote" }).click();
+    await page.getByLabel("Name").fill("From the opportunity");
+    await page.getByRole("button", { name: "Create quote" }).click();
+    await expect(page).toHaveURL(/\/app\/quotes\/[0-9a-f-]{36}$/);
+    const lines = page.getByRole("table", { name: "Quote lines" });
+    await expect(lines).toContainText("Gutter guard");
+    await expect(lines).toContainText("Install");
+    await expect(page.getByLabel("Totals")).toContainText("$75.00");
   });
 });
