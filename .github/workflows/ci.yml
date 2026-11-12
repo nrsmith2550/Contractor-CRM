@@ -73,12 +73,14 @@ jobs:
 
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm build
-        env:
-          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+      # E2E runs against the Postgres service (migrated, with the restricted app role) so the
+      # activation/sign-in flows exercise real RLS. The Neon branch above validates that the
+      # migrations apply cleanly on Neon itself.
       - run: pnpm e2e
         env:
           CI: "true"
-          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+          DATABASE_URL: postgres://crm_app:app_pw@localhost:5432/crm
+          DATABASE_URL_OWNER: postgres://crm_owner:owner_pw@localhost:5432/crm
 
       - name: Delete Neon branch
         if: always() && steps.neon.outcome == 'success'

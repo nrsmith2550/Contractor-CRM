@@ -398,6 +398,11 @@ tested with fabricated events. The "Stripe test-mode checkout produces an `issue
 stays unticked until it has been run once against a real test-mode Stripe account and Resend. See
 `docs/decisions/0003-stripe-billing.md`.
 
+**Auth pages status** (branch `claude/phase-1-auth-pages`): `/activate`, `/login`, `/change-password` and a
+guarded `/app` placeholder are built and covered by unit, integration and browser (Playwright) tests: activate
+once → signed in; a second attempt redirects to `/login` with a masked email hint; wrong password gives a generic
+error; sign-out; a suspended license signs the session out on its next request. See `docs/decisions/0004-auth-pages.md`.
+
 ### Phase 2 — App shell + core Sales
 
 Shell (top bar, site map, area switcher), metadata-driven `EntityGrid` and `EntityForm`, views, Timeline, activities, notes; Accounts, Contacts, Leads, Opportunities, business process flow, Qualify / Disqualify, Close as Won / Lost, pipeline Kanban, CSV import, duplicate detection, auto-numbering, audit log.

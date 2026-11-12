@@ -12,6 +12,7 @@ import {
   tenant,
   userRole,
 } from "@/db/schema";
+import { activateFields, passwordsMatch } from "@/lib/validation/auth";
 import { DEFAULT_ROLES, OWNER_ROLE_NAME } from "@/server/security/roles";
 import {
   hashLicenseKey,
@@ -22,31 +23,10 @@ import {
 import { hashPassword, validatePassword } from "./password";
 import { ACTIVATE_LIMIT, hitRateLimit } from "./rate-limit";
 
-function isTimeZone(tz: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: tz });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export const ActivationInput = z
-  .object({
-    licenseKey: z.string().min(1).max(100),
-    companyName: z.string().trim().min(1).max(120),
-    ownerName: z.string().trim().min(1).max(120),
-    ownerEmail: z.string().trim().toLowerCase().email().max(254),
-    password: z.string().max(256),
-    confirmPassword: z.string().max(256),
-    timeZone: z.string().refine(isTimeZone, "Unknown time zone"),
-    currency: z.string().regex(/^[A-Z]{3}$/, "Use a 3-letter currency code"),
-    ip: z.string().max(64).default("unknown"),
-  })
-  .refine((v) => v.password === v.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+// Same field rules as the browser form (src/lib/validation/auth.ts), plus the caller's IP.
+export const ActivationInput = activateFields
+  .extend({ ip: z.string().max(64).default("unknown") })
+  .refine(passwordsMatch, { message: "Passwords do not match", path: ["confirmPassword"] });
 
 export type ActivationResult =
   | { ok: true; tenantId: string; userId: string }
