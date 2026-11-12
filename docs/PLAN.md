@@ -371,7 +371,7 @@ Seven phases, each a branch and PR into `main`; a phase is done only when its ac
 
 Scaffold Next.js + TypeScript + pnpm, Fluent UI provider, ESLint/Prettier, Vitest, Playwright, Drizzle with Neon, GitHub Actions CI, `.env.example`, `CLAUDE.md`.
 
-- [ ] `pnpm dev` runs; `/api/health` returns DB connectivity OK
+- [x] `pnpm dev` runs; `/api/health` returns DB connectivity OK
 - [ ] CI runs lint, typecheck, unit and e2e on every PR and is green
 - [ ] A Neon branch is used for CI so tests never touch the main DB
 
