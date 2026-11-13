@@ -25,7 +25,7 @@ export default async function PriceListPage({ params }: { params: Promise<{ id: 
         <thead>
           <tr>
             <th scope="col">SKU</th>
-            <th scope="col">Product</th>
+            <th scope="col">Product or service</th>
             <th scope="col">Price</th>
           </tr>
         </thead>
@@ -51,10 +51,10 @@ export default async function PriceListPage({ params }: { params: Promise<{ id: 
         fields={[
           {
             name: "productId",
-            label: "Product",
+            label: "Product or service",
             type: "select",
             options: [
-              { value: "", label: "Choose a product" },
+              { value: "", label: "Choose a product or service" },
               ...(products.ok
                 ? products.rows.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))
                 : []),

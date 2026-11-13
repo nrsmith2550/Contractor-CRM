@@ -33,7 +33,7 @@ describe("clientIpFrom", () => {
 describe("safeNextPath (open-redirect guard)", () => {
   it("allows paths inside the app", () => {
     expect(safeNextPath("/app")).toBe("/app");
-    expect(safeNextPath("/app/leads/123?tab=2")).toBe("/app/leads/123?tab=2");
+    expect(safeNextPath("/app/prospects/123?tab=2")).toBe("/app/prospects/123?tab=2");
   });
 
   it("rejects everything else", () => {

@@ -34,7 +34,7 @@ export async function addOpportunityLineAction(
   });
   if (!r.ok) return failed(r);
   revalidatePath("/app", "layout");
-  return { ok: true, message: "Product added" };
+  return { ok: true, message: "Product or service added" };
 }
 
 export async function removeOpportunityLineAction(

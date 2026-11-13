@@ -17,6 +17,7 @@ import { addressFields, invalid, text } from "./leads";
 import { nextNumber } from "./numbering";
 import { PRIORITIES } from "./sla";
 import { canTransition, isEditable, isWoStatus, type WoStatus } from "./work-order-status";
+import { say } from "@/lib/vocabulary";
 
 // Work orders: the on-site job. Status moves through work-order-status.ts. Once the work is
 // completed (or posted, or cancelled) the details are read-only.
@@ -24,11 +25,11 @@ import { canTransition, isEditable, isWoStatus, type WoStatus } from "./work-ord
 export type WorkOrder = typeof workOrder.$inferSelect;
 
 export const WO_VIEWS = [
-  { id: "unscheduled", label: "Unscheduled Work Orders" },
+  { id: "unscheduled", label: "Unscheduled Jobs" },
   { id: "active", label: "Scheduled and In Progress" },
   { id: "completed", label: "Completed" },
-  { id: "all_open", label: "All Open Work Orders" },
-  { id: "all", label: "All Work Orders" },
+  { id: "all_open", label: "All Open Jobs" },
+  { id: "all", label: "All Jobs" },
 ] as const;
 export type WoView = (typeof WO_VIEWS)[number]["id"];
 
@@ -66,7 +67,7 @@ async function checkAccount(tx: Tx, ctx: Ctx, id: string | null | undefined) {
   if (!id) return null;
   const [a] = await tx.select().from(account).where(eq(account.id, id));
   return checkRecord(ctx, "account", "read", a)
-    ? fail("invalid", "That account doesn't exist or you don't have access to it.")
+    ? fail("invalid", "That customer doesn't exist or you don't have access to it.")
     : null;
 }
 
@@ -173,7 +174,7 @@ export async function updateWorkOrder(
     const { row, denied } = await load(tx, ctx, id);
     if (denied) return denied;
     if (!isEditable(row.status as WoStatus))
-      return fail("read_only", `This work order is ${row.status} and can't be edited.`);
+      return fail("read_only", `This job is ${say(row.status)} and can't be edited.`);
     const patch = defined(p.data);
     // The window rule needs the final values, so merge with what's stored.
     const merged = {
@@ -212,14 +213,14 @@ export async function setWorkOrderStatus(
   to: unknown,
 ): Promise<Result<{ workOrder: WorkOrder }>> {
   if (!isUuid(id)) return NOT_FOUND;
-  if (!isWoStatus(to)) return fail("invalid", "That isn't a work order status.");
+  if (!isWoStatus(to)) return fail("invalid", "That isn't a job status.");
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await load(tx, ctx, id);
     if (denied) return denied;
     if (!canTransition(row.status as WoStatus, to)) {
       return fail(
         "conflict",
-        `A ${row.status.replace("_", " ")} work order can't go to ${to.replace("_", " ")}.`,
+        `A ${row.status.replace("_", " ")} job can't go to ${to.replace("_", " ")}.`,
       );
     }
     const [updated] = await tx

@@ -60,15 +60,17 @@ export async function caseCommandAction(
         resolution: v.resolution ?? "",
         billableMinutes: minutes,
       });
-      return r.ok ? { ok: true, message: "Case resolved." } : failed(r);
+      return r.ok ? { ok: true, message: "Request resolved." } : failed(r);
     }
     case "cancel": {
       const r = await cancelCase(c, id, v.reason);
-      return r.ok ? { ok: true, message: "Case cancelled." } : failed(r);
+      return r.ok ? { ok: true, message: "Request cancelled." } : failed(r);
     }
     case "reactivate": {
       const r = await reactivateCase(c, id);
-      return r.ok ? { ok: true, message: "Case reactivated. Its SLA clock restarted." } : failed(r);
+      return r.ok
+        ? { ok: true, message: "Request reactivated. Its SLA clock restarted." }
+        : failed(r);
     }
     case "convert": {
       const r = await convertToWorkOrder(c, id, { title: v.title || undefined });
@@ -76,7 +78,7 @@ export async function caseCommandAction(
         ? {
             ok: true,
             message: `Created ${r.workOrder.woNumber}.`,
-            redirectTo: `/app/work-orders/${r.workOrder.id}`,
+            redirectTo: `/app/jobs/${r.workOrder.id}`,
           }
         : failed(r);
     }

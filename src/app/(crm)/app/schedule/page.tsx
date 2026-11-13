@@ -9,7 +9,7 @@ import { listWorkOrders } from "@/server/domain/work-orders";
 import { tenantTimeZone } from "@/server/entities/tenant";
 import { can } from "@/server/security/roles";
 
-export const metadata = { title: "Schedule board" };
+export const metadata = { title: "Schedule" };
 
 export default async function SchedulePage({
   searchParams,
@@ -37,9 +37,9 @@ export default async function SchedulePage({
   if (!resources.ok || !bookings.ok) {
     return (
       <>
-        <h1>Schedule board</h1>
+        <h1>Schedule</h1>
         <div role="alert" className="crm-error">
-          {resources.ok ? "You don't have access to bookings." : resources.message}
+          {resources.ok ? "You don't have access to visits." : resources.message}
         </div>
       </>
     );
@@ -59,7 +59,7 @@ export default async function SchedulePage({
 
   return (
     <>
-      <h1>Schedule board</h1>
+      <h1>Schedule</h1>
       <div className="sb-toolbar" role="toolbar" aria-label="Board controls">
         <Link
           className="crm-btn"

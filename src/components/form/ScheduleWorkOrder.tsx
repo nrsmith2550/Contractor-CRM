@@ -84,10 +84,10 @@ export function ScheduleWorkOrder(props: {
       )}
 
       <table className="crm-grid">
-        <caption className="crm-sr">Bookings</caption>
+        <caption className="crm-sr">Visits</caption>
         <thead>
           <tr>
-            <th scope="col">Resource</th>
+            <th scope="col">Team member</th>
             <th scope="col">When</th>
             <th scope="col">Status</th>
             <th scope="col">
@@ -114,10 +114,10 @@ export function ScheduleWorkOrder(props: {
                   <button
                     className="crm-btn"
                     disabled={pending}
-                    aria-label={`Cancel booking for ${b.resourceName}`}
+                    aria-label={`Cancel visit for ${b.resourceName}`}
                     onClick={() => run(() => bookingStatusAction(b.id, "cancelled"))}
                   >
-                    Cancel booking
+                    Cancel visit
                   </button>
                 )}
               </td>
@@ -136,12 +136,12 @@ export function ScheduleWorkOrder(props: {
           }}
         >
           <label>
-            Resource
+            Team member
             <select
               value={v.resourceId}
               onChange={(e) => setV({ ...v, resourceId: e.target.value })}
             >
-              {props.resources.length === 0 && <option value="">No resources yet</option>}
+              {props.resources.length === 0 && <option value="">No team members yet</option>}
               {props.resources.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -190,7 +190,7 @@ export function ScheduleWorkOrder(props: {
         </div>
       )}
       {res?.ok && res.warnings && res.warnings.length > 0 && (
-        <div role="group" aria-label="Booking warnings" className="crm-warn">
+        <div role="group" aria-label="Visit warnings" className="crm-warn">
           <strong>Booked, but check:</strong>
           <ul>
             {res.warnings.map((w) => (

@@ -68,8 +68,8 @@ export const snapshot = (o: Opportunity): OpportunitySnapshot => ({
 });
 
 export const OPPORTUNITY_VIEWS = [
-  { id: "my_open", label: "My Open Opportunities" },
-  { id: "open", label: "Open Opportunities" },
+  { id: "my_open", label: "My Open Deals" },
+  { id: "open", label: "Open Deals" },
   { id: "closing_30", label: "Closing Next 30 Days" },
   { id: "won", label: "Won" },
   { id: "lost", label: "Lost" },
@@ -202,7 +202,7 @@ export async function updateOpportunity(
     const { row, denied } = await loadOpen(tx, ctx, id);
     if (denied) return denied;
     if (row.status !== "open")
-      return fail("read_only", `This opportunity is ${row.status}. Reopen it to make changes.`);
+      return fail("read_only", `This deal is ${row.status}. Reopen it to make changes.`);
     const patch = defined(p.data);
     // While product lines exist the estimated revenue is calculated from them, so a typed-in
     // figure is ignored rather than allowed to disagree with the lines.
@@ -241,7 +241,7 @@ export async function moveStage(
     const { row, denied } = await loadOpen(tx, ctx, id);
     if (denied) return denied;
     if (row.status !== "open")
-      return fail("read_only", `This opportunity is ${row.status}. Reopen it to change its stage.`);
+      return fail("read_only", `This deal is ${row.status}. Reopen it to change its stage.`);
     const from = row.stage as Stage;
     const check = canMove(snapshot(row), from, target);
     if (!check.ok) {
@@ -289,7 +289,7 @@ const wonInput = z.object({
   reason: text(300),
 });
 const lostInput = z.object({
-  reason: z.string().trim().min(1, "Give a reason for losing this opportunity").max(300),
+  reason: z.string().trim().min(1, "Give a reason for losing this deal").max(300),
   actualCloseDate: date,
   competitor: text(120),
 });
@@ -306,8 +306,7 @@ export async function closeAsWon(
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await loadOpen(tx, ctx, id);
     if (denied) return denied;
-    if (row.status !== "open")
-      return fail("read_only", `This opportunity is already ${row.status}.`);
+    if (row.status !== "open") return fail("read_only", `This deal is already ${row.status}.`);
     const [updated] = await tx
       .update(opportunity)
       .set({
@@ -379,8 +378,7 @@ export async function closeAsLost(
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await loadOpen(tx, ctx, id);
     if (denied) return denied;
-    if (row.status !== "open")
-      return fail("read_only", `This opportunity is already ${row.status}.`);
+    if (row.status !== "open") return fail("read_only", `This deal is already ${row.status}.`);
     const [updated] = await tx
       .update(opportunity)
       .set({
@@ -414,7 +412,7 @@ export async function reopenOpportunity(
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await loadOpen(tx, ctx, id);
     if (denied) return denied;
-    if (row.status === "open") return fail("conflict", "This opportunity is already open.");
+    if (row.status === "open") return fail("conflict", "This deal is already open.");
     const [updated] = await tx
       .update(opportunity)
       .set({

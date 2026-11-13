@@ -34,13 +34,13 @@ export function OpportunityLines(props: {
   const total = lines.reduce((s, l) => s + l.extendedCents, 0);
 
   return (
-    <section aria-label="Products">
-      <h2>Products</h2>
+    <section aria-label="Products and services">
+      <h2>Products and services</h2>
       {lines.length > 0 && (
         <p>Estimated revenue is calculated from these lines: {formatMoney(total)}.</p>
       )}
       <table className="crm-grid">
-        <caption className="crm-sr">Opportunity products</caption>
+        <caption className="crm-sr">Deal products and services</caption>
         <thead>
           <tr>
             <th scope="col">#</th>
@@ -59,7 +59,9 @@ export function OpportunityLines(props: {
         <tbody>
           {lines.length === 0 && (
             <tr>
-              <td colSpan={7}>No products yet. Add some to calculate the estimated revenue.</td>
+              <td colSpan={7}>
+                Nothing added yet. Add products or services to calculate the estimated revenue.
+              </td>
             </tr>
           )}
           {lines.map((l) => (
@@ -75,7 +77,7 @@ export function OpportunityLines(props: {
                   <button
                     className="crm-btn"
                     disabled={pending}
-                    aria-label={`Remove product ${l.lineNumber}`}
+                    aria-label={`Remove product or service ${l.lineNumber}`}
                     onClick={() =>
                       start(async () => {
                         const r = await removeOpportunityLineAction(opportunityId, l.id);
@@ -99,15 +101,15 @@ export function OpportunityLines(props: {
       )}
       {editable && (
         <InlineForm
-          submitLabel="Add product"
+          submitLabel="Add product or service"
           action={(v) => addOpportunityLineAction(opportunityId, v)}
           fields={[
             {
               name: "productId",
-              label: "Product",
+              label: "Product or service",
               type: "select",
               options: [
-                { value: "", label: "Write-in (no product)" },
+                { value: "", label: "Write-in (not in your list)" },
                 ...products.map((p) => ({ value: p.id, label: p.label })),
               ],
             },

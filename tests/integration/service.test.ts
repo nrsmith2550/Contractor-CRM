@@ -113,13 +113,13 @@ describe.skipIf(!enabled)("Phase 4 acceptance criteria", () => {
       priority: "high",
       description: "Gate code 4411",
     });
-    expect(k.ticketNumber).toBe("CAS-01001");
+    expect(k.ticketNumber).toBe("REQ-01001");
 
     const r = must(
       await convertToWorkOrder(c, k.id, { workOrderType: "repair", estDurationMin: 90 }),
     );
     expect(r.workOrder).toMatchObject({
-      woNumber: "WO-01001",
+      woNumber: "JOB-01001",
       status: "unscheduled",
       incidentId: k.id,
       serviceAccountId: acct.id,
@@ -136,7 +136,7 @@ describe.skipIf(!enabled)("Phase 4 acceptance criteria", () => {
     // A case can have several visits.
     expect(
       must(await convertToWorkOrder(c, k.id, { title: "Follow-up visit" })).workOrder.woNumber,
-    ).toBe("WO-01002");
+    ).toBe("JOB-01002");
     expect(must(await listWorkOrders(c, { view: "unscheduled", incidentId: k.id })).total).toBe(2);
   });
 
@@ -375,7 +375,7 @@ describe.skipIf(!enabled)("Work orders", () => {
       }),
     ).workOrder;
     expect(wo).toMatchObject({
-      woNumber: "WO-01001",
+      woNumber: "JOB-01001",
       status: "unscheduled",
       workOrderType: "maintenance",
       priority: "normal",
@@ -505,7 +505,7 @@ describe.skipIf(!enabled)("Service permissions and isolation", () => {
     });
     expect(must(await listCases(b.admin, { view: "all_active" })).total).toBe(0);
     expect(must(await listWorkOrders(b.admin)).total).toBe(0);
-    // Numbering is per business: B's first case is also CAS-01001.
-    expect((await mkCase(b.admin)).ticketNumber).toBe("CAS-01001");
+    // Numbering is per business: B's first case is also REQ-01001.
+    expect((await mkCase(b.admin)).ticketNumber).toBe("REQ-01001");
   });
 });

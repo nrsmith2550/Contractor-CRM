@@ -38,7 +38,7 @@ test.describe("demo business", () => {
 
     // The owner sees a populated business.
     await signIn(page, email("Jordan Rivers"));
-    await page.goto("/app/leads?view=all_open");
+    await page.goto("/app/prospects?view=all_open");
     await expect(page.getByText("12 records")).toBeVisible();
     await page.goto("/app/dashboards/sales");
     await expect(page.getByRole("region", { name: /^Won revenue/ })).not.toContainText("$0.00");
@@ -51,23 +51,23 @@ test.describe("demo business", () => {
     const techCtx = await browser.newContext({ extraHTTPHeaders: { "x-real-ip": fakeIp() } });
     const tech = await techCtx.newPage();
     await signIn(tech, email("Riley Ortiz"));
-    await tech.goto("/app/my-bookings");
-    await expect(tech.getByRole("heading", { name: /my bookings/i })).toBeVisible();
-    await expect(tech.getByText(/WO-0\d+/).first()).toBeVisible();
+    await tech.goto("/app/my-visits");
+    await expect(tech.getByRole("heading", { name: /my visits/i })).toBeVisible();
+    await expect(tech.getByText(/JOB-0\d+/).first()).toBeVisible();
     await tech.goto("/app/dashboards/sales");
     await expect(tech.getByText("You don't have access to this.").first()).toBeVisible();
     await techCtx.close();
 
     // Realistic, full pages stay free of accessibility violations in both themes.
     const pages = [
-      "/app/leads?view=all_open",
-      "/app/accounts?view=all",
-      "/app/opportunities?view=open",
+      "/app/prospects?view=all_open",
+      "/app/customers?view=all",
+      "/app/deals?view=open",
       "/app/pipeline",
       "/app/quotes",
       "/app/orders",
-      "/app/cases?view=all_active",
-      "/app/work-orders",
+      "/app/support-requests?view=all_active",
+      "/app/jobs",
       "/app/schedule?view=day",
       "/app/calendar",
       "/app/dashboards/sales",

@@ -19,5 +19,4 @@ export const formatDate = (v: unknown, timeZone = "UTC"): string => {
 export const formatDateTime = (v: Date, timeZone = "UTC"): string =>
   new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone }).format(v);
 
-export const humanize = (v: string): string =>
-  v.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+export { humanize } from "./vocabulary";

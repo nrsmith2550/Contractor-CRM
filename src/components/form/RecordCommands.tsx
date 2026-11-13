@@ -54,14 +54,13 @@ export function RecordCommands(props: {
       <div className="crm-commandbar" role="toolbar" aria-label="Record commands">
         {entityKey === "lead" && (status === "new" || status === "contacted") && (
           <>
-            {btn("Qualify", () => run("qualify"), true)}
+            {btn("Turn into a customer", () => run("qualify"), true)}
             {status === "new" && btn("Mark contacted", () => run("contacted"))}
-            {btn("Disqualify", () => setPanel("disqualify"))}
+            {btn("Close prospect", () => setPanel("disqualify"))}
           </>
         )}
         {entityKey === "lead" &&
-          status !== "open" &&
-          status !== "qualified" &&
+          status === "disqualified" &&
           btn("Reactivate", () => run("reactivate"))}
         {entityKey === "opportunity" && status === "open" && (
           <>
@@ -76,12 +75,12 @@ export function RecordCommands(props: {
       </div>
 
       {panel === "disqualify" && (
-        <div className="crm-panel" role="group" aria-label="Disqualify lead">
+        <div className="crm-panel" role="group" aria-label="Close prospect">
           <label>
             Reason
             <input value={v.reason ?? ""} onChange={set("reason")} />
           </label>
-          {btn("Confirm disqualify", () => run("disqualify"), true)}
+          {btn("Confirm close", () => run("disqualify"), true)}
           {btn("Cancel", () => setPanel(""))}
         </div>
       )}

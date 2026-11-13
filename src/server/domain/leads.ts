@@ -16,6 +16,7 @@ import {
 } from "./context";
 import { findDuplicates } from "./duplicates";
 import { nextNumber } from "./numbering";
+import { say } from "@/lib/vocabulary";
 
 export type Lead = typeof lead.$inferSelect;
 
@@ -70,10 +71,10 @@ const defined = <T extends object>(o: T): Partial<T> =>
   Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
 
 export const LEAD_VIEWS = [
-  { id: "my_open", label: "My Open Leads" },
-  { id: "all_open", label: "All Open Leads" },
-  { id: "this_week", label: "Leads Opened This Week" },
-  { id: "disqualified", label: "Disqualified Leads" },
+  { id: "my_open", label: "My Open Prospects" },
+  { id: "all_open", label: "All Open Prospects" },
+  { id: "this_week", label: "Prospects Added This Week" },
+  { id: "disqualified", label: "Closed Prospects" },
 ] as const;
 export type LeadView = (typeof LEAD_VIEWS)[number]["id"];
 
@@ -186,7 +187,7 @@ export async function updateLead(
     const { row, denied } = await loadEditable(tx, ctx, id);
     if (denied) return denied;
     if (row.status === "qualified" || row.status === "disqualified") {
-      return fail("read_only", `This lead is ${row.status} and can't be edited.`);
+      return fail("read_only", `This prospect is ${say(row.status)} and can't be edited.`);
     }
     const patch = defined(p.data);
     // The topic is required: it can be changed but not cleared.
@@ -221,7 +222,7 @@ export async function markLeadContacted(ctx: Ctx, id: string): Promise<Result<{ 
     const { row, denied } = await loadEditable(tx, ctx, id);
     if (denied) return denied;
     if (row.status !== "new")
-      return fail("conflict", "Only a new lead can be marked as contacted.");
+      return fail("conflict", "Only a new prospect can be marked as contacted.");
     const [updated] = await tx
       .update(lead)
       .set({ status: "contacted", modifiedAt: new Date(), modifiedBy: ctx.userId })
@@ -246,14 +247,13 @@ export async function disqualifyLead(
 ): Promise<Result<{ lead: Lead }>> {
   if (!isUuid(id)) return NOT_FOUND;
   const r = z.enum(DISQUALIFY_REASONS).safeParse(reason);
-  if (!r.success) return fail("invalid", "Choose a reason for disqualifying this lead.");
+  if (!r.success) return fail("invalid", "Choose a reason for closing this prospect.");
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await loadEditable(tx, ctx, id);
     if (denied) return denied;
     if (row.status === "qualified")
-      return fail("read_only", "A qualified lead can't be disqualified.");
-    if (row.status === "disqualified")
-      return fail("conflict", "This lead is already disqualified.");
+      return fail("read_only", "A prospect who is already a customer can't be closed.");
+    if (row.status === "disqualified") return fail("conflict", "This prospect is already closed.");
     const [updated] = await tx
       .update(lead)
       .set({
@@ -282,7 +282,7 @@ export async function reactivateLead(ctx: Ctx, id: string): Promise<Result<{ lea
     const { row, denied } = await loadEditable(tx, ctx, id);
     if (denied) return denied;
     if (row.status !== "disqualified")
-      return fail("conflict", "Only a disqualified lead can be reactivated.");
+      return fail("conflict", "Only a closed prospect can be reactivated.");
     const [updated] = await tx
       .update(lead)
       .set({
@@ -332,9 +332,10 @@ export async function qualifyLead(
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await loadEditable(tx, ctx, id);
     if (denied) return denied;
-    if (row.status === "qualified") return fail("read_only", "This lead is already qualified.");
+    if (row.status === "qualified")
+      return fail("read_only", "This prospect is already a customer.");
     if (row.status === "disqualified")
-      return fail("read_only", "Reactivate the lead before qualifying it.");
+      return fail("read_only", "Reactivate the prospect before turning it into a customer.");
     // Qualifying creates records, so the user needs "create" on each of them.
     const needed: Entity[] = ["account", "contact"];
     if (opts.createOpportunity) needed.push("opportunity");
@@ -390,7 +391,7 @@ export async function qualifyLead(
         .select({ id: account.id })
         .from(account)
         .where(eq(account.id, opts.account));
-      if (!a) return fail("invalid", "The account you chose no longer exists.");
+      if (!a) return fail("invalid", "The customer you chose no longer exists.");
       accountId = a.id;
     } else {
       const [a] = await tx
@@ -415,7 +416,7 @@ export async function qualifyLead(
         .select({ id: contact.id })
         .from(contact)
         .where(eq(contact.id, opts.contact));
-      if (!c) return fail("invalid", "The contact you chose no longer exists.");
+      if (!c) return fail("invalid", "The person you chose no longer exists.");
       contactId = c.id;
     } else {
       const [c] = await tx

@@ -22,6 +22,7 @@ import {
 } from "./license-key";
 import { hashPassword, validatePassword } from "./password";
 import { ACTIVATE_LIMIT, hitRateLimit } from "./rate-limit";
+import { NUMBER_PREFIXES } from "@/lib/vocabulary";
 
 // Same field rules as the browser form (src/lib/validation/auth.ts), plus the caller's IP.
 export const ActivationInput = activateFields
@@ -45,16 +46,16 @@ export type ActivationResult =
       emailHint?: string;
     };
 
-/** Entities that get an auto-numbering sequence at activation (LEAD-01001 etc.). */
+/** Entities that get an auto-numbering sequence at activation (PROS-01001, JOB-01001 etc.). */
 const SEQUENCES: [entity: string, prefix: string][] = [
-  ["lead", "LEAD"],
-  ["account", "ACC"],
-  ["contact", "CON"],
-  ["opportunity", "OPP"],
+  ["lead", NUMBER_PREFIXES.lead],
+  ["account", NUMBER_PREFIXES.account],
+  ["contact", NUMBER_PREFIXES.contact],
+  ["opportunity", NUMBER_PREFIXES.opportunity],
   ["quote", "QUO"],
   ["order", "ORD"],
-  ["case", "CAS"],
-  ["work_order", "WO"],
+  ["case", NUMBER_PREFIXES.case],
+  ["work_order", NUMBER_PREFIXES.work_order],
 ];
 
 export function maskEmail(email: string): string {

@@ -3,6 +3,26 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The screens were renamed (leads -> prospects, work orders -> jobs ...). Old links and
+  // bookmarks keep working.
+  async redirects() {
+    const moved: [from: string, to: string][] = [
+      ["leads", "prospects"],
+      ["accounts", "customers"],
+      ["contacts", "people"],
+      ["opportunities", "deals"],
+      ["cases", "support-requests"],
+      ["work-orders", "jobs"],
+      ["my-bookings", "my-visits"],
+      ["price-lists", "pricing"],
+      ["resources", "team"],
+    ];
+    return moved.map(([from, to]) => ({
+      source: `/app/${from}/:path*`,
+      destination: `/app/${to}/:path*`,
+      permanent: true,
+    }));
+  },
   async headers() {
     return [
       {

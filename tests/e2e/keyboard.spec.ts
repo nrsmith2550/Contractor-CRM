@@ -74,8 +74,8 @@ test.describe("keyboard", () => {
     await expect(page.getByRole("heading", { name: "Sales Hub" })).toBeVisible();
 
     // The first Tab stop is the skip link; it appears on screen, and Enter moves focus to the content.
-    await page.goto("/app/leads");
-    await expect(page.getByRole("heading", { name: "Leads" })).toBeVisible();
+    await page.goto("/app/prospects");
+    await expect(page.getByRole("heading", { name: "Prospects" })).toBeVisible();
     await page.keyboard.press("Tab");
     const skip = page.getByRole("link", { name: "Skip to main content" });
     await expect(skip).toBeFocused();
@@ -94,8 +94,8 @@ test.describe("keyboard", () => {
       await page
         .context()
         .addCookies([{ name: "clinch-theme", value: theme, url: "http://localhost:3000" }]);
-      await page.goto("/app/leads");
-      await expect(page.getByRole("heading", { name: "Leads" })).toBeVisible();
+      await page.goto("/app/prospects");
+      await expect(page.getByRole("heading", { name: "Prospects" })).toBeVisible();
       const seen: string[] = [];
       for (let i = 0; i < 40; i++) {
         await page.keyboard.press("Tab");
@@ -110,10 +110,10 @@ test.describe("keyboard", () => {
     }
 
     // Create a lead using only the keyboard: open the form from the list, fill it, save with Enter.
-    await page.goto("/app/leads");
+    await page.goto("/app/prospects");
     await page.getByRole("link", { name: "+ New" }).focus();
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("heading", { name: "New lead" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New prospect" })).toBeVisible();
     await page.getByLabel("Last name").focus();
     await page.keyboard.type("Keyboard");
     await page.getByLabel("Company").focus();
@@ -122,7 +122,7 @@ test.describe("keyboard", () => {
     await page.keyboard.type("k@keys.test");
     await page.getByRole("button", { name: "Save" }).focus();
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/app\/leads\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/app\/prospects\/[0-9a-f-]{36}$/);
     await expect(page.getByText("Keys Ltd").first()).toBeVisible();
 
     // The theme switch works from the keyboard too.

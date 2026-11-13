@@ -76,7 +76,7 @@ export function ResourceEditor(props: {
       }}
     >
       <fieldset className="crm-section">
-        <legend>Resource</legend>
+        <legend>Team member</legend>
         <div className="crm-fields">
           <div className="crm-field">
             <label htmlFor="r-name">Name</label>

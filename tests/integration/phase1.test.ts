@@ -92,7 +92,7 @@ describe.skipIf(!enabled)("Phase 1 — licensing, auth, tenancy (real Postgres)"
         .innerJoin(securityRole, eq(userRole.roleId, securityRole.id));
       expect(link!.name).toBe("System Administrator");
 
-      expect((await tx.select().from(sequence)).map((s) => s.prefix)).toContain("LEAD");
+      expect((await tx.select().from(sequence)).map((s) => s.prefix)).toContain("PROS");
       const [audit] = await tx.select().from(auditLog).where(eq(auditLog.action, "activate"));
       expect(audit).toBeTruthy();
       // The audit entry records the last 5 characters only, never the key.

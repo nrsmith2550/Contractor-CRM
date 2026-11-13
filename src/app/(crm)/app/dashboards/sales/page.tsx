@@ -22,12 +22,7 @@ export default async function SalesDashboardPage() {
       <h1>Sales dashboard</h1>
       <div className="dash-grid">
         {r.pipeline ? (
-          <BarCard
-            title="Open pipeline by stage"
-            data={r.pipeline}
-            money
-            empty="No open opportunities."
-          />
+          <BarCard title="Open pipeline by stage" data={r.pipeline} money empty="No open deals." />
         ) : (
           none
         )}
@@ -36,15 +31,15 @@ export default async function SalesDashboardPage() {
             <h2>Won revenue, {r.quarter}</h2>
             <div style={{ fontSize: 32, fontWeight: 600 }}>{formatMoney(r.wonCents)}</div>
             <div className="crm-muted">
-              {r.wonCount} {r.wonCount === 1 ? "opportunity" : "opportunities"} won
+              {r.wonCount} {r.wonCount === 1 ? "deal" : "deals"} won
             </div>
           </section>
         ) : null}
         {r.leadsBySource ? (
           <BarCard
-            title="Open leads by source"
+            title="Open prospects by source"
             data={r.leadsBySource}
-            empty="No open leads."
+            empty="No open prospects."
             color="#bc4b09"
           />
         ) : (

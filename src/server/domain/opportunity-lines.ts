@@ -81,7 +81,7 @@ async function loadOpen(tx: Tx, ctx: Ctx, id: string) {
     return {
       denied: fail(
         "read_only",
-        `This opportunity is ${row!.status}. Reopen it to change its products.`,
+        `This deal is ${row!.status}. Reopen it to change its products and services.`,
       ),
     };
   }
@@ -122,7 +122,7 @@ export async function addOpportunityLine(
     let unitPrice = p.data.unitPriceCents;
     if (p.data.productId) {
       const [pr] = await tx.select().from(product).where(eq(product.id, p.data.productId));
-      if (!pr) return fail("invalid", "That product doesn't exist.");
+      if (!pr) return fail("invalid", "That product or service doesn't exist.");
       description ||= pr.name;
       unitPrice ??= (await unitPriceFor(tx, pr.id, null)) ?? 0;
     }

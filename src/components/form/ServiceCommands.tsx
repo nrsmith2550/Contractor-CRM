@@ -62,7 +62,7 @@ export function CaseCommands({ id, status }: { id: string; status: string }) {
   );
   return (
     <div>
-      <div className="crm-commandbar" role="toolbar" aria-label="Case commands">
+      <div className="crm-commandbar" role="toolbar" aria-label="Support request commands">
         {active && (
           <>
             <button
@@ -71,19 +71,19 @@ export function CaseCommands({ id, status }: { id: string; status: string }) {
               disabled={pending}
               onClick={() => setPanel(panel ? "" : "resolve")}
             >
-              Resolve case
+              Resolve request
             </button>
-            {btn("Convert to work order", "convert")}
+            {btn("Turn into a job", "convert")}
             {status !== "in_progress" && btn("Resume", "resume")}
             {status !== "on_hold" && btn("Put on hold", "hold")}
             {status !== "waiting_on_customer" && btn("Waiting on customer", "waiting")}
-            {btn("Cancel case", "cancel")}
+            {btn("Cancel request", "cancel")}
           </>
         )}
         {!active && btn("Reactivate", "reactivate", true)}
       </div>
       {panel === "resolve" && (
-        <div className="crm-panel" role="group" aria-label="Resolve case">
+        <div className="crm-panel" role="group" aria-label="Resolve request">
           <label>
             Resolution
             <textarea rows={3} value={resolution} onChange={(e) => setResolution(e.target.value)} />
@@ -119,7 +119,7 @@ const WO_LABEL: Record<WoStatus, string> = {
   in_progress: "Start work",
   completed: "Complete",
   posted: "Post",
-  cancelled: "Cancel work order",
+  cancelled: "Cancel job",
 };
 
 /** Work order status buttons: only the moves the status flow allows from here. */
@@ -128,7 +128,7 @@ export function WorkOrderCommands({ id, status }: { id: string; status: WoStatus
   const moves = nextStatuses(status);
   return (
     <div>
-      <div className="crm-commandbar" role="toolbar" aria-label="Work order commands">
+      <div className="crm-commandbar" role="toolbar" aria-label="Job commands">
         {moves.map((to, i) => (
           <button
             key={to}
@@ -144,7 +144,7 @@ export function WorkOrderCommands({ id, status }: { id: string; status: WoStatus
                 : WO_LABEL[to]}
           </button>
         ))}
-        {moves.length === 0 && <span>Posted work orders are final.</span>}
+        {moves.length === 0 && <span>Posted jobs are final.</span>}
       </div>
       <Result res={res} />
     </div>

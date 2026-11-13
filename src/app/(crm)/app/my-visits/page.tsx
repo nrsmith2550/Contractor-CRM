@@ -6,7 +6,7 @@ import { buildCtx } from "@/server/domain/context";
 import { listProductChoices, listWorkOrderLines } from "@/server/domain/work-order-lines";
 import { tenantTimeZone } from "@/server/entities/tenant";
 
-export const metadata = { title: "My bookings" };
+export const metadata = { title: "My visits" };
 
 // The technician's phone view: today's visits first, then the rest of the week.
 export default async function MyBookingsPage() {
@@ -21,7 +21,7 @@ export default async function MyBookingsPage() {
   if (!res.ok) {
     return (
       <>
-        <h1>My bookings</h1>
+        <h1>My visits</h1>
         <div role="alert" className="crm-error">
           {res.message}
         </div>
@@ -83,7 +83,7 @@ export default async function MyBookingsPage() {
   }
   return (
     <>
-      <h1>My bookings</h1>
+      <h1>My visits</h1>
       <TechnicianBookings days={days} products={choices.ok ? choices.rows : []} />
     </>
   );

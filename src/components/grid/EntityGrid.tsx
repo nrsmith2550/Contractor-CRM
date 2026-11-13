@@ -50,8 +50,8 @@ export function EntityGrid(props: {
           + New
         </Link>
         {meta.key === "lead" && (
-          <Link className="crm-btn" href="/app/leads/import">
-            Import leads
+          <Link className="crm-btn" href="/app/prospects/import">
+            Import prospects
           </Link>
         )}
         <a className="crm-btn" href={exportHref("xlsx")}>

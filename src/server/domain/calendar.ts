@@ -130,11 +130,11 @@ export async function listCalendarEvents(
         events.push({
           id: r.b.id,
           kind: "booking",
-          title: [r.woNumber, r.woTitle].filter(Boolean).join(" ") || "Booking",
+          title: [r.woNumber, r.woTitle].filter(Boolean).join(" ") || "Visit",
           start: r.b.startAt,
           end: r.b.endAt,
           status: r.b.status,
-          href: r.b.workOrderId ? `/app/work-orders/${r.b.workOrderId}` : null,
+          href: r.b.workOrderId ? `/app/jobs/${r.b.workOrderId}` : null,
           ownerId: r.b.ownerId,
           ownerName: r.ownerName,
           detail: r.resource,

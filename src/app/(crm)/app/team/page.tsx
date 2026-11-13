@@ -9,7 +9,7 @@ import { listResources } from "@/server/domain/resources";
 import { defaultWorkHours } from "@/server/domain/work-hours";
 import { can } from "@/server/security/roles";
 
-export const metadata = { title: "Resources" };
+export const metadata = { title: "Team members" };
 
 export default async function ResourcesPage() {
   const user = await requireUser();
@@ -22,7 +22,7 @@ export default async function ResourcesPage() {
   if (!resources.ok) {
     return (
       <>
-        <h1>Resources</h1>
+        <h1>Team members</h1>
         <div role="alert" className="crm-error">
           {resources.message}
         </div>
@@ -34,10 +34,10 @@ export default async function ResourcesPage() {
   const canEdit = can(ctx.subject, "security_role", "write");
   return (
     <>
-      <h1>Resources</h1>
-      <p>People, crews and equipment that can be booked onto work orders.</p>
+      <h1>Team members</h1>
+      <p>People, crews and equipment that can be sent out on jobs.</p>
       <table className="crm-grid">
-        <caption className="crm-sr">Resources</caption>
+        <caption className="crm-sr">Team members</caption>
         <thead>
           <tr>
             <th scope="col">Name</th>
@@ -49,12 +49,12 @@ export default async function ResourcesPage() {
         <tbody>
           {resources.rows.length === 0 && (
             <tr>
-              <td colSpan={4}>No resources yet.</td>
+              <td colSpan={4}>No team members yet.</td>
             </tr>
           )}
           {resources.rows.map((r) => (
             <tr key={r.id}>
-              <td>{canEdit ? <Link href={`/app/resources/${r.id}`}>{r.name}</Link> : r.name}</td>
+              <td>{canEdit ? <Link href={`/app/team/${r.id}`}>{r.name}</Link> : r.name}</td>
               <td>{r.resourceType}</td>
               <td>{r.userId ? (userName.get(r.userId) ?? "") : ""}</td>
               <td>
@@ -69,7 +69,7 @@ export default async function ResourcesPage() {
       </table>
       {canEdit && (
         <>
-          <h2>Add a resource</h2>
+          <h2>Add a team member</h2>
           <ResourceEditor
             init={{
               name: "",
@@ -84,7 +84,7 @@ export default async function ResourcesPage() {
               .map((u) => ({ id: u.id, label: `${u.fullName} (${u.email})` }))}
             skills={skills.ok ? skills.rows : []}
             action={createResourceAction}
-            submitLabel="Add resource"
+            submitLabel="Add team member"
             resetOnSuccess
           />
         </>

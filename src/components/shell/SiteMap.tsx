@@ -17,8 +17,8 @@ const GROUPS = [
     title: "Sales",
     links: [
       ["Dashboard", "/app"],
-      ["Leads", "/app/leads"],
-      ["Opportunities", "/app/opportunities"],
+      ["Prospects", "/app/prospects"],
+      ["Deals", "/app/deals"],
       ["Quotes", "/app/quotes"],
       ["Orders", "/app/orders"],
       ["Pipeline", "/app/pipeline"],
@@ -27,25 +27,25 @@ const GROUPS = [
   {
     title: "Service",
     links: [
-      ["Cases", "/app/cases"],
-      ["Work orders", "/app/work-orders"],
-      ["Schedule board", "/app/schedule"],
-      ["Resources", "/app/resources"],
-      ["My bookings", "/app/my-bookings"],
+      ["Support requests", "/app/support-requests"],
+      ["Jobs", "/app/jobs"],
+      ["Schedule", "/app/schedule"],
+      ["Team members", "/app/team"],
+      ["My visits", "/app/my-visits"],
     ],
   },
   {
-    title: "Customers",
+    title: "Customers and people",
     links: [
-      ["Accounts", "/app/accounts"],
-      ["Contacts", "/app/contacts"],
+      ["Customers", "/app/customers"],
+      ["People", "/app/people"],
     ],
   },
   {
-    title: "Collateral",
+    title: "Products and pricing",
     links: [
-      ["Products", "/app/products"],
-      ["Price lists", "/app/price-lists"],
+      ["Products and services", "/app/products"],
+      ["Pricing", "/app/pricing"],
     ],
   },
   {

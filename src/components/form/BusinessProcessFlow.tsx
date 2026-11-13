@@ -11,7 +11,7 @@ const LABEL: Record<string, string> = {
 export function BusinessProcessFlow({ stage, status }: { stage: string; status: string }) {
   const current = STAGES.indexOf(stage as (typeof STAGES)[number]);
   return (
-    <ol className="crm-bpf" aria-label="Business process flow">
+    <ol className="crm-bpf" aria-label="Progress bar">
       {STAGES.map((s, i) => (
         <li
           key={s}

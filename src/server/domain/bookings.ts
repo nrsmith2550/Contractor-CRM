@@ -52,11 +52,11 @@ const MAX_BOOKING_MS = 14 * 24 * 3_600_000;
 const timeRange = z
   .object({ startAt: z.coerce.date(), endAt: z.coerce.date() })
   .refine((d) => d.endAt > d.startAt, {
-    message: "The booking must end after it starts.",
+    message: "The visit must end after it starts.",
     path: ["endAt"],
   })
   .refine((d) => d.endAt.getTime() - d.startAt.getTime() <= MAX_BOOKING_MS, {
-    message: "A booking can't be longer than 14 days.",
+    message: "A visit can't be longer than 14 days.",
     path: ["endAt"],
   });
 
@@ -172,7 +172,7 @@ export async function createBooking(
     const denied = checkRecord(ctx, "work_order", "write", wo);
     if (denied) return denied;
     if (wo!.status !== "unscheduled" && wo!.status !== "scheduled") {
-      return fail("conflict", `A ${wo!.status.replace("_", " ")} work order can't be booked.`);
+      return fail("conflict", `A ${wo!.status.replace("_", " ")} job can't be booked.`);
     }
     const active = await tx
       .select({ id: resourceBooking.id })
@@ -185,17 +185,14 @@ export async function createBooking(
         ),
       );
     if (active.length > 0)
-      return fail(
-        "conflict",
-        "This work order is already booked. Cancel or move that booking first.",
-      );
+      return fail("conflict", "This job is already booked. Cancel or move that visit first.");
 
     const [resource] = await tx
       .select()
       .from(bookableResource)
       .where(eq(bookableResource.id, p.data.resourceId));
     if (!resource || resource.stateCode !== "active")
-      return fail("invalid", "That resource doesn't exist.");
+      return fail("invalid", "That team member doesn't exist.");
 
     const warnings = await warningsFor(tx, {
       resource,
@@ -273,14 +270,14 @@ export async function moveBooking(
     if (row!.status !== "scheduled")
       return fail(
         "read_only",
-        `This booking is ${row!.status.replace("_", " ")} and can't be moved.`,
+        `This visit is ${row!.status.replace("_", " ")} and can't be moved.`,
       );
     const [resource] = await tx
       .select()
       .from(bookableResource)
       .where(eq(bookableResource.id, p.data.resourceId ?? row!.resourceId));
     if (!resource || resource.stateCode !== "active")
-      return fail("invalid", "That resource doesn't exist.");
+      return fail("invalid", "That team member doesn't exist.");
     const warnings = await warningsFor(tx, {
       resource,
       workOrderId: row!.workOrderId,
@@ -331,7 +328,7 @@ export async function setBookingStatus(
   raw: unknown = {},
 ): Promise<Result<{ booking: Booking }>> {
   if (!isUuid(id)) return NOT_FOUND;
-  if (!isBookingStatus(to)) return fail("invalid", "That isn't a booking status.");
+  if (!isBookingStatus(to)) return fail("invalid", "That isn't a visit status.");
   const p = statusInput.safeParse(raw ?? {});
   if (!p.success) return invalid(p);
 
@@ -364,7 +361,7 @@ export async function setBookingStatus(
     if (!canBookingTransition(from, to)) {
       return fail(
         "conflict",
-        `A ${from.replace("_", " ")} booking can't go to ${to.replace("_", " ")}.`,
+        `A ${from.replace("_", " ")} visit can't go to ${to.replace("_", " ")}.`,
       );
     }
     const now = new Date();

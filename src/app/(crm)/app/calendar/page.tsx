@@ -26,7 +26,7 @@ export default async function CalendarPage({
     <>
       <h1>Calendar</h1>
       <p>
-        Your appointments, tasks with due dates and bookings. Click or drag across a time to add an
+        Your appointments, tasks with due dates and visits. Click or drag across a time to add an
         appointment.
       </p>
       <CalendarView

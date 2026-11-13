@@ -103,7 +103,7 @@ test.describe("calendar", () => {
     await details.getByRole("button", { name: "Close" }).click();
     await cal(page).getByText(`${wo.woNumber} Fix furnace`).click();
     await details.getByRole("link", { name: "Open the record" }).click();
-    await expect(page).toHaveURL(new RegExp(`/app/work-orders/${wo.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/app/jobs/${wo.id}$`));
     await page.goBack();
 
     // The other views.

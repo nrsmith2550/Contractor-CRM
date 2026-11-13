@@ -615,7 +615,7 @@ describe.skipIf(!enabled)("Creating, moving and listing bookings", () => {
     ).toHaveLength(3);
     expect(must(await listBookings(dispatcher, day)).rows[0]).toMatchObject({
       resourceName: expect.any(String),
-      woNumber: expect.stringMatching(/^WO-/),
+      woNumber: expect.stringMatching(/^JOB-/),
     });
   });
 

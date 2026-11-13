@@ -31,8 +31,8 @@ export default async function SalesHubPage() {
         <strong>{await tenantName(user.tenantId)}</strong>.
       </p>
       <div className="crm-row" style={{ flexWrap: "wrap" }}>
-        {tile("My open leads", leads.ok ? String(leads.total) : "—", "/app/leads")}
-        {tile("My open opportunities", opps.ok ? String(opps.total) : "—", "/app/opportunities")}
+        {tile("My open prospects", leads.ok ? String(leads.total) : "—", "/app/prospects")}
+        {tile("My open deals", opps.ok ? String(opps.total) : "—", "/app/deals")}
         {tile("Open pipeline value", formatMoney(value), "/app/pipeline")}
       </div>
     </>

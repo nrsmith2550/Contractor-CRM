@@ -107,8 +107,8 @@ test.describe("dashboards", () => {
     const pipeline = page.getByRole("region", { name: "Open pipeline by stage" });
     await expect(pipeline.getByRole("row", { name: /Qualify\s*2\s*\$1,500\.00/ })).toBeVisible();
     await expect(page.getByRole("region", { name: /^Won revenue/ })).toContainText("$4,000.00");
-    await expect(page.getByRole("region", { name: "Open leads by source" })).toContainText(
-      "No open leads.",
+    await expect(page.getByRole("region", { name: "Open prospects by source" })).toContainText(
+      "No open prospects.",
     );
     await expect(page.getByRole("region", { name: "My activities" })).toContainText(
       "Call the supplier",
@@ -118,17 +118,17 @@ test.describe("dashboards", () => {
     await expect(page.getByRole("heading", { name: "Service dashboard" })).toBeVisible();
     await expect(
       page
-        .getByRole("region", { name: "Active cases by priority" })
+        .getByRole("region", { name: "Active support requests by priority" })
         .getByRole("row", { name: /Urgent\s*1/ }),
     ).toBeVisible();
     const sla = page.getByRole("region", { name: "SLA breaches" });
     await expect(sla).toContainText("SLA breaches (1)");
     await sla.getByRole("link", { name: /No heat/ }).click();
-    await expect(page).toHaveURL(new RegExp(`/app/cases/${late.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/app/support-requests/${late.id}$`));
     await page.goBack();
     await expect(
       page
-        .getByRole("region", { name: "Today's bookings by resource" })
+        .getByRole("region", { name: "Today's visits by team member" })
         .getByRole("row", { name: /Crew A\s*1/ }),
     ).toBeVisible();
   });

@@ -1,6 +1,6 @@
+import { humanize as title } from "../lib/vocabulary";
 import type { EntityKey, EntityMeta, Option } from "./types";
 
-const title = (v: string) => v.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 const opts = (values: string[]): Option[] =>
   values.map((value) => ({ value, label: title(value) }));
 
@@ -15,9 +15,9 @@ const ADDRESS = (section = "Address") =>
 
 export const LEAD: EntityMeta = {
   key: "lead",
-  slug: "leads",
-  singular: "Lead",
-  plural: "Leads",
+  slug: "prospects",
+  singular: "Prospect",
+  plural: "Prospects",
   numberField: "leadNumber",
   titleFields: ["topic"],
   columns: [
@@ -31,10 +31,10 @@ export const LEAD: EntityMeta = {
     { name: "createdAt", label: "Created", type: "date" },
   ],
   views: [
-    { id: "my_open", label: "My Open Leads" },
-    { id: "all_open", label: "All Open Leads" },
-    { id: "this_week", label: "Leads Opened This Week" },
-    { id: "disqualified", label: "Disqualified Leads" },
+    { id: "my_open", label: "My Open Prospects" },
+    { id: "all_open", label: "All Open Prospects" },
+    { id: "this_week", label: "Prospects Added This Week" },
+    { id: "disqualified", label: "Closed Prospects" },
   ],
   defaultView: "my_open",
   headerFields: ["status", "rating", "leadSource", "estValueCents"],
@@ -54,7 +54,7 @@ export const LEAD: EntityMeta = {
     { name: "phone", label: "Phone", type: "tel", section: "Summary" },
     {
       name: "leadSource",
-      label: "Lead source",
+      label: "Source",
       type: "select",
       section: "Details",
       options: opts(["web", "phone", "referral", "trade_show", "email", "other"]),
@@ -73,28 +73,28 @@ export const LEAD: EntityMeta = {
 
 export const ACCOUNT: EntityMeta = {
   key: "account",
-  slug: "accounts",
-  singular: "Account",
-  plural: "Accounts",
+  slug: "customers",
+  singular: "Customer",
+  plural: "Customers",
   numberField: "accountNumber",
   titleFields: ["name"],
   columns: [
     { name: "accountNumber", label: "Number" },
-    { name: "name", label: "Account name" },
+    { name: "name", label: "Customer name" },
     { name: "relationshipType", label: "Relationship", type: "badge" },
     { name: "phone", label: "Phone" },
     { name: "industry", label: "Industry" },
     { name: "createdAt", label: "Created", type: "date" },
   ],
   views: [
-    { id: "all", label: "All Accounts" },
-    { id: "customers", label: "Customers" },
-    { id: "prospects", label: "Prospects" },
+    { id: "all", label: "All Customers" },
+    { id: "customers", label: "Current Customers" },
+    { id: "prospects", label: "Potential Customers" },
   ],
   defaultView: "all",
   headerFields: ["relationshipType", "phone", "industry", "paymentTerms"],
   fields: [
-    { name: "name", label: "Account name", type: "text", section: "Summary", required: true },
+    { name: "name", label: "Customer name", type: "text", section: "Summary", required: true },
     { name: "phone", label: "Phone", type: "tel", section: "Summary", recommended: true },
     { name: "website", label: "Website", type: "url", section: "Summary" },
     { name: "industry", label: "Industry", type: "text", section: "Summary" },
@@ -107,14 +107,14 @@ export const ACCOUNT: EntityMeta = {
     },
     {
       name: "parentAccountId",
-      label: "Parent account",
+      label: "Parent customer",
       type: "lookup",
       lookup: "account",
       section: "Details",
     },
     {
       name: "primaryContactId",
-      label: "Primary contact",
+      label: "Main person",
       type: "lookup",
       lookup: "contact",
       section: "Details",
@@ -127,9 +127,9 @@ export const ACCOUNT: EntityMeta = {
 
 export const CONTACT: EntityMeta = {
   key: "contact",
-  slug: "contacts",
-  singular: "Contact",
-  plural: "Contacts",
+  slug: "people",
+  singular: "Person",
+  plural: "People",
   numberField: "contactNumber",
   titleFields: ["firstName", "lastName"],
   columns: [
@@ -140,7 +140,7 @@ export const CONTACT: EntityMeta = {
     { name: "businessPhone", label: "Business phone" },
     { name: "jobTitle", label: "Job title" },
   ],
-  views: [{ id: "all", label: "All Contacts" }],
+  views: [{ id: "all", label: "All People" }],
   defaultView: "all",
   headerFields: ["jobTitle", "email", "businessPhone", "mobile"],
   fields: [
@@ -148,7 +148,7 @@ export const CONTACT: EntityMeta = {
     { name: "lastName", label: "Last name", type: "text", section: "Summary", required: true },
     {
       name: "parentAccountId",
-      label: "Account",
+      label: "Customer",
       type: "lookup",
       lookup: "account",
       section: "Summary",
@@ -171,9 +171,9 @@ export const CONTACT: EntityMeta = {
 
 export const OPPORTUNITY: EntityMeta = {
   key: "opportunity",
-  slug: "opportunities",
-  singular: "Opportunity",
-  plural: "Opportunities",
+  slug: "deals",
+  singular: "Deal",
+  plural: "Deals",
   numberField: "opportunityNumber",
   titleFields: ["name"],
   columns: [
@@ -186,8 +186,8 @@ export const OPPORTUNITY: EntityMeta = {
     { name: "probability", label: "Probability %" },
   ],
   views: [
-    { id: "my_open", label: "My Open Opportunities" },
-    { id: "open", label: "Open Opportunities" },
+    { id: "my_open", label: "My Open Deals" },
+    { id: "open", label: "Open Deals" },
     { id: "closing_30", label: "Closing Next 30 Days" },
     { id: "won", label: "Won" },
     { id: "lost", label: "Lost" },
@@ -198,7 +198,7 @@ export const OPPORTUNITY: EntityMeta = {
     { name: "name", label: "Topic", type: "text", section: "Summary", required: true },
     {
       name: "customerAccountId",
-      label: "Account",
+      label: "Customer",
       type: "lookup",
       lookup: "account",
       section: "Summary",
@@ -206,7 +206,7 @@ export const OPPORTUNITY: EntityMeta = {
     },
     {
       name: "customerContactId",
-      label: "Contact",
+      label: "Person",
       type: "lookup",
       lookup: "contact",
       section: "Summary",
@@ -246,8 +246,8 @@ export const OPPORTUNITY: EntityMeta = {
 export const PRODUCT: EntityMeta = {
   key: "product",
   slug: "products",
-  singular: "Product",
-  plural: "Products",
+  singular: "Product or service",
+  plural: "Products and services",
   numberField: "sku",
   titleFields: ["name"],
   columns: [
@@ -256,7 +256,7 @@ export const PRODUCT: EntityMeta = {
     { name: "productType", label: "Type", type: "badge" },
     { name: "listPriceCents", label: "List price", type: "money" },
   ],
-  views: [{ id: "all", label: "Active Products" }],
+  views: [{ id: "all", label: "Active Products and Services" }],
   defaultView: "all",
   headerFields: ["productType", "listPriceCents", "standardCostCents"],
   fields: [
@@ -291,9 +291,9 @@ export const PRODUCT: EntityMeta = {
 
 export const CASE: EntityMeta = {
   key: "case",
-  slug: "cases",
-  singular: "Case",
-  plural: "Cases",
+  slug: "support-requests",
+  singular: "Support request",
+  plural: "Support requests",
   numberField: "ticketNumber",
   titleFields: ["title"],
   columns: [
@@ -305,9 +305,9 @@ export const CASE: EntityMeta = {
     { name: "createdAt", label: "Created", type: "date" },
   ],
   views: [
-    { id: "my_active", label: "My Active Cases" },
-    { id: "all_active", label: "All Active Cases" },
-    { id: "resolved", label: "Resolved Cases" },
+    { id: "my_active", label: "My Active Requests" },
+    { id: "all_active", label: "All Active Requests" },
+    { id: "resolved", label: "Resolved Requests" },
   ],
   defaultView: "my_active",
   headerFields: ["status", "priority", "caseType", "origin"],
@@ -323,7 +323,7 @@ export const CASE: EntityMeta = {
     },
     {
       name: "customerContactId",
-      label: "Contact",
+      label: "Person",
       type: "lookup",
       lookup: "contact",
       section: "Summary",
@@ -339,7 +339,7 @@ export const CASE: EntityMeta = {
     },
     {
       name: "caseType",
-      label: "Case type",
+      label: "Request type",
       type: "select",
       section: "Summary",
       options: opts(["question", "problem", "request"]),
@@ -369,9 +369,9 @@ export const CASE: EntityMeta = {
 
 export const WORK_ORDER: EntityMeta = {
   key: "work_order",
-  slug: "work-orders",
-  singular: "Work order",
-  plural: "Work orders",
+  slug: "jobs",
+  singular: "Job",
+  plural: "Jobs",
   numberField: "woNumber",
   titleFields: ["title"],
   columns: [
@@ -383,8 +383,8 @@ export const WORK_ORDER: EntityMeta = {
     { name: "estDurationMin", label: "Est. minutes" },
   ],
   views: [
-    { id: "all_open", label: "All Open Work Orders" },
-    { id: "unscheduled", label: "Unscheduled Work Orders" },
+    { id: "all_open", label: "All Open Jobs" },
+    { id: "unscheduled", label: "Unscheduled Jobs" },
     { id: "active", label: "Scheduled and In Progress" },
     { id: "completed", label: "Completed" },
   ],
@@ -394,7 +394,7 @@ export const WORK_ORDER: EntityMeta = {
     { name: "title", label: "Title", type: "text", section: "Summary", required: true },
     {
       name: "serviceAccountId",
-      label: "Service account",
+      label: "Customer",
       type: "lookup",
       lookup: "account",
       section: "Summary",
@@ -402,7 +402,7 @@ export const WORK_ORDER: EntityMeta = {
     },
     {
       name: "workOrderType",
-      label: "Work order type",
+      label: "Job type",
       type: "select",
       section: "Summary",
       options: opts(["repair", "maintenance", "installation", "inspection"]),
@@ -420,10 +420,10 @@ export const WORK_ORDER: EntityMeta = {
     },
     {
       name: "incidentType",
-      label: "Incident type",
+      label: "Kind of job",
       type: "text",
       section: "Summary",
-      hint: "What kind of job, e.g. HVAC repair",
+      hint: "For example, HVAC repair",
     },
     { name: "instructions", label: "Instructions", type: "textarea", section: "Summary" },
     {

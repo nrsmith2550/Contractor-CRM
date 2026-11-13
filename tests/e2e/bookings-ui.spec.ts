@@ -65,11 +65,11 @@ test.describe("bookings UI", () => {
     await page.getByRole("button", { name: "Add skill" }).click();
     await expect(page.getByRole("list", { name: "Skills" })).toContainText("HVAC certified");
 
-    await page.goto("/app/resources");
+    await page.goto("/app/team");
     await page.getByLabel("Name", { exact: true }).fill("Crew A");
-    await page.getByRole("button", { name: "Add resource" }).click();
+    await page.getByRole("button", { name: "Add team member" }).click();
     await expect(page.getByText("Crew A added.")).toBeVisible();
-    await expect(page.getByRole("table", { name: "Resources" })).toContainText("Crew A");
+    await expect(page.getByRole("table", { name: "Team members" })).toContainText("Crew A");
 
     // Bad working hours are refused with a message.
     await page.getByRole("link", { name: "Crew A" }).click();
@@ -85,10 +85,10 @@ test.describe("bookings UI", () => {
     await page.getByLabel("Monday").fill("08:00-17:00");
 
     // A work order that needs the skill.
-    await page.goto("/app/work-orders/new");
+    await page.goto("/app/jobs/new");
     await page.getByLabel("Title").fill("Service the furnace");
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page).toHaveURL(/\/app\/work-orders\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/app\/jobs\/[0-9a-f-]{36}$/);
     await page.getByRole("checkbox", { name: "HVAC certified" }).check();
     await page.getByRole("button", { name: "Save required skills" }).click();
     await expect(page.getByText("Required skills saved")).toBeVisible();
@@ -97,23 +97,23 @@ test.describe("bookings UI", () => {
     await page.getByLabel("Start", { exact: true }).fill("2030-05-01T20:00");
     await page.getByLabel("End", { exact: true }).fill("2030-05-01T21:00");
     await page.getByRole("button", { name: "Book", exact: true }).click();
-    const warnings = page.getByRole("group", { name: "Booking warnings" });
+    const warnings = page.getByRole("group", { name: "Visit warnings" });
     await expect(warnings).toContainText("outside Crew A's working hours");
     await expect(warnings).toContainText("doesn't have: HVAC certified");
-    const bookings = page.getByRole("table", { name: "Bookings" });
+    const bookings = page.getByRole("table", { name: "Visits" });
     await expect(bookings).toContainText("Crew A");
     await expect(bookings).toContainText("Scheduled");
     await expect(page.getByText("Scheduled", { exact: true }).first()).toBeVisible();
 
     // Cancel: the work order is Unscheduled again and can be rebooked inside working hours, no warnings.
-    await page.getByRole("button", { name: "Cancel booking for Crew A" }).click();
+    await page.getByRole("button", { name: "Cancel visit for Crew A" }).click();
     await expect(bookings).toContainText("Cancelled");
     await page.getByLabel("Start", { exact: true }).fill("2030-05-01T09:00");
     await page.getByLabel("End", { exact: true }).fill("2030-05-01T10:00");
     await page.getByRole("button", { name: "Book", exact: true }).click();
     await expect(page.getByText("Booked.")).toBeVisible();
     // 9am New York is inside Crew A's hours (the hours warning is gone); the skill warning remains.
-    const again = page.getByRole("group", { name: "Booking warnings" });
+    const again = page.getByRole("group", { name: "Visit warnings" });
     await expect(again).toContainText("doesn't have: HVAC certified");
     await expect(again).not.toContainText("working hours");
 
@@ -127,9 +127,9 @@ test.describe("bookings UI", () => {
     await lines.getByLabel("Hourly rate ($)").fill("95");
     await lines.getByRole("button", { name: "Add labour" }).click();
     await expect(lines.getByRole("table", { name: "Labour" })).toContainText("$142.50");
-    await expect(lines.getByLabel("Work order totals")).toContainText("$232.00");
+    await expect(lines.getByLabel("Job totals")).toContainText("$232.00");
     await lines.getByRole("button", { name: "Remove part 1" }).click();
-    await expect(lines.getByLabel("Work order totals")).toContainText("$142.50");
+    await expect(lines.getByLabel("Job totals")).toContainText("$142.50");
   });
 
   test("a technician runs a visit from their phone and captures a signature", async ({
@@ -197,10 +197,10 @@ test.describe("bookings UI", () => {
     // The site map is still reachable on a phone.
     await page
       .getByRole("navigation", { name: "Site map" })
-      .getByRole("link", { name: "My bookings" })
+      .getByRole("link", { name: "My visits" })
       .click();
-    await expect(page).toHaveURL(/\/app\/my-bookings$/);
-    await expect(page.getByRole("heading", { name: "My bookings" })).toBeVisible();
+    await expect(page).toHaveURL(/\/app\/my-visits$/);
+    await expect(page.getByRole("heading", { name: "My visits" })).toBeVisible();
     const card = page.getByRole("article", { name: /Replace the igniter/ });
     await expect(page.getByRole("region", { name: "Today" })).toBeVisible();
     await expect(card).toContainText("9:00 AM – 11:00 AM");

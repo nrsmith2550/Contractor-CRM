@@ -10,7 +10,7 @@ export default async function TaxRatesPage() {
   return (
     <>
       <h1>Tax rates</h1>
-      <p>Assign a tax rate to a product and it is applied to that product&apos;s quote lines.</p>
+      <p>Assign a tax rate to a product or service and it is applied to its quote lines.</p>
       {res.ok && res.rows.length === 0 && <p>No tax rates yet.</p>}
       {res.ok && (
         <ul>

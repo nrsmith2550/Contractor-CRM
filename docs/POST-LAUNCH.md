@@ -11,6 +11,15 @@ simpler, friendlier and easier to adopt, not adding enterprise features.
 
 ## 1. Simpler names and easier steps
 
+> **Done (2026-11-13): plain names.** Every screen, menu, button, message and web address now uses the
+> approved names, defined once in `src/lib/vocabulary.ts` (Prospect, Customer, Person, Deal, Support
+> request, Job, Team member, Visit, Schedule, Pricing, Products and services, Progress bar, and
+> "Turn into a customer"). Record numbers follow (PROS-, CUST-, PERS-, DEAL-, REQ-, JOB-), old web
+> addresses redirect to the new ones, and a test fails if an old word creeps back into a label. Not
+> changed on purpose: the deal stage names (Qualify, Develop, Propose, Close), the login "account"
+> (a person's sign-in), and internal database and code names. Still to do: industry vocabulary
+> packs, and friendlier deal stage names if wanted.
+
 Goal: nothing in the product should need a CRM glossary, and each task should be a short guided
 path. Terminology changes only affect labels (the data model and permissions keep their internal
 names), so it is a metadata change in `src/entities/*` plus page headings.

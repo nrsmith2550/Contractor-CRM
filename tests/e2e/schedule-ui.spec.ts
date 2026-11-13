@@ -107,19 +107,17 @@ test.describe("schedule board", () => {
     await signIn(page, biz.email);
     await page
       .getByRole("navigation", { name: "Site map" })
-      .getByRole("link", { name: "Schedule board" })
+      .getByRole("link", { name: "Schedule" })
       .click();
     await page.goto(url());
-    await expect(page.getByRole("group", { name: "Schedule board" })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Schedule" })).toBeVisible();
     await expect(page.locator('[data-resource="Alpha"]')).toBeVisible();
     await expect(page.locator('[data-resource="Bravo"]')).toBeVisible();
     const bookedBlock = page.locator(`[data-booking]`).filter({ hasText: booked.woNumber });
     await expect(bookedBlock).toHaveAttribute("aria-label", /09:00–11:00, scheduled/);
     expect((await bookedBlock.boundingBox())!.width).toBeCloseTo(2 * PX, 0); // two hours wide
-    await expect(page.getByRole("region", { name: "Unscheduled work orders" })).toContainText(
-      "Loose job",
-    );
-    await expect(page.getByRole("region", { name: "Unscheduled work orders" })).not.toContainText(
+    await expect(page.getByRole("region", { name: "Unscheduled jobs" })).toContainText("Loose job");
+    await expect(page.getByRole("region", { name: "Unscheduled jobs" })).not.toContainText(
       "Booked job",
     );
 
@@ -131,7 +129,7 @@ test.describe("schedule board", () => {
     });
     const looseBlock = page.locator(`[data-booking]`).filter({ hasText: loose.woNumber });
     await expect(looseBlock).toBeVisible();
-    await expect(page.getByRole("region", { name: "Unscheduled work orders" })).not.toContainText(
+    await expect(page.getByRole("region", { name: "Unscheduled jobs" })).not.toContainText(
       "Loose job",
     );
     let b = (await bookingOf(biz.tenantId, loose.id))!;
@@ -182,7 +180,7 @@ test.describe("schedule board", () => {
       x: (await xAt(page, "Alpha", 10)) + 4,
       y: await rowY(page, "Alpha"),
     });
-    const warnings = page.getByRole("group", { name: "Booking warnings" });
+    const warnings = page.getByRole("group", { name: "Visit warnings" });
     await expect(warnings).toContainText("already booked");
     await expect(page.locator(`[data-booking]`).filter({ hasText: third.woNumber })).toBeVisible();
 
@@ -192,13 +190,11 @@ test.describe("schedule board", () => {
       .filter({ hasText: third.woNumber })
       .click({ button: "right" });
     const menu = page.getByRole("menu");
-    await expect(menu.getByRole("menuitem", { name: "Open work order" })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Open job" })).toBeVisible();
     await expect(menu.getByRole("menuitem", { name: "Mark travelling" })).toBeVisible();
-    await menu.getByRole("menuitem", { name: "Cancel booking" }).click();
+    await menu.getByRole("menuitem", { name: "Cancel visit" }).click();
     await expect(page.locator(`[data-booking]`).filter({ hasText: third.woNumber })).toHaveCount(0);
-    await expect(page.getByRole("region", { name: "Unscheduled work orders" })).toContainText(
-      "Third job",
-    ); // back in the pane
+    await expect(page.getByRole("region", { name: "Unscheduled jobs" })).toContainText("Third job"); // back in the pane
     expect(await bookingOf(biz.tenantId, third.id)).toBeUndefined();
 
     // 6b. Outside working hours: the third job dropped at 06:00 (hours start at 08:00) books, with a warning.
@@ -206,7 +202,7 @@ test.describe("schedule board", () => {
       x: (await xAt(page, "Bravo", 6)) + 4,
       y: await rowY(page, "Bravo"),
     });
-    await expect(page.getByRole("group", { name: "Booking warnings" })).toContainText(
+    await expect(page.getByRole("group", { name: "Visit warnings" })).toContainText(
       "outside Bravo's working hours",
     );
     await expect(

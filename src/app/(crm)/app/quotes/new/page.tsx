@@ -13,8 +13,7 @@ export default async function NewQuotePage({
     <>
       <h1>New quote</h1>
       <p>
-        Give the quote a name. Customer details are copied from the opportunity when you start from
-        one.
+        Give the quote a name. Customer details are copied from the deal when you start from one.
       </p>
       <InlineForm
         submitLabel="Create quote"

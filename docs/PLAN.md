@@ -613,6 +613,13 @@ compares every table's row count before keeping it; a per-customer export and re
 `src/server/backup/tenant-data.ts`) that replaces one business's rows in a single verified transaction without touching the others;
 and the customer exports. 7 integration tests cover the per-customer restore. The first restore drill (branch copy, dump and
 restore, total-loss rebuild, encryption) is recorded there. One setup step is yours: add the `BACKUP_PASSPHRASE` secret on GitHub.
+**Plain names (done, before launch):** the original spec uses the Dynamics-style words. The product now shows the approved plain
+ones: Lead -> Prospect, Account -> Customer, Contact -> Person, Opportunity -> Deal, Case -> Support request, Work order -> Job,
+Resource -> Team member, Booking -> Visit, Schedule board -> Schedule, Price lists -> Pricing, Products -> Products and
+services, Business process flow -> Progress bar, and Qualify (a lead) -> Turn into a customer. They live in
+`src/lib/vocabulary.ts`. Web addresses changed to match (`/app/prospects`, `/app/jobs`, ...) with permanent redirects from the
+old ones, and record numbers now read PROS-, CUST-, PERS-, DEAL-, REQ-, JOB- (migration `0009` renumbers existing records).
+The rest of this document still uses the original words; read it with the table above.
 **Still to build in Phase 6:** production deploy.
 
 - [x] Lighthouse accessibility ≥ 90 on grid and form pages (measured with axe-core, see below)

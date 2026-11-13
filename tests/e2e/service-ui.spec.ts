@@ -46,9 +46,9 @@ test.describe("service UI", () => {
     // The site map has the service links.
     await page
       .getByRole("navigation", { name: "Site map" })
-      .getByRole("link", { name: "Cases" })
+      .getByRole("link", { name: "Support requests" })
       .click();
-    await expect(page.getByRole("heading", { name: "Cases" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Support requests" })).toBeVisible();
 
     // Administrators set up a subject and a queue.
     await page.goto("/app/settings/service");
@@ -60,16 +60,16 @@ test.describe("service UI", () => {
     await expect(page.getByRole("list", { name: "Queues" })).toContainText("Dispatch");
 
     // A new urgent case: its SLA counts down.
-    await page.goto("/app/cases/new");
+    await page.goto("/app/support-requests/new");
     await page.getByLabel("Title").fill("Furnace won't start");
     await page.getByLabel("Priority").selectOption("urgent");
     await page.getByLabel("Subject").selectOption({ label: "Heating" });
     await page.getByLabel("Queue").selectOption({ label: "Dispatch" });
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page).toHaveURL(/\/app\/cases\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/app\/support-requests\/[0-9a-f-]{36}$/);
     const caseUrl = page.url();
     const caseId = caseUrl.split("/").pop()!;
-    await expect(page.getByText("CAS-01001").first()).toBeVisible();
+    await expect(page.getByText("REQ-01001").first()).toBeVisible();
     await expect(page.locator('[data-sla="on_track"]')).toContainText("left");
 
     // Push its due time into the past: it shows as breached, in the list too.
@@ -82,20 +82,20 @@ test.describe("service UI", () => {
     await page.reload();
     await expect(page.locator('[data-sla="breached"]')).toContainText("Breached");
     await expect(page.locator('[data-sla="breached"]')).toContainText("overdue");
-    await page.goto("/app/cases");
+    await page.goto("/app/support-requests");
     await expect(
-      page.getByRole("row", { name: /CAS-01001/ }).locator('[data-sla="breached"]'),
+      page.getByRole("row", { name: /REQ-01001/ }).locator('[data-sla="breached"]'),
     ).toBeVisible();
 
     // Convert to a work order: linked, Unscheduled.
     await page.goto(caseUrl);
-    await page.getByRole("button", { name: "Convert to work order" }).click();
-    await expect(page).toHaveURL(/\/app\/work-orders\/[0-9a-f-]{36}$/);
-    await expect(page.getByText("WO-01001").first()).toBeVisible();
+    await page.getByRole("button", { name: "Turn into a job" }).click();
+    await expect(page).toHaveURL(/\/app\/jobs\/[0-9a-f-]{36}$/);
+    await expect(page.getByText("JOB-01001").first()).toBeVisible();
     await expect(page.getByText("Unscheduled").first()).toBeVisible();
     const woUrl = page.url();
     const woId = woUrl.split("/").pop()!;
-    await expect(page.getByRole("link", { name: "open the case" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "open the support request" })).toBeVisible();
 
     // The time window is entered in the business's zone (New York) and stored in UTC.
     await page.getByLabel("Time window start").fill("2030-07-15T09:00");
@@ -117,11 +117,11 @@ test.describe("service UI", () => {
 
     // The case can't be resolved while the work order is open.
     await page.goto(caseUrl);
-    await expect(page.getByRole("list").filter({ hasText: "WO-01001" })).toBeVisible();
-    await page.getByRole("button", { name: "Resolve case" }).click();
+    await expect(page.getByRole("list").filter({ hasText: "JOB-01001" })).toBeVisible();
+    await page.getByRole("button", { name: "Resolve request" }).click();
     await page.getByLabel("Resolution").fill("Replaced the igniter");
     await page.getByRole("button", { name: "Confirm resolve" }).click();
-    await expect(page.locator(".crm-error")).toContainText("WO-01001");
+    await expect(page.locator(".crm-error")).toContainText("JOB-01001");
 
     // Work the order through its status flow.
     await page.goto(woUrl);
@@ -136,11 +136,11 @@ test.describe("service UI", () => {
 
     // Now the case resolves; having breached its SLA it is recorded as missed.
     await page.goto(caseUrl);
-    await page.getByRole("button", { name: "Resolve case" }).click();
+    await page.getByRole("button", { name: "Resolve request" }).click();
     await page.getByLabel("Resolution").fill("Replaced the igniter");
     await page.getByLabel("Billable minutes").fill("75");
     await page.getByRole("button", { name: "Confirm resolve" }).click();
-    await expect(page.getByText("Case resolved.")).toBeVisible();
+    await expect(page.getByText("Request resolved.")).toBeVisible();
     await expect(page.locator('[data-sla="missed"]')).toBeVisible();
 
     // Reactivating restarts the clock.

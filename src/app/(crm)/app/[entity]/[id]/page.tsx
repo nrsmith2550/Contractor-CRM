@@ -4,7 +4,7 @@ import { BusinessProcessFlow } from "@/components/form/BusinessProcessFlow";
 import { EntityForm } from "@/components/form/EntityForm";
 import { NoteForm, RecordCommands } from "@/components/form/RecordCommands";
 import { Timeline } from "@/components/form/Timeline";
-import { entityBySlug, recordTitle } from "@/entities";
+import { ENTITIES, entityBySlug, recordTitle } from "@/entities";
 import { formatDate, formatMoney, humanize } from "@/lib/format";
 import { requireUser } from "@/server/auth/http";
 import { timeline } from "@/server/domain/activities";
@@ -46,7 +46,7 @@ export default async function RecordPage({
     const rid = row[f.name];
     if (typeof rid !== "string") continue;
     const r = await OPS[f.lookup!].get(ctx, rid);
-    if (r.ok) lookupLabels[f.name] = recordTitle(entityBySlug(f.lookup! + "s")!, r.row);
+    if (r.ok) lookupLabels[f.name] = recordTitle(ENTITIES[f.lookup!], r.row);
   }
 
   const hasTimeline = meta.key !== "product";
@@ -126,7 +126,8 @@ export default async function RecordPage({
       {meta.key === "work_order" && <WorkOrderCommands id={id} status={status as WoStatus} />}
       {meta.key === "work_order" && typeof row.incidentId === "string" && (
         <p>
-          Case: <Link href={`/app/cases/${row.incidentId}`}>open the case</Link>
+          Support request:{" "}
+          <Link href={`/app/support-requests/${row.incidentId}`}>open the support request</Link>
         </p>
       )}
       {meta.key === "work_order" && sched && sched[0].ok && sched[3].ok && (
@@ -199,15 +200,15 @@ export default async function RecordPage({
         tz={tz}
       />
       {meta.key === "case" && caseWorkOrders && (
-        <section aria-label="Work orders">
-          <h2>Work orders</h2>
+        <section aria-label="Jobs">
+          <h2>Jobs</h2>
           {caseWorkOrders.length === 0 ? (
-            <p>No work orders yet. Use Convert to work order to send someone out.</p>
+            <p>No jobs yet. Use Turn into a job to send someone out.</p>
           ) : (
             <ul>
               {caseWorkOrders.map((w) => (
                 <li key={w.id}>
-                  <Link href={`/app/work-orders/${w.id}`}>{w.woNumber}</Link> · {w.title} ·{" "}
+                  <Link href={`/app/jobs/${w.id}`}>{w.woNumber}</Link> · {w.title} ·{" "}
                   <span className="crm-badge">{humanize(w.status)}</span>
                 </li>
               ))}

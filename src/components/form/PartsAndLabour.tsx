@@ -107,10 +107,10 @@ export function PartsAndLabour(props: {
           fields={[
             {
               name: "productId",
-              label: "Product",
+              label: "Product or service",
               type: "select",
               options: [
-                { value: "", label: "Write-in (no product)" },
+                { value: "", label: "Write-in (not in your list)" },
                 ...props.products.map((p) => ({ value: p.id, label: p.label })),
               ],
             },
@@ -197,11 +197,7 @@ export function PartsAndLabour(props: {
           {err.message}
         </div>
       )}
-      <dl
-        className="crm-header"
-        aria-label="Work order totals"
-        style={{ justifyContent: "flex-end" }}
-      >
+      <dl className="crm-header" aria-label="Job totals" style={{ justifyContent: "flex-end" }}>
         {(
           [
             ["Parts", partsTotal],
