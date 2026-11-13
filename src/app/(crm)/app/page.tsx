@@ -18,9 +18,9 @@ export default async function SalesHubPage() {
     openPipelineValue(ctx),
   ]);
   const tile = (label: string, v: string, href: string) => (
-    <Link href={href} className="crm-card" style={{ display: "block", minWidth: 180 }}>
-      <div style={{ fontSize: 28, fontWeight: 600 }}>{v}</div>
-      <div>{label}</div>
+    <Link href={href} className="crm-card crm-tile">
+      <div className="crm-tile-value">{v}</div>
+      <div className="crm-tile-label">{label}</div>
     </Link>
   );
   return (

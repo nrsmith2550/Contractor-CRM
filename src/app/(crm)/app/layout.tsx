@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { SiteMap } from "@/components/shell/SiteMap";
+import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { requireUser } from "@/server/auth/http";
 import { SignOutButton } from "../../(auth)/auth-forms";
 import "../../crm.css";
@@ -15,16 +15,17 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
   return (
     <div className="crm-shell">
       <header className="crm-topbar">
-        <Link href="/app">
-          <strong>CRM</strong> · Sales Hub
-        </Link>
-        <span className="crm-row">
-          <form action="/app/search" method="get" role="search">
-            <input type="search" name="q" placeholder="Search" aria-label="Search all records" />
-          </form>
-          <span>{user.fullName}</span>
-          <SignOutButton />
-        </span>
+        <form action="/app/search" method="get" role="search">
+          <input
+            type="search"
+            name="q"
+            placeholder="Search leads, deals, contacts…"
+            aria-label="Search all records"
+          />
+        </form>
+        <ThemeToggle />
+        <span className="crm-user">{user.fullName}</span>
+        <SignOutButton />
       </header>
       <SiteMap />
       <main className="crm-main">{children}</main>

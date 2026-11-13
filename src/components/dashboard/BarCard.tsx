@@ -34,7 +34,15 @@ export function BarCard(props: {
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={48} />
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  background: "var(--surface)",
+                  color: "var(--text)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                }}
+                cursor={{ fill: "var(--hover)" }}
+              />
               <Bar dataKey="value" fill={props.color ?? "#0f6cbd"} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer>
