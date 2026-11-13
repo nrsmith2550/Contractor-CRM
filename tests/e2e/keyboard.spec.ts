@@ -34,7 +34,7 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Sales Hub" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
 }
 
 /** The element that has keyboard focus, described, with whether it shows a visible focus indicator. */
@@ -71,7 +71,7 @@ test.describe("keyboard", () => {
     await page.keyboard.press("Tab");
     await page.keyboard.type(PASSWORD);
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("heading", { name: "Sales Hub" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
 
     // The first Tab stop is the skip link; it appears on screen, and Enter moves focus to the content.
     await page.goto("/app/prospects");

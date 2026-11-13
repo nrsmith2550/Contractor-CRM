@@ -105,8 +105,12 @@ export function EntityGrid(props: {
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={meta.columns.length}>
-                No {meta.plural.toLowerCase()} to show in this view.
+              <td colSpan={meta.columns.length} className="crm-empty">
+                <strong>No {meta.plural.toLowerCase()} to show in this view.</strong>
+                <span>
+                  Try another view, or{" "}
+                  <Link href={`/app/${meta.slug}/new`}>add {meta.singular.toLowerCase()}</Link>.
+                </span>
               </td>
             </tr>
           )}

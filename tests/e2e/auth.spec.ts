@@ -42,10 +42,10 @@ test.describe("activation and sign-in", () => {
     await page.goto("/app");
     await expect(page).toHaveURL(/\/login$/);
 
-    // Activation creates the business and signs the owner in on the Sales Hub.
+    // Activation creates the business and signs the owner in on the Home.
     await fillActivation(page, key, company, email);
     await expect(page).toHaveURL(/\/app$/);
-    await expect(page.getByRole("heading", { name: "Sales Hub" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
     await expect(page.getByText(company)).toBeVisible();
 
     // The same key can't be activated twice: it redirects to sign-in with a masked email hint.
