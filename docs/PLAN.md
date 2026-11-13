@@ -607,11 +607,17 @@ found a link nested inside a draggable card on the schedule board; fixed.
 the Vercel `DATABASE_URL` points at). From a network that reaches the database only through an HTTP proxy, run it with
 `NODE_USE_ENV_PROXY=1`; the script now opens fresh connections at each phase so no single connection has to stay up for the
 whole two minutes. The app's database pools also log, instead of crashing on, a connection dropped while idle.
-**Still to build in Phase 6:** production deploy, backups.
+**Backups (done):** `docs/BACKUPS.md` is the runbook. Four layers, all free: Neon's 6-hour history; a nightly encrypted full
+backup (`.github/workflows/backup.yml`, `scripts/backup/dump-and-verify.sh`) that restores each dump into a scratch database and
+compares every table's row count before keeping it; a per-customer export and restore (`pnpm tenant:data`, in
+`src/server/backup/tenant-data.ts`) that replaces one business's rows in a single verified transaction without touching the others;
+and the customer exports. 7 integration tests cover the per-customer restore. The first restore drill (branch copy, dump and
+restore, total-loss rebuild, encryption) is recorded there. One setup step is yours: add the `BACKUP_PASSPHRASE` secret on GitHub.
+**Still to build in Phase 6:** production deploy.
 
 - [x] Lighthouse accessibility ≥ 90 on grid and form pages (measured with axe-core, see below)
 - [ ] Production deploy from `main` via CI, with migrations applied automatically
-- [ ] Restore drill: recover the DB from a Neon branch/snapshot into a test branch
+- [x] Restore drill: recover the DB from a Neon branch/snapshot into a test branch (first drill recorded in `docs/BACKUPS.md`)
 
 ## Security, testing, deployment
 

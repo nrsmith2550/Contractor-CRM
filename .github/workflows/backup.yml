@@ -1,0 +1,123 @@
+name: Nightly backup
+
+# A full, encrypted copy of the database every night, kept off the database host (as a GitHub
+# artifact for 30 days). It is restored into a scratch database and compared table by table BEFORE
+# it is kept, so a green run means the backup really works. Setup and restore steps: docs/BACKUPS.md.
+
+on:
+  schedule:
+    - cron: "17 7 * * *" # 07:17 UTC, about 2 am US Eastern
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The scratch database the dump is restored into to prove it works.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      # Which Neon branch is the live database (today "staging"; "main" once production is set up).
+      SOURCE_BRANCH: ${{ vars.BACKUP_NEON_BRANCH || 'staging' }}
+      DB_ROLE: ${{ vars.BACKUP_DB_ROLE || 'neondb_owner' }}
+      DB_NAME: ${{ vars.BACKUP_DB_NAME || 'neondb' }}
+    steps:
+      - name: Check configuration
+        id: cfg
+        run: |
+          missing=""
+          for v in NEON_PROJECT_ID NEON_API_KEY BACKUP_PASSPHRASE; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::warning title=Backups are not set up yet::Missing secret(s):$missing. See docs/BACKUPS.md."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ready == 'true'
+
+      # The runner ships PostgreSQL 16 tools; the database is newer, and pg_dump must not be older.
+      - name: Install PostgreSQL 18 client tools
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo tee /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc > /dev/null
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+          pg_dump --version
+
+      # A frozen copy of the live database at this moment, so the dump and the comparison see
+      # exactly the same data even while customers are using the app.
+      - name: Make a frozen copy of the database
+        id: copy
+        if: steps.cfg.outputs.ready == 'true'
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          parent: ${{ env.SOURCE_BRANCH }}
+          branch_name: backup-${{ github.run_id }}
+          username: ${{ env.DB_ROLE }}
+          database: ${{ env.DB_NAME }}
+
+      - name: Dump, restore into a scratch database, and compare
+        if: steps.cfg.outputs.ready == 'true'
+        run: ./scripts/backup/dump-and-verify.sh
+        env:
+          SOURCE_URL: ${{ steps.copy.outputs.db_url }}
+          VERIFY_URL: postgres://postgres:postgres@localhost:5432/postgres
+          OUT: backup.dump
+
+      - name: Encrypt and check it decrypts
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          stamp=$(date -u +%Y-%m-%d)
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 600000 -pass env:BACKUP_PASSPHRASE \
+            -in backup.dump -out "clinch-backup-$stamp.dump.enc"
+          # Round trip: the encrypted file must decrypt to exactly the dump that was verified.
+          want=$(sha256sum < backup.dump)
+          got=$(openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:BACKUP_PASSPHRASE \
+                  -in "clinch-backup-$stamp.dump.enc" | sha256sum)
+          [ "$want" = "$got" ] || { echo "Encrypted file does not decrypt to the verified dump" >&2; exit 1; }
+          echo "stamp=$stamp" >> "$GITHUB_ENV"
+          shred -u backup.dump
+          ls -l clinch-backup-*.dump.enc
+
+      - uses: actions/upload-artifact@v4
+        if: steps.cfg.outputs.ready == 'true'
+        with:
+          name: clinch-backup-${{ env.stamp }}
+          path: clinch-backup-*.dump.enc
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Delete the frozen copy
+        if: always() && steps.copy.outputs.branch_id != ''
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch: ${{ steps.copy.outputs.branch_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}
