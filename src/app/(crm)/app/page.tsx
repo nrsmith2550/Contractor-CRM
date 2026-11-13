@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/shell/Icon";
-import { formatMoney } from "@/lib/format";
+import { formatDateTime, formatMoney, humanize } from "@/lib/format";
 import { WORDS } from "@/lib/vocabulary";
-import { tenantName } from "@/server/entities/tenant";
+import { tenantName, tenantTimeZone } from "@/server/entities/tenant";
 import { requireUser } from "@/server/auth/http";
 import { buildCtx } from "@/server/domain/context";
+import { salesDashboard, serviceDashboard } from "@/server/domain/dashboards";
 import { openPipelineValue } from "@/server/domain/opportunities";
 import { OPS } from "@/server/entities/registry";
 
@@ -16,16 +17,24 @@ const ONE = { limit: 1, offset: 0 } as const;
 export default async function HomePage() {
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
-  const [leads, opps, value, requests, jobs, customers, products, anyLeads] = await Promise.all([
-    OPS.lead.list(ctx, { view: "my_open", ...ONE }),
-    OPS.opportunity.list(ctx, { view: "my_open", ...ONE }),
-    openPipelineValue(ctx),
-    OPS.case.list(ctx, { view: "all_active", ...ONE }),
-    OPS.work_order.list(ctx, { view: "all_open", ...ONE }),
-    OPS.account.list(ctx, { view: "all", ...ONE }),
-    OPS.product.list(ctx, { view: "all", ...ONE }),
-    OPS.lead.list(ctx, { view: "all_open", ...ONE }),
-  ]);
+  const tz = await tenantTimeZone(user.tenantId);
+  const now = new Date();
+  const [leads, opps, value, requests, jobs, customers, products, anyLeads, sales, service] =
+    await Promise.all([
+      // Lists only ever include what this person is allowed to see, so "open" means their share.
+      OPS.lead.list(ctx, { view: "all_open", ...ONE }),
+      OPS.opportunity.list(ctx, { view: "open", ...ONE }),
+      openPipelineValue(ctx),
+      OPS.case.list(ctx, { view: "all_active", ...ONE }),
+      OPS.work_order.list(ctx, { view: "all_open", ...ONE }),
+      OPS.account.list(ctx, { view: "all", ...ONE }),
+      OPS.product.list(ctx, { view: "all", ...ONE }),
+      OPS.lead.list(ctx, { view: "all_open", ...ONE }),
+      salesDashboard(ctx, { now, tz }),
+      serviceDashboard(ctx, { now, tz }),
+    ]);
+  const tasks = sales.ok ? sales.myActivities : null;
+  const late = service.ok ? service.breaches : null;
   const count = (r: { ok: boolean; total?: number }) => (r.ok ? String(r.total ?? 0) : "—");
   const has = (r: { ok: boolean; total?: number }) => r.ok && (r.total ?? 0) > 0;
 
@@ -83,12 +92,70 @@ export default async function HomePage() {
       </div>
 
       <div className="home-tiles">
-        {tile("target", `My open ${WORDS.lead.many.toLowerCase()}`, count(leads), "/app/prospects")}
-        {tile("deal", `My open ${WORDS.opportunity.many.toLowerCase()}`, count(opps), "/app/deals")}
+        {tile(
+          "target",
+          `Open ${WORDS.lead.many.toLowerCase()}`,
+          count(leads),
+          "/app/prospects?view=all_open",
+        )}
+        {tile(
+          "deal",
+          `Open ${WORDS.opportunity.many.toLowerCase()}`,
+          count(opps),
+          "/app/deals?view=open",
+        )}
         {tile("funnel", "Open pipeline value", formatMoney(value), "/app/pipeline")}
         {tile("support", "Active support requests", count(requests), "/app/support-requests")}
         {tile("job", `Open ${WORDS.workOrder.many.toLowerCase()}`, count(jobs), "/app/jobs")}
       </div>
+
+      {(tasks || late) && (
+        <div className="home-panels">
+          {tasks && (
+            <section className="home-panel" aria-labelledby="home-tasks">
+              <h2 id="home-tasks">Your open tasks</h2>
+              {tasks.length === 0 ? (
+                <p className="crm-muted">Nothing open. Nice.</p>
+              ) : (
+                <ul>
+                  {tasks.map((a) => (
+                    <li key={a.id}>
+                      {a.href ? <Link href={a.href}>{a.subject}</Link> : a.subject}
+                      <span className="crm-muted">
+                        {" "}
+                        · {humanize(a.type)}
+                        {a.when ? ` · ${formatDateTime(a.when, tz)}` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+          {late && (
+            <section className="home-panel" aria-labelledby="home-late">
+              <h2 id="home-late">Past due</h2>
+              {late.length === 0 ? (
+                <p className="crm-muted">No support request is past its due time.</p>
+              ) : (
+                <ul>
+                  {late.map((b) => (
+                    <li key={b.id}>
+                      <Link href={`/app/support-requests/${b.id}`}>
+                        {b.ticketNumber} {b.title}
+                      </Link>
+                      <span className="crm-muted">
+                        {" "}
+                        · {humanize(b.priority)} · due {formatDateTime(b.dueAt, tz)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+        </div>
+      )}
 
       {remaining > 0 && (
         <section className="home-steps" aria-labelledby="first-steps">

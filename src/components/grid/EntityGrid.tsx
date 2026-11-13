@@ -35,8 +35,10 @@ export function EntityGrid(props: {
   search: string;
   page: number;
   tz: string;
+  /** The default view was empty, so a wider one is shown instead. */
+  widened?: boolean;
 }) {
-  const { meta, rows, total, view, search, page, tz } = props;
+  const { meta, rows, total, view, search, page, tz, widened } = props;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const href = (p: number) =>
     `/app/${meta.slug}?view=${encodeURIComponent(view)}&q=${encodeURIComponent(search)}&page=${p}`;
@@ -89,6 +91,12 @@ export function EntityGrid(props: {
           </button>
         </form>
       </div>
+      {widened && (
+        <p className="crm-muted" role="status">
+          You don&apos;t have any {meta.plural.toLowerCase()} of your own yet, so this shows{" "}
+          {(meta.views.find((v) => v.id === view)?.label ?? "everything").toLowerCase()}.
+        </p>
+      )}
       <table className="crm-grid">
         <caption className="crm-sr">
           {meta.views.find((v) => v.id === view)?.label ?? meta.plural}

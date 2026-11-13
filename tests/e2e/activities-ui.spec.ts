@@ -39,7 +39,7 @@ test.describe("calls and tasks", () => {
     await page.goto("/app/prospects/new");
     // Optional fields start tucked away under "More details".
     await expect(page.getByLabel("Est. value")).toBeHidden();
-    await page.getByText("More details: Details").click();
+    await page.getByText("More details", { exact: true }).click();
     await expect(page.getByLabel("Est. value")).toBeVisible();
     await page.getByLabel("Last name").fill(`Calla${id}`);
     await page.getByRole("button", { name: "Save" }).click();

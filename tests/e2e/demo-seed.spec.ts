@@ -38,6 +38,15 @@ test.describe("demo business", () => {
 
     // The owner sees a populated business.
     await signIn(page, email("Jordan Rivers"));
+    // Home counts everyone's open work, and a "My ..." list with nothing in it shows the wider list.
+    await page.goto("/app");
+    await expect(page.locator('a.crm-tile[href="/app/prospects?view=all_open"]')).toContainText(
+      "12",
+    );
+    await expect(page.getByRole("region", { name: "Your open tasks" })).toBeVisible();
+    await page.goto("/app/prospects");
+    await expect(page.getByText("You don't have any prospects of your own yet")).toBeVisible();
+    await expect(page.getByText("12 records")).toBeVisible();
     await page.goto("/app/prospects?view=all_open");
     await expect(page.getByText("12 records")).toBeVisible();
     await page.goto("/app/dashboards/sales");
