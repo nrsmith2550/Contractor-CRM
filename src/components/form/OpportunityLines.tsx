@@ -49,7 +49,11 @@ export function OpportunityLines(props: {
             <th scope="col">Unit price</th>
             <th scope="col">Discount</th>
             <th scope="col">Amount</th>
-            {editable && <th scope="col" />}
+            {editable && (
+              <th scope="col">
+                <span className="crm-sr">Actions</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>

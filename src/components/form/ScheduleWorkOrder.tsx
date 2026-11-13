@@ -90,7 +90,9 @@ export function ScheduleWorkOrder(props: {
             <th scope="col">Resource</th>
             <th scope="col">When</th>
             <th scope="col">Status</th>
-            <th scope="col" />
+            <th scope="col">
+              <span className="crm-sr">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>

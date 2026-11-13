@@ -16,10 +16,10 @@ export default async function UsersPage() {
   const subject = await loadSubject(user.tenantId, user.userId);
   if (!can(subject, "user", "read")) {
     return (
-      <main style={{ padding: 24 }}>
+      <div>
         <h1>Users</h1>
         <p>You don&apos;t have permission to view this page.</p>
-      </main>
+      </div>
     );
   }
 
@@ -41,7 +41,7 @@ export default async function UsersPage() {
   const canRevoke = can(subject, "user", "write");
 
   return (
-    <main style={{ padding: 24, maxWidth: 900 }}>
+    <div style={{ maxWidth: 900 }}>
       <h1>Users</h1>
       <p>
         <strong>
@@ -104,6 +104,6 @@ export default async function UsersPage() {
           <InviteForm roles={roles} />
         </>
       ) : null}
-    </main>
+    </div>
   );
 }

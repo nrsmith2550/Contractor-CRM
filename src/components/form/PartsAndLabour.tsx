@@ -65,7 +65,11 @@ export function PartsAndLabour(props: {
             <th scope="col">Qty</th>
             <th scope="col">Price</th>
             <th scope="col">Amount</th>
-            {props.editable && <th scope="col" />}
+            {props.editable && (
+              <th scope="col">
+                <span className="crm-sr">Actions</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -131,7 +135,11 @@ export function PartsAndLabour(props: {
             <th scope="col">Minutes</th>
             <th scope="col">Rate / hour</th>
             <th scope="col">Amount</th>
-            {props.editable && props.canLabour && <th scope="col" />}
+            {props.editable && props.canLabour && (
+              <th scope="col">
+                <span className="crm-sr">Actions</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>

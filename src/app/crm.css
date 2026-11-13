@@ -169,6 +169,17 @@
   padding: 1px 8px;
   font-size: 12px;
 }
+.crm-badge[data-sla="on_track"],
+.crm-badge[data-sla="met"] {
+  color: var(--ok);
+}
+.crm-badge[data-sla="due_soon"] {
+  color: var(--warn-text);
+}
+.crm-badge[data-sla="breached"],
+.crm-badge[data-sla="missed"] {
+  color: var(--danger);
+}
 .crm-pager {
   margin-top: 12px;
 }
@@ -795,4 +806,32 @@
 }
 .public-brand .brand-plate {
   width: 220px;
+}
+
+/* Days from the neighbouring months: FullCalendar fades them to 30%, which fails contrast. Shade instead. */
+.cal-wrap .fc-day-other {
+  background: var(--surface-2);
+}
+.cal-wrap .fc-day-other .fc-daygrid-day-top {
+  opacity: 1;
+}
+
+/* Keyboard users: a link that jumps past the sidebar, visible only while focused. */
+.crm-skip {
+  position: absolute;
+  left: 8px;
+  top: -64px;
+  z-index: 100;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.crm-skip:focus {
+  top: 8px;
+}
+.crm-main:focus {
+  outline: none;
 }
