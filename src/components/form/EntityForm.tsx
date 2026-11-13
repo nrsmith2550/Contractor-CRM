@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import type { EntityMeta, FieldDef } from "@/entities/types";
 import { utcToZonedInput } from "@/lib/tz";
 import { saveRecordAction, lookupAction, type CmdResult } from "@/server/actions/entities";
@@ -155,101 +155,118 @@ export function EntityForm(props: {
           {result.message}
         </div>
       )}
-      {sections.map((s) => (
-        <fieldset key={s} className="crm-section">
-          <legend>{s}</legend>
-          <div className="crm-fields">
-            {meta.fields
-              .filter((f) => f.section === s)
-              .map((f) => {
-                const err = issue(f.name);
-                const common = {
-                  id: `f-${f.name}`,
-                  name: f.name,
-                  disabled: readOnly,
-                  "aria-invalid": err ? true : undefined,
-                  "aria-describedby": err ? `e-${f.name}` : undefined,
-                };
-                const set = (v: string | boolean) => setValues((p) => ({ ...p, [f.name]: v }));
-                const v = values[f.name];
-                return (
-                  <div key={f.name} className="crm-field">
-                    <label htmlFor={`f-${f.name}`}>
-                      {f.label}
-                      {f.required && (
-                        <span aria-hidden="true" className="crm-req">
-                          {" "}
-                          *
-                        </span>
+      {sections.map((s, i) => {
+        // On a new record, the sections the entity lists as optional are tucked away, so the form starts short.
+        const inSection = meta.fields.filter((f) => f.section === s);
+        const optional =
+          !id &&
+          i > 0 &&
+          !!meta.moreSections?.includes(s) &&
+          !inSection.some((f) => f.required || f.recommended || issue(f.name) !== undefined);
+        const box = (
+          <fieldset className="crm-section">
+            <legend>{s}</legend>
+            <div className="crm-fields">
+              {meta.fields
+                .filter((f) => f.section === s)
+                .map((f) => {
+                  const err = issue(f.name);
+                  const common = {
+                    id: `f-${f.name}`,
+                    name: f.name,
+                    disabled: readOnly,
+                    "aria-invalid": err ? true : undefined,
+                    "aria-describedby": err ? `e-${f.name}` : undefined,
+                  };
+                  const set = (v: string | boolean) => setValues((p) => ({ ...p, [f.name]: v }));
+                  const v = values[f.name];
+                  return (
+                    <div key={f.name} className="crm-field">
+                      <label htmlFor={`f-${f.name}`}>
+                        {f.label}
+                        {f.required && (
+                          <span aria-hidden="true" className="crm-req">
+                            {" "}
+                            *
+                          </span>
+                        )}
+                        {f.recommended && (
+                          <span aria-hidden="true" className="crm-rec">
+                            {" "}
+                            +
+                          </span>
+                        )}
+                      </label>
+                      {f.type === "select" ? (
+                        <select {...common} value={String(v)} onChange={(e) => set(e.target.value)}>
+                          <option value="">—</option>
+                          {f.options!.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : f.type === "textarea" ? (
+                        <textarea
+                          {...common}
+                          value={String(v)}
+                          onChange={(e) => set(e.target.value)}
+                        />
+                      ) : f.type === "checkbox" ? (
+                        <input
+                          {...common}
+                          type="checkbox"
+                          checked={v === true}
+                          onChange={(e) => set(e.target.checked)}
+                        />
+                      ) : f.type === "lookup" ? (
+                        <Lookup
+                          field={f}
+                          value={String(v)}
+                          label={labels[f.name] ?? ""}
+                          onPick={(pid, plabel) => {
+                            set(pid);
+                            setLabels((p) => ({ ...p, [f.name]: plabel }));
+                          }}
+                        />
+                      ) : (
+                        <input
+                          {...common}
+                          type={
+                            f.type === "money" || f.type === "number"
+                              ? "text"
+                              : f.type === "datetime"
+                                ? "datetime-local"
+                                : f.type
+                          }
+                          inputMode={
+                            f.type === "money" || f.type === "number" ? "decimal" : undefined
+                          }
+                          value={String(v)}
+                          onChange={(e) => set(e.target.value)}
+                        />
                       )}
-                      {f.recommended && (
-                        <span aria-hidden="true" className="crm-rec">
-                          {" "}
-                          +
-                        </span>
+                      {f.hint && <small>{f.hint}</small>}
+                      {err && (
+                        <small id={`e-${f.name}`} className="crm-error-text">
+                          {err}
+                        </small>
                       )}
-                    </label>
-                    {f.type === "select" ? (
-                      <select {...common} value={String(v)} onChange={(e) => set(e.target.value)}>
-                        <option value="">—</option>
-                        {f.options!.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : f.type === "textarea" ? (
-                      <textarea
-                        {...common}
-                        value={String(v)}
-                        onChange={(e) => set(e.target.value)}
-                      />
-                    ) : f.type === "checkbox" ? (
-                      <input
-                        {...common}
-                        type="checkbox"
-                        checked={v === true}
-                        onChange={(e) => set(e.target.checked)}
-                      />
-                    ) : f.type === "lookup" ? (
-                      <Lookup
-                        field={f}
-                        value={String(v)}
-                        label={labels[f.name] ?? ""}
-                        onPick={(pid, plabel) => {
-                          set(pid);
-                          setLabels((p) => ({ ...p, [f.name]: plabel }));
-                        }}
-                      />
-                    ) : (
-                      <input
-                        {...common}
-                        type={
-                          f.type === "money" || f.type === "number"
-                            ? "text"
-                            : f.type === "datetime"
-                              ? "datetime-local"
-                              : f.type
-                        }
-                        inputMode={
-                          f.type === "money" || f.type === "number" ? "decimal" : undefined
-                        }
-                        value={String(v)}
-                        onChange={(e) => set(e.target.value)}
-                      />
-                    )}
-                    {f.hint && <small>{f.hint}</small>}
-                    {err && (
-                      <small id={`e-${f.name}`} className="crm-error-text">
-                        {err}
-                      </small>
-                    )}
-                  </div>
-                );
-              })}
-          </div>
-        </fieldset>
-      ))}
+                    </div>
+                  );
+                })}
+            </div>
+          </fieldset>
+        );
+        return optional ? (
+          <details key={s} className="crm-more">
+            <summary>More details: {s}</summary>
+            {box}
+          </details>
+        ) : (
+          <Fragment key={s}>{box}</Fragment>
+        );
+      })}
     </form>
   );
 }

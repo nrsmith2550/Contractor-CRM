@@ -38,6 +38,7 @@ export const LEAD: EntityMeta = {
   ],
   defaultView: "my_open",
   headerFields: ["status", "rating", "leadSource", "estValueCents"],
+  moreSections: ["Details"],
   fields: [
     {
       name: "topic",
@@ -93,6 +94,7 @@ export const ACCOUNT: EntityMeta = {
   ],
   defaultView: "all",
   headerFields: ["relationshipType", "phone", "industry", "paymentTerms"],
+  moreSections: ["Details"],
   fields: [
     { name: "name", label: "Customer name", type: "text", section: "Summary", required: true },
     { name: "phone", label: "Phone", type: "tel", section: "Summary", recommended: true },
@@ -143,6 +145,7 @@ export const CONTACT: EntityMeta = {
   views: [{ id: "all", label: "All People" }],
   defaultView: "all",
   headerFields: ["jobTitle", "email", "businessPhone", "mobile"],
+  moreSections: ["Details"],
   fields: [
     { name: "firstName", label: "First name", type: "text", section: "Summary" },
     { name: "lastName", label: "Last name", type: "text", section: "Summary", required: true },

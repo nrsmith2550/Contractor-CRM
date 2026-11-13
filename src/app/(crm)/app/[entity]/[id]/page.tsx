@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BusinessProcessFlow } from "@/components/form/BusinessProcessFlow";
 import { EntityForm } from "@/components/form/EntityForm";
-import { NoteForm, RecordCommands } from "@/components/form/RecordCommands";
+import { Composer } from "@/components/form/Composer";
+import { RecordCommands } from "@/components/form/RecordCommands";
 import { Timeline } from "@/components/form/Timeline";
 import { ENTITIES, entityBySlug, recordTitle } from "@/entities";
 import { formatDate, formatMoney, humanize } from "@/lib/format";
@@ -219,7 +220,7 @@ export default async function RecordPage({
       {hasTimeline && (
         <>
           <h2>Timeline</h2>
-          <NoteForm entityKey={meta.key} id={id} />
+          <Composer entityKey={meta.key} id={id} />
           {tl?.ok && <Timeline items={tl.items} tz={tz} />}
         </>
       )}

@@ -25,7 +25,7 @@ export const SALES: Article[] = [
       h("Follow up"),
       list(
         "**Mark contacted** once you have reached out. It is only offered while the prospect is new.",
-        "Add a note from the timeline at the bottom of the record: see [Notes and appointments](/app/help/notes-and-appointments).",
+        "Add a note from the timeline at the bottom of the record: see [Notes, calls, tasks and appointments](/app/help/notes-and-appointments).",
         "Use the views at the top of the list: *My Open Prospects*, *All Open Prospects*, *Prospects Added This Week*, *Closed Prospects*.",
       ),
       h("When it goes nowhere"),

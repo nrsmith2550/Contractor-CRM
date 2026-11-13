@@ -100,7 +100,7 @@ export const PROCESS: Article[] = [
         `Alongside this, a ${N.request} records a customer asking for help, with a due time. A ${N.request} can result in a ${N.job}.`,
       ),
       note(
-        `Every record keeps its history: who created or changed it and when. Notes and appointments are attached to the record they are about, so the story of a ${N.customer} is in one place.`,
+        `Every record keeps its history: who created or changed it and when. Notes, calls, tasks and appointments are attached to the record they are about, so the story of a ${N.customer} is in one place.`,
       ),
     ],
     related: ["sales-process", "service-process", "record-lifecycles", "who-can-do-what"],
