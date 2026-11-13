@@ -620,6 +620,7 @@ services, Business process flow -> Progress bar, and Qualify (a lead) -> Turn in
 `src/lib/vocabulary.ts`. Web addresses changed to match (`/app/prospects`, `/app/jobs`, ...) with permanent redirects from the
 old ones, and record numbers now read PROS-, CUST-, PERS-, DEAL-, REQ-, JOB- (migration `0009` renumbers existing records).
 The rest of this document still uses the original words; read it with the table above.
+**Process guide (done, "Step 3"):** seven more guides under "How it all works": the whole journey, the sales process, the service process, statuses and what they allow (job, visit, request and quote tables generated from the real status rules), the life of a quote, a day in the life by role, and where your data lives. 47 guides in total.
 **Help guide (done, "Step 2" of the pre-launch work):** an in-app support guide at `/app/help` with 40 plain-language guides in nine
 topics (getting started, sales, customers and people, support requests and jobs, products and pricing, calendar and data, team,
 how it all works, fixing problems), a search, step-by-step instructions, flow diagrams, a "words we use" dictionary that maps other

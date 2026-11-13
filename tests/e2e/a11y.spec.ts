@@ -131,6 +131,8 @@ test.describe("accessibility", () => {
       "/app/help/quotes",
       "/app/help/due-times",
       "/app/help/who-can-do-what",
+      "/app/help/record-lifecycles",
+      "/app/help/how-it-works",
       "/app/help/words-we-use",
     ];
 
