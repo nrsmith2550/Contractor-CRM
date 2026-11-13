@@ -21,6 +21,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "license:mint": "tsx scripts/mint-license.ts",
+    "db:seed-demo": "tsx scripts/seed-demo.ts",
     "vercel-build": "pnpm db:migrate && next build"
   },
   "dependencies": {
