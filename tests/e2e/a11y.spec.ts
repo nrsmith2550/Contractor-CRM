@@ -126,6 +126,12 @@ test.describe("accessibility", () => {
       "/app/settings/tax-rates",
       "/app/settings/branding",
       "/app/settings/service",
+      "/app/help",
+      "/app/help?q=quote",
+      "/app/help/quotes",
+      "/app/help/due-times",
+      "/app/help/who-can-do-what",
+      "/app/help/words-we-use",
     ];
 
     const found: Record<string, unknown> = {};

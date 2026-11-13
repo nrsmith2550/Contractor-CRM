@@ -620,6 +620,16 @@ services, Business process flow -> Progress bar, and Qualify (a lead) -> Turn in
 `src/lib/vocabulary.ts`. Web addresses changed to match (`/app/prospects`, `/app/jobs`, ...) with permanent redirects from the
 old ones, and record numbers now read PROS-, CUST-, PERS-, DEAL-, REQ-, JOB- (migration `0009` renumbers existing records).
 The rest of this document still uses the original words; read it with the table above.
+**Help guide (done, "Step 2" of the pre-launch work):** an in-app support guide at `/app/help` with 40 plain-language guides in nine
+topics (getting started, sales, customers and people, support requests and jobs, products and pricing, calendar and data, team,
+how it all works, fixing problems), a search, step-by-step instructions, flow diagrams, a "words we use" dictionary that maps other
+CRM products' names to ours, and a "Who can do what" table generated from the real role settings. The guides pull their numbers
+(due-time hours, import and export limits, seat limits, stage requirements) from the code, so they cannot drift, and tests check
+that every link resolves, no old word creeps back, and the search works. A "Help" link is in the top bar and menu, and each list
+has "Help with ..." beside its buttons. Set `SUPPORT_EMAIL` to show a support address on the Help page.
+Found and fixed while writing it: closing a prospect asked for free text but accepted four fixed reasons (now a choice list); the
+sign-in message for turned-off access said "account" (now "access"). Known gap, planned for the UI step: tasks and phone calls
+cannot yet be added from the screens (only notes and appointments), although the dashboard lists "My activities".
 **Still to build in Phase 6:** production deploy.
 
 - [x] Lighthouse accessibility ≥ 90 on grid and form pages (measured with axe-core, see below)

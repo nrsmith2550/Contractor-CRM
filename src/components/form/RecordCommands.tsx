@@ -5,6 +5,14 @@ import { useState, useTransition } from "react";
 import type { EntityKey } from "@/entities/types";
 import { addNoteAction, recordCommandAction, type CmdResult } from "@/server/actions/entities";
 
+/** Why a prospect is closed. The values are what the server accepts; the words are what people read. */
+const CLOSE_REASONS: [value: string, label: string][] = [
+  ["lost", "Lost to someone else"],
+  ["cannot_contact", "Could not reach them"],
+  ["no_longer_interested", "No longer interested"],
+  ["cancelled", "Cancelled"],
+];
+
 type Dup = { kind: string; id: string; label: string; matchedOn?: string[] };
 
 /** Command bar for a saved record: lead and opportunity workflow actions, with their prompts. */
@@ -78,7 +86,14 @@ export function RecordCommands(props: {
         <div className="crm-panel" role="group" aria-label="Close prospect">
           <label>
             Reason
-            <input value={v.reason ?? ""} onChange={set("reason")} />
+            <select value={v.reason ?? ""} onChange={set("reason")}>
+              <option value="">Choose a reason</option>
+              {CLOSE_REASONS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </label>
           {btn("Confirm close", () => run("disqualify"), true)}
           {btn("Cancel", () => setPanel(""))}

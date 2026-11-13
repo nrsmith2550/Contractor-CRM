@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { SiteMap } from "@/components/shell/SiteMap";
@@ -26,6 +27,9 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
             aria-label="Search all records"
           />
         </form>
+        <Link href="/app/help" className="crm-btn">
+          Help
+        </Link>
         <ThemeToggle />
         <span className="crm-user">{user.fullName}</span>
         <SignOutButton />
