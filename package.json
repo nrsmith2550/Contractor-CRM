@@ -26,6 +26,12 @@
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@fluentui/react-components": "^9.54.0",
+    "@fullcalendar/core": "^6.1.22",
+    "@fullcalendar/daygrid": "6.1.22",
+    "@fullcalendar/interaction": "6.1.22",
+    "@fullcalendar/list": "6.1.22",
+    "@fullcalendar/react": "^6.1.22",
+    "@fullcalendar/timegrid": "6.1.22",
     "@griffel/react": "^1.5.25",
     "@hookform/resolvers": "^7.0.6",
     "@neondatabase/serverless": "^0.10.0",
