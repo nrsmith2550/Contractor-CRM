@@ -58,6 +58,7 @@ test.describe("calendar", () => {
   test("shows appointments, tasks and bookings in the business's zone, and adds an appointment", async ({
     page,
   }) => {
+    await page.context().setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
     const { email, tenantId, ownerId } = await newBusiness();
     const c = await buildCtx(tenantId, ownerId);
     // 13:00 UTC is 9:00 in New York (daylight time in May).
@@ -135,6 +136,7 @@ test.describe("calendar", () => {
   });
 
   test("an administrator can switch to everyone's calendar", async ({ page }) => {
+    await page.context().setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
     const { email, tenantId, ownerId } = await newBusiness();
     const c = await buildCtx(tenantId, ownerId);
     ok(
