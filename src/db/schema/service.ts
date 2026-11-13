@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { systemUser } from "./identity";
 import { tenant } from "./platform";
-import { address, standard } from "./sales";
+import { address, cents, standard } from "./sales";
 
 // Service tables: cases ("incident"), their subjects and queues, and work orders. All are
 // tenant-scoped (tenant_id + RLS via src/db/tenant-tables.ts) and owned (owner_id), like the
@@ -182,4 +182,50 @@ export const resourceBooking = pgTable(
     index("booking_resource_time_idx").on(t.tenantId, t.resourceId, t.startAt),
     index("booking_work_order_idx").on(t.tenantId, t.workOrderId),
   ],
+);
+
+// ---- Parts and labour used on a work order (these feed an invoice later) ------------------------
+
+export const workOrderProduct = pgTable(
+  "work_order_product",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    workOrderId: uuid("work_order_id")
+      .notNull()
+      .references(() => workOrder.id, { onDelete: "cascade" }),
+    lineNumber: integer("line_number").notNull(),
+    productId: uuid("product_id"),
+    description: text("description").notNull(), // product name, or a write-in
+    quantityMilli: cents("quantity_milli").notNull(), // 1000 = 1
+    unitPriceCents: cents("unit_price_cents").notNull(),
+    extendedCents: cents("extended_cents").notNull().default(0),
+    addedBy: uuid("added_by").references(() => systemUser.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("work_order_product_line_uq").on(t.workOrderId, t.lineNumber)],
+);
+
+export const workOrderService = pgTable(
+  "work_order_service",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    workOrderId: uuid("work_order_id")
+      .notNull()
+      .references(() => workOrder.id, { onDelete: "cascade" }),
+    lineNumber: integer("line_number").notNull(),
+    resourceId: uuid("resource_id").references(() => bookableResource.id),
+    description: text("description").notNull(), // e.g. "Labour"
+    minutes: integer("minutes").notNull(),
+    hourlyRateCents: cents("hourly_rate_cents").notNull(),
+    extendedCents: cents("extended_cents").notNull().default(0),
+    addedBy: uuid("added_by").references(() => systemUser.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("work_order_service_line_uq").on(t.workOrderId, t.lineNumber)],
 );

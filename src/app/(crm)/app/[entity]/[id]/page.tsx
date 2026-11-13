@@ -12,6 +12,9 @@ import { buildCtx } from "@/server/domain/context";
 import { SlaBadge } from "@/components/grid/SlaBadge";
 import { CaseCommands, WorkOrderCommands } from "@/components/form/ServiceCommands";
 import { listWorkOrders } from "@/server/domain/work-orders";
+import { PartsAndLabour } from "@/components/form/PartsAndLabour";
+import { listWorkOrderLines } from "@/server/domain/work-order-lines";
+import { can } from "@/server/security/roles";
 import { ScheduleWorkOrder, type WoBooking } from "@/components/form/ScheduleWorkOrder";
 import { listWorkOrderBookings } from "@/server/domain/bookings";
 import { listCharacteristics, listResources, listWorkOrderSkills } from "@/server/domain/resources";
@@ -47,6 +50,8 @@ export default async function RecordPage({
   }
 
   const hasTimeline = meta.key !== "product";
+  const lines = meta.key === "work_order" ? await listWorkOrderLines(ctx, id) : null;
+  const woProducts = meta.key === "work_order" ? await listProducts(ctx, { limit: 200 }) : null;
   const sched =
     meta.key === "work_order"
       ? await Promise.all([
@@ -139,6 +144,29 @@ export default async function RecordPage({
             signedByName: b.signedByName,
             hasSignature: Boolean(b.signatureDataUrl),
           }))}
+        />
+      )}
+      {meta.key === "work_order" && lines && lines.ok && (
+        <PartsAndLabour
+          workOrderId={id}
+          editable={status !== "posted" && status !== "cancelled"}
+          canLabour={can(ctx.subject, "work_order", "write")}
+          parts={lines.parts}
+          labour={lines.labour.map((l) => ({
+            ...l,
+            resourceName:
+              (sched && sched[0].ok
+                ? sched[0].rows.find((r) => r.id === l.resourceId)?.name
+                : null) ?? null,
+          }))}
+          products={
+            woProducts && woProducts.ok
+              ? woProducts.rows.map((p) => ({ id: p.id, label: `${p.name} (${p.sku})` }))
+              : []
+          }
+          resources={
+            sched && sched[0].ok ? sched[0].rows.map((r) => ({ id: r.id, name: r.name })) : []
+          }
         />
       )}
       <RecordCommands

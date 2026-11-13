@@ -3,6 +3,7 @@ import { utcToZonedInput, zonedToUtc } from "@/lib/tz";
 import { requireUser } from "@/server/auth/http";
 import { listMyBookings } from "@/server/domain/bookings";
 import { buildCtx } from "@/server/domain/context";
+import { listProductChoices, listWorkOrderLines } from "@/server/domain/work-order-lines";
 import { tenantTimeZone } from "@/server/entities/tenant";
 
 export const metadata = { title: "My bookings" };
@@ -42,6 +43,24 @@ export default async function MyBookingsPage() {
       d,
     );
 
+  const choices = await listProductChoices(ctx);
+  const partsByWo = new Map<string, MyBooking["parts"]>();
+  for (const id of new Set(
+    res.rows.map((r) => r.workOrderId).filter((x): x is string => Boolean(x)),
+  )) {
+    const lines = await listWorkOrderLines(ctx, id);
+    partsByWo.set(
+      id,
+      lines.ok
+        ? lines.parts.map((p) => ({
+            id: p.id,
+            description: p.description,
+            quantityMilli: p.quantityMilli,
+          }))
+        : [],
+    );
+  }
+
   const days: { label: string; bookings: MyBooking[] }[] = [];
   for (const b of res.rows) {
     const key = utcToZonedInput(b.startAt, tz).slice(0, 10);
@@ -50,6 +69,8 @@ export default async function MyBookingsPage() {
     if (!day) days.push((day = { label, bookings: [] }));
     day.bookings.push({
       id: b.id,
+      workOrderId: b.workOrderId,
+      parts: b.workOrderId ? (partsByWo.get(b.workOrderId) ?? []) : [],
       status: b.status,
       when: `${time(b.startAt)} – ${time(b.endAt)}`,
       woNumber: b.woNumber,
@@ -63,7 +84,7 @@ export default async function MyBookingsPage() {
   return (
     <>
       <h1>My bookings</h1>
-      <TechnicianBookings days={days} />
+      <TechnicianBookings days={days} products={choices.ok ? choices.rows : []} />
     </>
   );
 }

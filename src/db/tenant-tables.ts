@@ -38,4 +38,6 @@ export const TENANT_TABLES = [
   "resource_characteristic",
   "work_order_skill",
   "resource_booking",
+  "work_order_product",
+  "work_order_service",
 ] as const;
