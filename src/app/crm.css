@@ -61,23 +61,24 @@
 }
 .crm-brand {
   display: block;
-  padding: 0 8px 18px;
+  margin: 0 0 14px;
   text-decoration: none;
 }
-.crm-brand-lockup {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #fff;
+.brand-plate {
+  display: inline-block;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: #f8f7f5;
+  border-radius: 14px;
+  line-height: 0;
 }
-.crm-brand-name {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+.crm-brand .brand-plate {
+  display: block;
 }
-.crm-brand-sub {
-  font-size: 15px;
-  color: var(--nav-muted);
+.brand-logo {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 .crm-sitemap h2 {
   font-size: 12px;
@@ -371,10 +372,12 @@
     margin-top: 8px;
   }
   .crm-brand {
-    padding: 0 8px 0 4px;
+    margin: 0 8px 0 0;
+    width: 132px;
   }
-  .crm-brand-name {
-    font-size: 20px;
+  .crm-brand .brand-plate {
+    padding: 6px 10px;
+    border-radius: 10px;
   }
   .crm-sitemap div {
     display: contents;
@@ -782,4 +785,14 @@
 .dash-card {
   border-radius: 12px;
   padding: 16px;
+}
+
+/* Sign-in and other public pages */
+.public-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.public-brand .brand-plate {
+  width: 220px;
 }

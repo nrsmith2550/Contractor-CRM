@@ -581,7 +581,7 @@ being silently cut off, and each export is written to the audit log. 12 unit, 8 
 supplied mockup). Every colour comes from named tokens in `src/app/theme.css`; there are Light, Dark and "match my device"
 themes, chosen in the top bar, remembered in a cookie and applied on the first paint (also on the sign-in pages). A unit test
 reads the real tokens and enforces WCAG AA contrast (4.5:1 text, 3:1 focus rings) for every text/background pair in both
-themes. Charts and the calendar follow the theme. The plan for making the product simpler, packaging it as a suite and
+themes. Charts and the calendar follow the theme. The supplied logo is used in the sidebar, on the sign-in pages and as the favicon. The plan for making the product simpler, packaging it as a suite and
 adding import templates is in `docs/POST-LAUNCH.md`.
 **Still to build in Phase 6:** the rest of the accessibility pass (measured Lighthouse score, keyboard walk-through), demo seed,
 production deploy, backups.

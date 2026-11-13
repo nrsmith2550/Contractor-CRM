@@ -1,9 +1,14 @@
 import Link from "next/link";
+import { Brand } from "@/components/shell/Brand";
+import "./crm.css";
 
 export default function Home() {
   return (
     <main style={{ padding: 32, maxWidth: 560 }}>
-      <h1>Clinch CRM</h1>
+      <div className="public-brand" style={{ justifyContent: "flex-start" }}>
+        <Brand />
+      </div>
+      <h1 className="crm-sr">Clinch CRM</h1>
       <p>Customer relationship management for your business.</p>
       <p style={{ display: "flex", gap: 16 }}>
         <Link href="/login">Sign in</Link>
