@@ -43,7 +43,8 @@ export type DemoOptions = {
   timeZone?: string;
   /** Shifts the dated items (visits, tasks, close dates). Winning a deal still stamps the real date. */
   now?: Date;
-  log?: (message: string) => void;
+  /** Called at the start of each phase. May be async; the seed waits for it. */
+  log?: (message: string) => void | Promise<void>;
 };
 
 export type DemoResult = {
@@ -133,7 +134,7 @@ const LEADS = [
 ] as const;
 
 export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
-  const log = o.log ?? (() => {});
+  const log = async (m: string) => void (await o.log?.(m));
   const now = o.now ?? new Date();
   const tz = o.timeZone ?? "America/New_York";
   const companyName = o.companyName ?? "Summit Plumbing & Heating";
@@ -142,7 +143,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   const at = (days: number, hhmm: string) => zonedToUtc(`${ymd(days)}T${hhmm}`, tz)!.toISOString();
 
   // ── The business and its people ──────────────────────────────────────────────────────────
-  log("Creating the business and its owner…");
+  await log("Creating the business and its owner…");
   const { key } = await mintLicense({ tier: "team" });
   const act = await activateLicense({
     licenseKey: key,
@@ -159,7 +160,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   const tenantId = act.tenantId;
   const owner = await buildCtx(tenantId, act.userId);
 
-  log("Adding the team…");
+  await log("Adding the team…");
   const people = [
     { role: "System Administrator", name: o.ownerName ?? "Jordan Rivers", email: o.ownerEmail },
   ];
@@ -192,7 +193,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   const sam = ctxByName["Sam Patel"]!;
 
   // ── Catalog ─────────────────────────────────────────────────────────────────────────────
-  log("Building the catalog…");
+  await log("Building the catalog…");
   const tax = must(
     "tax rate",
     await createTaxRate(owner, { name: "PA sales tax", rateBp: 600 }),
@@ -213,7 +214,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   }
 
   // ── Customers and people ────────────────────────────────────────────────────────────────
-  log("Adding customers…");
+  await log("Adding customers…");
   const accounts: { id: string; name: string; contactId: string }[] = [];
   for (const [i, [name, industry, rel]] of CUSTOMERS.entries()) {
     const a = must(
@@ -245,7 +246,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   }
 
   // ── Leads ───────────────────────────────────────────────────────────────────────────────
-  log("Adding prospects…");
+  await log("Adding prospects…");
   const leadIds: string[] = [];
   const leadOwner: Ctx[] = [];
   for (const [i, [last, company, source, rating, value]] of LEADS.entries()) {
@@ -275,7 +276,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   must("disqualify", await disqualifyLead(leadOwner[10]!, leadIds[10]!, "no_longer_interested"));
 
   // ── Opportunities, quotes and orders ────────────────────────────────────────────────────
-  log("Building the pipeline…");
+  await log("Building the pipeline…");
   const deals = [
     ["Water heater replacement, Maple St", 0, 118000, 14, 0],
     ["Annual maintenance contract", 1, 480000, 30, 0],
@@ -404,7 +405,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   must("lost", await closeAsLost(sales, lost.id, { reason: "Went with a cheaper bid" }));
 
   // ── Service: crew, support cases, jobs and the schedule ────────────────────────────────
-  log("Setting up the crew…");
+  await log("Setting up the crew…");
   const skill: Record<string, string> = {};
   for (const n of ["Licensed plumber", "Gas fitter", "HVAC certified"]) {
     skill[n] = must(`skill ${n}`, await createCharacteristic(owner, { name: n })).characteristic.id;
@@ -436,7 +437,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
     }),
   ).resource;
 
-  log("Creating support cases and jobs…");
+  await log("Creating support cases and jobs…");
   const caseDefs = [
     ["No hot water, Brightside Daycare", 4, "urgent", "phone"],
     ["Leaking faucet in unit 3B", 0, "normal", "web"],
@@ -516,7 +517,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
       .where(eq(incident.id, caseIds[3]!)),
   ); // an open case that is already late, so the SLA tile has something to show
 
-  log("Scheduling visits…");
+  await log("Scheduling visits…");
   const book = async (
     job: { id: string },
     r: { id: string },
@@ -565,7 +566,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   );
 
   // ── Activities and notes ────────────────────────────────────────────────────────────────
-  log("Adding activities…");
+  await log("Adding activities…");
   const tasks = [
     [sales, "Call Dubois Dental back", 1, "high"],
     [sales, "Send maintenance contract draft", 2, "normal"],
@@ -645,6 +646,6 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
     jobs: 8,
     resources: 3,
   };
-  log("Done.");
+  await log("Done.");
   return { tenantId, companyName, licenseKey: key, people, counts };
 }

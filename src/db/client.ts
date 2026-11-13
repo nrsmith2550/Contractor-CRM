@@ -17,11 +17,26 @@ async function createDb(url: string): Promise<Db> {
       neonConfig.webSocketConstructor =
         WebSocket as unknown as typeof neonConfig.webSocketConstructor;
     }
-    return drizzle(new Pool({ connectionString: url }) as unknown as PgPool, { schema });
+    const pool = new Pool({ connectionString: url }) as unknown as PgPool;
+    onPoolError(pool);
+    return drizzle(pool, { schema });
   }
   // Any other Postgres (local dev, Docker): the standard driver.
   const { Pool } = await import("pg");
-  return drizzle(new Pool({ connectionString: url, max: 5 }), { schema });
+  const pool = new Pool({ connectionString: url, max: 5 });
+  onPoolError(pool);
+  return drizzle(pool, { schema });
+}
+
+/**
+ * A connection that is dropped while idle (a network blip, a proxy, a database restart) emits
+ * "error" on the pool. With no listener Node treats that as fatal and kills the process, so log it
+ * (message only, never the connection string) and let the pool open a fresh connection next time.
+ */
+function onPoolError(pool: PgPool): void {
+  pool.on("error", (err) => {
+    console.error("Database connection error (it will reconnect):", err.message);
+  });
 }
 
 async function getDbFor(url: string): Promise<Db> {

@@ -603,6 +603,10 @@ numbering, audit), and dates are relative to the day it is run so the dashboards
 4 integration tests (counts, dashboards, role visibility, separate businesses per run) and a Playwright journey (the logins
 work, a technician sees only their own work, and the full pages pass axe in light and dark). Running axe over the fuller pages
 found a link nested inside a draggable card on the schedule board; fixed.
+**Loading the demo into a hosted database:** the seed ran against the Vercel site's database (the Neon `staging` branch, which
+the Vercel `DATABASE_URL` points at). From a network that reaches the database only through an HTTP proxy, run it with
+`NODE_USE_ENV_PROXY=1`; the script now opens fresh connections at each phase so no single connection has to stay up for the
+whole two minutes. The app's database pools also log, instead of crashing on, a connection dropped while idle.
 **Still to build in Phase 6:** production deploy, backups.
 
 - [x] Lighthouse accessibility ≥ 90 on grid and form pages (measured with axe-core, see below)
