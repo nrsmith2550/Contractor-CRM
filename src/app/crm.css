@@ -1287,17 +1287,10 @@
   color: var(--text);
 }
 
-/* Phones: one scrolling row of links instead of a tall wrapped block, and two-up tiles */
+/* Phones: two-up tiles, and a tighter wrapping menu */
 @media (max-width: 800px) {
-  .crm-sitemap {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-  }
   .crm-sitemap a {
-    flex: none;
-    white-space: nowrap;
+    padding: 7px 8px;
   }
   .home-tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
