@@ -577,7 +577,14 @@ filter, numbers, money and dates that sort and sum) written by a small dependenc
 `src/lib/zip.ts`, checked against openpyxl); text is stored as strings so a spreadsheet never runs it as a formula, and CSV
 cells that start with `=`, `+`, `-` or `@` are defused. A view over 10,000 records is refused with a message instead of
 being silently cut off, and each export is written to the audit log. 12 unit, 8 integration and 1 Playwright test.
-**Still to build in Phase 6:** dark theme and accessibility pass, demo seed, production deploy, backups.
+**Clinch brand and themes (done):** the product is now **Clinch CRM** (navy sidebar, orange accent, soft light page, from the
+supplied mockup). Every colour comes from named tokens in `src/app/theme.css`; there are Light, Dark and "match my device"
+themes, chosen in the top bar, remembered in a cookie and applied on the first paint (also on the sign-in pages). A unit test
+reads the real tokens and enforces WCAG AA contrast (4.5:1 text, 3:1 focus rings) for every text/background pair in both
+themes. Charts and the calendar follow the theme. The plan for making the product simpler, packaging it as a suite and
+adding import templates is in `docs/POST-LAUNCH.md`.
+**Still to build in Phase 6:** the rest of the accessibility pass (measured Lighthouse score, keyboard walk-through), demo seed,
+production deploy, backups.
 
 - [ ] Lighthouse accessibility ≥ 90 on grid and form pages
 - [ ] Production deploy from `main` via CI, with migrations applied automatically

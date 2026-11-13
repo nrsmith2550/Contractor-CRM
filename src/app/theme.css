@@ -1,0 +1,150 @@
+/*
+ * Clinch colour tokens. Everything in the app takes its colours from these names, so a theme is
+ * just a different set of values. Text/background pairs are kept above WCAG AA (4.5:1) by
+ * tests/unit/theme-contrast.test.ts, which reads this file.
+ */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --surface-2: #f0f2f8;
+  --hover: #eceff6;
+  --text: #141b2d;
+  --muted: #586177;
+  --border: #d5dae6;
+  --border-soft: #e6e9f1;
+  --grid-line: #e3e7ef;
+  --grid-line-strong: #c3cad9;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-text: #c2410c;
+  --on-accent: #ffffff;
+  --focus: #1d4ed8;
+  --nav-bg: #0f1a33;
+  --nav-text: #d3dbed;
+  --nav-muted: #97a3bd;
+  --nav-hover: rgba(255, 255, 255, 0.07);
+  --nav-active-bg: rgba(255, 122, 77, 0.18);
+  --nav-active-text: #ff9c78;
+  --danger: #b42318;
+  --danger-bg: #fee4e2;
+  --ok: #067647;
+  --ok-bg: #dcfae6;
+  --warn-bg: #fef0c7;
+  --warn-border: #b54708;
+  --badge-bg: #e8ecf5;
+  --done-bg: #b7ebc9;
+  --today-bg: #fff1ea;
+  --ev-blue: #0f6cbd;
+  --ev-orange: #bc4b09;
+  --ev-green: #107c10;
+  --ev-grey: #6b6a68;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 2px 8px rgba(16, 24, 40, 0.06);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --surface: #121b2e;
+  --surface-2: #18233a;
+  --hover: #1e2b46;
+  --text: #e6eaf4;
+  --muted: #9ba7c0;
+  --border: #2b3957;
+  --border-soft: #223050;
+  --grid-line: #26334f;
+  --grid-line-strong: #3a4a6e;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-text: #ff9d7a;
+  --on-accent: #ffffff;
+  --focus: #7ab0ff;
+  --nav-bg: #080d19;
+  --nav-text: #d3dbed;
+  --nav-muted: #97a3bd;
+  --nav-hover: rgba(255, 255, 255, 0.07);
+  --nav-active-bg: rgba(255, 122, 77, 0.18);
+  --nav-active-text: #ff9c78;
+  --danger: #ff9a90;
+  --danger-bg: #3a1618;
+  --ok: #6ee7a8;
+  --ok-bg: #0f2e22;
+  --warn-bg: #3a2a0a;
+  --warn-border: #f0b429;
+  --badge-bg: #25324f;
+  --done-bg: #1f5f3a;
+  --today-bg: #2a1f24;
+  --ev-blue: #0f6cbd;
+  --ev-orange: #bc4b09;
+  --ev-green: #107c10;
+  --ev-grey: #6b6a68;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* "System": use the dark values when the device asks for them. Same values as above. */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    color-scheme: dark;
+    --bg: #0b1220;
+    --surface: #121b2e;
+    --surface-2: #18233a;
+    --hover: #1e2b46;
+    --text: #e6eaf4;
+    --muted: #9ba7c0;
+    --border: #2b3957;
+    --border-soft: #223050;
+    --grid-line: #26334f;
+    --grid-line-strong: #3a4a6e;
+    --accent-text: #ff9d7a;
+    --focus: #7ab0ff;
+    --nav-bg: #080d19;
+    --danger: #ff9a90;
+    --danger-bg: #3a1618;
+    --ok: #6ee7a8;
+    --ok-bg: #0f2e22;
+    --warn-bg: #3a2a0a;
+    --warn-border: #f0b429;
+    --badge-bg: #25324f;
+    --done-bg: #1f5f3a;
+    --today-bg: #2a1f24;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+html {
+  background: var(--bg);
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  line-height: 1.45;
+}
+a {
+  color: var(--accent-text);
+}
+input,
+select,
+textarea {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
