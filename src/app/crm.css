@@ -587,3 +587,35 @@
   text-decoration: line-through;
   opacity: 0.7;
 }
+
+/* Dashboards */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.dash-card h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 14px;
+}
+.dash-table th {
+  text-align: left;
+  font-weight: 400;
+}
+.dash-table td {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.dash-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}

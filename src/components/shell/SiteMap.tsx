@@ -6,7 +6,11 @@ import { usePathname } from "next/navigation";
 const GROUPS = [
   {
     title: "My work",
-    links: [["Calendar", "/app/calendar"]],
+    links: [
+      ["Sales dashboard", "/app/dashboards/sales"],
+      ["Service dashboard", "/app/dashboards/service"],
+      ["Calendar", "/app/calendar"],
+    ],
   },
   {
     title: "Sales",

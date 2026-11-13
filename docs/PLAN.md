@@ -565,6 +565,13 @@ cancelled, filters, role limits, tenant isolation) and a Playwright journey. Pha
 
 Sales and Service dashboards, export to Excel (CSV/XLSX), tenant branding, dark theme, accessibility pass (keyboard + WCAG AA contrast), seed demo tenant, production deploy to Cloudflare, backups.
 
+**Dashboards (done):** `/app/dashboards/sales` shows open pipeline by stage (count and value), revenue won this calendar
+quarter in the business's time zone (by actual close date), open leads by source and my next open activities; `/app/dashboards/service`
+shows active cases by priority, cases past their SLA (most overdue first) and today's bookings by resource (the business's
+local day, DST-aware). Charts are Recharts (MIT) with the same numbers in a table beneath. Every number follows the user's
+read scope, and a section a role can't read says so. 6 unit + 9 integration + 1 Playwright tests.
+**Still to build in Phase 6:** Export to Excel, dark theme and accessibility pass, demo seed, production deploy, backups.
+
 - [ ] Lighthouse accessibility ≥ 90 on grid and form pages
 - [ ] Production deploy from `main` via CI, with migrations applied automatically
 - [ ] Restore drill: recover the DB from a Neon branch/snapshot into a test branch
