@@ -1306,3 +1306,70 @@
     padding: 12px;
   }
 }
+
+/* Timeline composer and activity pills */
+.crm-seg {
+  display: inline-flex;
+  margin: 4px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.crm-seg button {
+  padding: 7px 16px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.crm-seg button + button {
+  border-left: 1px solid var(--border);
+}
+.crm-seg button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.crm-composer form {
+  display: grid;
+  gap: 6px;
+  max-width: 520px;
+}
+.crm-pill {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.crm-pill-done {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.crm-pill-late {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.crm-muted {
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+/* "More details" on new records */
+.crm-more {
+  margin: 12px 0;
+}
+.crm-more > summary {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--accent-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+.crm-more[open] > summary {
+  margin-bottom: 8px;
+}

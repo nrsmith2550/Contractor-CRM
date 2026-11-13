@@ -59,8 +59,9 @@ export const CUSTOMERS: Article[] = [
   },
   {
     slug: "notes-and-appointments",
-    title: "Notes and appointments",
-    summary: "Keep a running record on any customer, and put meetings on the calendar.",
+    title: "Notes, calls, tasks and appointments",
+    summary:
+      "Keep a running record on any customer, log calls, set reminders and put meetings on the calendar.",
     category: "customers",
     body: [
       h("Notes"),
@@ -73,6 +74,21 @@ export const CUSTOMERS: Article[] = [
       ),
       tip(
         "Write what you would want to know if a colleague took over tomorrow: what was said, what was promised, what is next.",
+      ),
+      h("Log a call"),
+      steps(
+        "On the record, above the timeline, choose **Call**.",
+        "Say what the call was about, and whether you called them or they called you. Add notes if you like.",
+        "Choose **Log call**. It goes on the timeline with the date and time.",
+      ),
+      h("Add a task"),
+      p(
+        "A task is something you need to do, with a due date. Choose **Task** above the timeline, say what needs doing, pick a due date and a priority, and choose **Add task**.",
+      ),
+      list(
+        "A task that is past its due date shows **Overdue** on the timeline.",
+        "When it is done, choose **Mark done**. It stays on the timeline, marked as completed.",
+        "Your open tasks show on your dashboard and on the [calendar](/app/calendar) on the day they are due.",
       ),
       h("Appointments"),
       p(

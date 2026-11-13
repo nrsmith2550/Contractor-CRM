@@ -62,4 +62,6 @@ export type EntityMeta = {
   fields: FieldDef[];
   /** Up to four key fields shown in the form header. */
   headerFields: string[];
+  /** Sections tucked under "More details" when creating a record, so the form starts short. */
+  moreSections?: string[];
 };
