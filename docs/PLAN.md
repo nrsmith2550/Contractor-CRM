@@ -591,7 +591,19 @@ settings) and the public pages, in light and dark, and requires zero violations.
 "Actions"), faded other-month days and unnamed arrows on the calendar. A "Skip to main content" link was added, and
 `tests/e2e/keyboard.spec.ts` drives the app with the keyboard only: sign in, skip link, a visible focus indicator on every stop
 of the list page in both themes, creating a lead, the theme switch and the calendar toolbar.
-**Still to build in Phase 6:** demo seed, production deploy, backups.
+**Demo business (done):** `pnpm db:seed-demo --yes` (`scripts/seed-demo.ts`, `src/db/seed/demo.ts`) adds a NEW demo
+business, "Summit Plumbing & Heating", to whatever database `DATABASE_URL` points at, and prints one login per role plus a
+random password (shown once). It shows the target database first and does nothing without `--yes`; existing businesses are
+never touched. It contains 6 people in different roles (owner, sales manager, salesperson, service rep, two technicians),
+12 customers with contacts, 14 prospects, a catalog, an 8-deal open pipeline across all four stages plus 2 won deals (through
+quote -> order) and 1 lost, a draft, a sent and two won quotes, 8 support cases (one already past its due time), 8 jobs, a crew
+of 3 with skills, a day of bookings plus a finished, signed visit with parts and labour, tasks, appointments, calls and notes.
+Everything is created through the app's own domain functions, so it obeys every rule (stage requirements, permissions,
+numbering, audit), and dates are relative to the day it is run so the dashboards and calendar always look current.
+4 integration tests (counts, dashboards, role visibility, separate businesses per run) and a Playwright journey (the logins
+work, a technician sees only their own work, and the full pages pass axe in light and dark). Running axe over the fuller pages
+found a link nested inside a draggable card on the schedule board; fixed.
+**Still to build in Phase 6:** production deploy, backups.
 
 - [x] Lighthouse accessibility ≥ 90 on grid and form pages (measured with axe-core, see below)
 - [ ] Production deploy from `main` via CI, with migrations applied automatically

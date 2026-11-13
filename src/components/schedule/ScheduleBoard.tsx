@@ -527,16 +527,15 @@ function Block(props: {
 }
 
 function UnscheduledCard({ w, draggable }: { w: BoardUnscheduled; draggable: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `wo:${w.id}`,
-    data: { kind: "wo", id: w.id, minutes: w.estDurationMin ?? 60 },
-    disabled: !draggable,
-  });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
+    useDraggable({
+      id: `wo:${w.id}`,
+      data: { kind: "wo", id: w.id, minutes: w.estDurationMin ?? 60 },
+      disabled: !draggable,
+    });
   return (
     <div
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
       className={`sb-card${isDragging ? " dragging" : ""}`}
       data-wo={w.id}
       style={{
@@ -544,11 +543,16 @@ function UnscheduledCard({ w, draggable }: { w: BoardUnscheduled; draggable: boo
         zIndex: isDragging ? 30 : undefined,
       }}
     >
-      <strong>{w.woNumber}</strong> {w.title}
-      <div className="crm-muted">
-        {w.estDurationMin ? `${w.estDurationMin} min` : "60 min (default)"} · {humanize(w.priority)}
+      {/* The drag handle holds only text. The link sits beside it, not inside it, because a link
+          inside a draggable "button" is a nested control that keyboards and screen readers can't use. */}
+      <div ref={setActivatorNodeRef} {...attributes} {...listeners} className="sb-card-body">
+        <strong>{w.woNumber}</strong> {w.title}
+        <div className="crm-muted">
+          {w.estDurationMin ? `${w.estDurationMin} min` : "60 min (default)"} ·{" "}
+          {humanize(w.priority)}
+        </div>
       </div>
-      <Link href={`/app/work-orders/${w.id}`} onPointerDown={(e) => e.stopPropagation()}>
+      <Link className="sb-card-open" href={`/app/work-orders/${w.id}`}>
         Open
       </Link>
     </div>
