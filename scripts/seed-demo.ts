@@ -14,10 +14,26 @@
  */
 import { randomBytes } from "node:crypto";
 import { seedDemo } from "../src/db/seed/demo";
+import type { Db } from "../src/db/client";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
+/**
+ * Starts the next phase on new database connections. Over a slow or proxied link (cloud shells,
+ * CI) a single connection held open for minutes can be cut off partway through; short-lived ones
+ * can't be. The app itself is unaffected: this only touches the script's own pools.
+ */
+async function freshConnections() {
+  const dbs = (
+    globalThis as unknown as { __crmDbs?: Map<string, Db & { $client: { end(): Promise<void> } }> }
+  ).__crmDbs;
+  if (!dbs) return;
+  const old = [...dbs.values()];
+  dbs.clear();
+  await Promise.all(old.map((d) => d.$client.end().catch(() => {})));
 }
 
 async function main() {
@@ -39,7 +55,10 @@ async function main() {
     password,
     companyName: arg("company"),
     timeZone: arg("time-zone"),
-    log: (m) => console.log(`  ${m}`),
+    log: async (m) => {
+      console.log(`  ${m}`);
+      await freshConnections();
+    },
   });
 
   console.log(`\nDemo business ready: ${result.companyName}`);
