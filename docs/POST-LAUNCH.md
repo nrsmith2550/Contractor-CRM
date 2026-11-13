@@ -17,27 +17,28 @@ names), so it is a metadata change in `src/entities/*` plus page headings.
 
 **(proposal) Plain-language names**
 
-| Now | Proposed | Notes |
-| --- | --- | --- |
-| Lead | Prospect | someone who might buy |
-| Qualify (a lead) | Turn into a customer | creates the customer, contact and deal |
-| Account | Customer (or Company) | |
-| Contact | Person | |
-| Opportunity | Deal | |
-| Business process flow | Progress bar | stages shown as plain steps |
-| Case | Support request | |
-| Work order | Job | |
-| Bookable resource | Team member / crew | |
-| Booking | Visit | |
-| Schedule board | Schedule | |
-| Price lists | Pricing | |
-| Products | Products and services | |
+| Now                   | Proposed              | Notes                                  |
+| --------------------- | --------------------- | -------------------------------------- |
+| Lead                  | Prospect              | someone who might buy                  |
+| Qualify (a lead)      | Turn into a customer  | creates the customer, contact and deal |
+| Account               | Customer (or Company) |                                        |
+| Contact               | Person                |                                        |
+| Opportunity           | Deal                  |                                        |
+| Business process flow | Progress bar          | stages shown as plain steps            |
+| Case                  | Support request       |                                        |
+| Work order            | Job                   |                                        |
+| Bookable resource     | Team member / crew    |                                        |
+| Booking               | Visit                 |                                        |
+| Schedule board        | Schedule              |                                        |
+| Price lists           | Pricing               |                                        |
+| Products              | Products and services |                                        |
 
 **(proposal) Industry vocabulary packs.** One setting at sign-up ("What kind of business are you?")
 swaps the labels: contractors see Customer / Estimate / Job / Crew; a clothing brand sees Customer /
 Order / Product / Wholesale buyer. Same engine, different words.
 
 **Easier steps**
+
 - A first-run checklist on the home page ("Add your logo, add your first customer, send your first
   quote") that disappears when done.
 - Forms show only the essentials first, with "More details" for the rest.
@@ -50,14 +51,14 @@ Order / Product / Wholesale buyer. Same engine, different words.
 The license tiers already exist (`src/lib/tiers.ts`). **(proposal)** Package the modules so a
 customer buys only what they run their business on, with the shared customer list underneath:
 
-| Product | Contains | Typical buyer |
-| --- | --- | --- |
-| Clinch Contacts (core) | customers, people, notes, tasks, import/export | everyone |
-| Clinch Sales | prospects, deals, pipeline, quotes, orders, sales dashboard | any seller |
-| Clinch Jobs | jobs, crew, schedule, visits, technician phone view, invoices from parts and labour | contractors, trades |
-| Clinch Support | support requests, due times, support dashboard | service businesses |
-| Clinch Shop | products, price lists, orders, wholesale accounts | clothing / retail brands |
-| Clinch Suite | everything | growing teams |
+| Product                | Contains                                                                            | Typical buyer            |
+| ---------------------- | ----------------------------------------------------------------------------------- | ------------------------ |
+| Clinch Contacts (core) | customers, people, notes, tasks, import/export                                      | everyone                 |
+| Clinch Sales           | prospects, deals, pipeline, quotes, orders, sales dashboard                         | any seller               |
+| Clinch Jobs            | jobs, crew, schedule, visits, technician phone view, invoices from parts and labour | contractors, trades      |
+| Clinch Support         | support requests, due times, support dashboard                                      | service businesses       |
+| Clinch Shop            | products, price lists, orders, wholesale accounts                                   | clothing / retail brands |
+| Clinch Suite           | everything                                                                          | growing teams            |
 
 Technically this is feature flags per license, the site map and permissions hiding what a license
 does not include, and upgrade prompts. Pricing and billing stay deferred (no payment setup yet).
