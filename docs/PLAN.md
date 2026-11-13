@@ -535,9 +535,24 @@ invoice that parts and labour will feed (a later phase).
 
 FullCalendar tab; custom schedule board with resource rows, day/week/month scales, drag/move/resize/reassign, unscheduled pane, conflict and skills warnings, filters, polling refresh.
 
-- [ ] Dragging an unscheduled work order onto a resource creates a booking and sets the work order to Scheduled
-- [ ] Overlapping bookings and outside-hours drops show a warning
-- [ ] Board renders 25 resources × 1 week with 300 bookings in under 1 s on a mid-range laptop
+- [x] Dragging an unscheduled work order onto a resource creates a booking and sets the work order to Scheduled
+- [x] Overlapping bookings and outside-hours drops show a warning
+- [x] Board renders 25 resources × 1 week with 300 bookings in under 1 s on a mid-range laptop
+
+**Phase 5 schedule board** (branch `claude/phase-5-board`): `/app/schedule`, a custom board (no paid plugin): resource rows by
+time with day / week / month views (in the business's zone; day lengths follow daylight saving, so 23 and 25 hour days
+stay truthful), previous / today / next, and a filter by skill. Bookings are coloured blocks by status, stacked in lanes
+when they overlap. **Drag** a block to move it (snapped: 15 min on the day view, 30 on the week, 1 h on the month) or to
+another row to reassign it; **resize** from either edge; or use the **keyboard** (arrows move, Shift+arrows resize,
+Up/Down change row, Enter opens the menu). **Drag an unscheduled work order** from the pane below onto a resource and
+time to book it for its estimated duration. **Right-click** (or Enter) for the menu: open the work order, change status,
+cancel the booking (which returns the work order to the pane). A booking that has started can't be dragged. After any
+change the server's warnings (overlap, outside working hours, missing skill, outside the customer's window) are shown,
+and the board refreshes every 30 s (paused during a drag). The geometry lives in `src/lib/board.ts` with 17 unit tests
+(ranges, snapping, lanes, DST, a randomised no-overlap check, a layout timing check). Measured end to end: 25 resources x
+300 bookings draw in about 0.25 s here (target 1 s). All three Phase 5 boxes are ticked.
+**Still to build in Phase 5:** the Calendar tab (FullCalendar day / week / month / agenda of the signed-in user's
+appointments, due tasks and bookings; quick-create an appointment).
 
 ### Phase 6 — Dashboards, polish, launch
 
