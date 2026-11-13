@@ -540,3 +540,50 @@
   color: #fff;
   border-color: var(--crm-accent);
 }
+
+/* Calendar */
+.cal-wrap {
+  --fc-border-color: #e1dfdd;
+  --fc-today-bg-color: #ebf3fc;
+  margin-bottom: 12px;
+}
+.cal-wrap .fc-button {
+  background: #fff;
+  color: #242424;
+  border: 1px solid var(--crm-border);
+  text-transform: none;
+}
+.cal-wrap .fc-button:hover {
+  background: #f3f2f1;
+  color: #242424;
+}
+.cal-wrap .fc-button-active,
+.cal-wrap .fc-button-primary:not(:disabled).fc-button-active {
+  background: var(--crm-accent);
+  border-color: var(--crm-accent);
+  color: #fff;
+}
+.cal-wrap .fc-event {
+  cursor: pointer;
+  border: 0;
+}
+.cal-appointment {
+  background: #0f6cbd;
+  border-color: #0f6cbd;
+}
+.cal-task {
+  background: #bc4b09;
+  border-color: #bc4b09;
+}
+.cal-booking {
+  background: #107c10;
+  border-color: #107c10;
+}
+.cal-st-completed {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+.cal-wrap .fc-list-event.cal-st-completed td {
+  text-decoration: line-through;
+  opacity: 0.7;
+}

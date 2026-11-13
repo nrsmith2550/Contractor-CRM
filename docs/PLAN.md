@@ -551,8 +551,15 @@ change the server's warnings (overlap, outside working hours, missing skill, out
 and the board refreshes every 30 s (paused during a drag). The geometry lives in `src/lib/board.ts` with 17 unit tests
 (ranges, snapping, lanes, DST, a randomised no-overlap check, a layout timing check). Measured end to end: 25 resources x
 300 bookings draw in about 0.25 s here (target 1 s). All three Phase 5 boxes are ticked.
-**Still to build in Phase 5:** the Calendar tab (FullCalendar day / week / month / agenda of the signed-in user's
-appointments, due tasks and bookings; quick-create an appointment).
+**Calendar tab (done):** `/app/calendar` (under "My work") is a FullCalendar (MIT, no paid plugins) with Month, Week, Day and
+Agenda views. It shows the signed-in user's appointments, tasks on their due date (a 30-minute marker) and non-cancelled
+bookings, colour-coded, with completed items struck through. The server (`listCalendarEvents`) returns events that overlap
+the visible range; times are sent as wall-clock times in the business's time zone so the calendar draws them correctly with
+no extra time-zone plugin. People with organization-wide read access get a "Show" filter (my calendar, everyone, or one
+person); everyone else is limited to their own and gets "forbidden" if they ask for more. Click an empty day or drag a time
+range to add an appointment (end must be after start); click an event for its details and an "Open the record" link.
+`?date=YYYY-MM-DD` opens a given day. Covered by 8 unit tests (`src/lib/calendar.ts`), 9 integration tests (ranges and edges,
+cancelled, filters, role limits, tenant isolation) and a Playwright journey. Phase 5 is complete.
 
 ### Phase 6 — Dashboards, polish, launch
 
