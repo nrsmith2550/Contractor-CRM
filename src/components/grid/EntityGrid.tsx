@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HELP_FOR_ENTITY } from "@/help/links";
 import type { EntityMeta } from "@/entities/types";
 import { SlaBadge } from "@/components/grid/SlaBadge";
 import { formatDate, formatMoney, humanize } from "@/lib/format";
@@ -60,6 +61,11 @@ export function EntityGrid(props: {
         <a className="crm-btn" href={exportHref("csv")}>
           Export to CSV
         </a>
+        {HELP_FOR_ENTITY[meta.key] && (
+          <Link className="crm-help-link" href={`/app/help/${HELP_FOR_ENTITY[meta.key]}`}>
+            Help with {meta.plural.toLowerCase()}
+          </Link>
+        )}
         <form method="get" className="crm-row">
           <label>
             <span className="crm-sr">View</span>

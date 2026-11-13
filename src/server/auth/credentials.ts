@@ -82,7 +82,7 @@ export async function authenticate(raw: {
   }
   if (user.disabled_at) {
     await logAuthEvent("login_disabled", raw.ip);
-    return fail("disabled", "This account has been disabled. Contact your administrator.");
+    return fail("disabled", "Your access has been turned off. Contact your administrator.");
   }
   if (user.license_status !== "active") {
     await logAuthEvent("login_license_inactive", raw.ip);

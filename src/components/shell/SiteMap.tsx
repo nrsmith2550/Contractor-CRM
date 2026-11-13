@@ -49,6 +49,10 @@ const GROUPS = [
     ],
   },
   {
+    title: "Help",
+    links: [["Help guide", "/app/help"]],
+  },
+  {
     title: "Settings",
     links: [
       ["Users", "/app/settings/users"],

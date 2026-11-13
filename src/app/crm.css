@@ -849,3 +849,244 @@
   margin: 2px 0 -4px -8px;
   box-sizing: border-box;
 }
+
+/* Help guide */
+.help {
+  max-width: 1100px;
+}
+.help-lede {
+  color: var(--muted);
+  font-size: 16px;
+  margin: 4px 0 16px;
+  max-width: 62ch;
+}
+.help-search {
+  margin: 0 0 24px;
+  max-width: 560px;
+}
+.help-search label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.help-search input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.help-popular,
+.help-results {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: grid;
+  gap: 10px;
+}
+.help-popular {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+.help-popular li,
+.help-results li {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+.help-popular a,
+.help-results a {
+  font-weight: 600;
+}
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.help-cat {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.help-cat h2 {
+  margin: 0 0 2px;
+  font-size: 17px;
+}
+.help-cat p {
+  margin: 0 0 8px;
+}
+.help-cat ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+.help-contact {
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 8px;
+  max-width: 62ch;
+}
+.help-article {
+  max-width: 760px;
+}
+.help-crumbs {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.help-who {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.help-article h2 {
+  font-size: 18px;
+  margin: 24px 0 6px;
+}
+.help-article p,
+.help-article li {
+  line-height: 1.6;
+}
+.help-steps {
+  padding-left: 0;
+  list-style: none;
+  counter-reset: step;
+  display: grid;
+  gap: 10px;
+}
+.help-steps li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 40px;
+}
+.help-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.help-callout {
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 14px 0;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.help-warning {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+.help-tip {
+  background: var(--ok-bg);
+  border-color: var(--ok);
+}
+.help-table-wrap {
+  overflow-x: auto;
+  margin: 14px 0;
+}
+.help-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+.help-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 6px;
+}
+.help-table th,
+.help-table td {
+  border: 1px solid var(--border-soft);
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.help-table thead th {
+  background: var(--surface-2);
+}
+.help-table tbody th {
+  font-weight: 600;
+  background: var(--surface);
+}
+.help-flow {
+  margin: 16px 0;
+}
+.help-flow figcaption {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.help-flow ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  counter-reset: flow;
+}
+.help-flow li {
+  flex: 1 1 150px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+  counter-increment: flow;
+}
+.help-flow li strong::before {
+  content: counter(flow) ". ";
+  color: var(--accent-text);
+}
+.help-flow li span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.help-pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.crm-help-link {
+  margin-left: auto;
+  font-size: 14px;
+}
+@media print {
+  .crm-sitemap,
+  .crm-topbar,
+  .help-search,
+  .help-pager {
+    display: none;
+  }
+  .crm-shell {
+    display: block;
+  }
+}
+
+/* Related guides: roomy tap targets */
+.help-related ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.help-related a {
+  display: inline-block;
+  padding: 6px 0;
+}
