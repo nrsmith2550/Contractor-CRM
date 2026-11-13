@@ -34,13 +34,13 @@ export function rangeFromCalendar(
 }
 
 const SLUG: Record<string, string> = {
-  lead: "leads",
-  account: "accounts",
-  contact: "contacts",
-  opportunity: "opportunities",
+  lead: "prospects",
+  account: "customers",
+  contact: "people",
+  opportunity: "deals",
   quote: "quotes",
-  case: "cases",
-  work_order: "work-orders",
+  case: "support-requests",
+  work_order: "jobs",
 };
 
 /** The page for a record an activity is about, or null for a type with no page. */

@@ -66,10 +66,10 @@ describe("visible range", () => {
 
 describe("record links", () => {
   it("links the records that have pages", () => {
-    expect(recordHref("lead", "abc")).toBe("/app/leads/abc");
-    expect(recordHref("opportunity", "x")).toBe("/app/opportunities/x");
-    expect(recordHref("work_order", "w")).toBe("/app/work-orders/w");
-    expect(recordHref("case", "c")).toBe("/app/cases/c");
+    expect(recordHref("lead", "abc")).toBe("/app/prospects/abc");
+    expect(recordHref("opportunity", "x")).toBe("/app/deals/x");
+    expect(recordHref("work_order", "w")).toBe("/app/jobs/w");
+    expect(recordHref("case", "c")).toBe("/app/support-requests/c");
     expect(recordHref("quote", "q")).toBe("/app/quotes/q");
   });
   it("returns null for the rest", () => {

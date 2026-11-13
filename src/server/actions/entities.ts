@@ -146,10 +146,10 @@ export async function recordCommandAction(
       res = r.ok
         ? {
             ok: true,
-            message: "Lead qualified.",
+            message: "Prospect turned into a customer.",
             redirectTo: r.opportunityId
-              ? `/app/opportunities/${r.opportunityId}`
-              : `/app/accounts/${r.accountId}`,
+              ? `/app/deals/${r.opportunityId}`
+              : `/app/customers/${r.accountId}`,
           }
         : r;
       break;
@@ -161,12 +161,12 @@ export async function recordCommandAction(
     }
     case "lead:disqualify": {
       const r = await disqualifyLead(c, id, v.reason);
-      res = r.ok ? { ok: true, message: "Lead disqualified." } : r;
+      res = r.ok ? { ok: true, message: "Prospect closed." } : r;
       break;
     }
     case "lead:reactivate": {
       const r = await reactivateLead(c, id);
-      res = r.ok ? { ok: true, message: "Lead reactivated." } : r;
+      res = r.ok ? { ok: true, message: "Prospect reactivated." } : r;
       break;
     }
     case "opportunity:stage": {
@@ -188,7 +188,9 @@ export async function recordCommandAction(
       res = r.ok
         ? {
             ok: true,
-            message: r.accountBecameCustomer ? "Won. The account is now a customer." : "Won.",
+            message: r.accountBecameCustomer
+              ? "Won. This customer is now a current customer."
+              : "Won.",
           }
         : r;
       break;

@@ -65,7 +65,8 @@ export async function createProduct(ctx: Ctx, raw: unknown): Promise<Result<{ pr
       return { ok: true as const, product: row! };
     });
   } catch (err) {
-    if (uniqueViolation(err)) return fail("conflict", "A product with that SKU already exists.");
+    if (uniqueViolation(err))
+      return fail("conflict", "A product or service with that SKU already exists.");
     throw err;
   }
 }
@@ -99,7 +100,8 @@ export async function updateProduct(
       return { ok: true as const, product: row };
     });
   } catch (err) {
-    if (uniqueViolation(err)) return fail("conflict", "A product with that SKU already exists.");
+    if (uniqueViolation(err))
+      return fail("conflict", "A product or service with that SKU already exists.");
     throw err;
   }
 }
@@ -273,7 +275,7 @@ export async function createPriceList(
     });
   } catch (err) {
     if (uniqueViolation(err))
-      return fail("conflict", "A price list with that name already exists.");
+      return fail("conflict", "A pricing list with that name already exists.");
     throw err;
   }
 }

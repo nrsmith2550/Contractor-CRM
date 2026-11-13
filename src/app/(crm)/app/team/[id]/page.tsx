@@ -40,7 +40,7 @@ export default async function ResourcePage({ params }: { params: Promise<{ id: s
           submitLabel="Save"
         />
       ) : (
-        <p>Only administrators can change resources.</p>
+        <p>Only administrators can change team members.</p>
       )}
     </>
   );

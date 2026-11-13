@@ -22,7 +22,7 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
           <input
             type="search"
             name="q"
-            placeholder="Search leads, deals, contacts…"
+            placeholder="Search prospects, customers, deals…"
             aria-label="Search all records"
           />
         </form>

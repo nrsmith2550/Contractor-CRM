@@ -28,7 +28,7 @@ const defined = <T extends object>(o: T): Partial<T> =>
   Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
 
 export const accountFields = z.object({
-  name: z.string().trim().min(1, "Account name is required").max(200),
+  name: z.string().trim().min(1, "Customer name is required").max(200),
   phone: text(40),
   website: text(200),
   industry: text(120),
@@ -142,7 +142,8 @@ export async function updateAccount(
     const denied = checkRecord(ctx, "account", "write", row);
     if (denied) return denied;
     const patch = defined(p.data);
-    if (patch.parentAccountId === id) return fail("invalid", "An account can't be its own parent.");
+    if (patch.parentAccountId === id)
+      return fail("invalid", "A customer can't be their own parent.");
     const changes = diffChanges(row as never, { ...row, ...patch } as never, Object.keys(patch));
     if (Object.keys(changes).length === 0) return { ok: true, account: row! };
     const [updated] = await tx

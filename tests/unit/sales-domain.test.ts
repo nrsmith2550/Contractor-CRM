@@ -32,12 +32,8 @@ describe("business process flow", () => {
   });
 
   it("each stage names the fields that must be filled before leaving it", () => {
-    expect(labels(empty, "qualify")).toEqual(["Account", "Estimated close date"]);
-    expect(labels(empty, "develop")).toEqual([
-      "Decision-maker contact",
-      "Budget",
-      "Purchase timeframe",
-    ]);
+    expect(labels(empty, "qualify")).toEqual(["Customer", "Estimated close date"]);
+    expect(labels(empty, "develop")).toEqual(["Decision-maker", "Budget", "Purchase timeframe"]);
     expect(labels(empty, "propose")).toEqual(["Estimated revenue", "Proposal delivered"]);
     expect(labels(empty, "close")).toEqual([]);
     // Blank strings and zero don't count as filled in.
@@ -59,7 +55,7 @@ describe("business process flow", () => {
     expect(canMove(empty, "qualify", "develop")).toMatchObject({
       ok: false,
       reason: "missing_fields",
-      missing: [{ label: "Account" }, { label: "Estimated close date" }],
+      missing: [{ label: "Customer" }, { label: "Estimated close date" }],
     });
     expect(canMove(ready, "qualify", "develop")).toEqual({ ok: true });
     expect(canMove(ready, "qualify", "propose")).toMatchObject({ ok: false, reason: "skip" });

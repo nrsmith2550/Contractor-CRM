@@ -51,13 +51,13 @@ export function ImportLeads({ fields }: { fields: { name: string; label: string 
       )}
       {preview && (
         <>
-          <p>{preview.rows} rows found. Map your columns to lead fields:</p>
+          <p>{preview.rows} rows found. Map your columns to prospect fields:</p>
           <table className="crm-grid">
             <thead>
               <tr>
                 <th>Column in file</th>
                 <th>Example</th>
-                <th>Lead field</th>
+                <th>Prospect field</th>
               </tr>
             </thead>
             <tbody>

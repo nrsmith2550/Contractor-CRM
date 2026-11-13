@@ -14,6 +14,7 @@ import { unitPriceFor } from "./catalog";
 import { FORBIDDEN, NOT_FOUND, checkRecord, fail, type Ctx, type Result } from "./context";
 import { invalid } from "./leads";
 import { labourAmountCents, partAmountCents } from "./quote-math";
+import { say } from "@/lib/vocabulary";
 
 // Parts and labour used on a work order. They can be recorded from the time the work is booked
 // until the work order is posted (posted work feeds an invoice and is final) or cancelled.
@@ -50,7 +51,7 @@ async function authorize(tx: Tx, ctx: Ctx, workOrderId: string, what: "part" | "
     return {
       denied: fail(
         "read_only",
-        `This work order is ${wo!.status}, so its parts and labour can't be changed.`,
+        `This job is ${say(wo!.status)}, so its parts and labour can't be changed.`,
       ),
     };
   }
@@ -87,7 +88,7 @@ export async function addPart(
     let price = p.data.unitPriceCents;
     if (p.data.productId) {
       const [pr] = await tx.select().from(product).where(eq(product.id, p.data.productId));
-      if (!pr) return fail("invalid", "That product doesn't exist.");
+      if (!pr) return fail("invalid", "That product or service doesn't exist.");
       description ||= pr.name;
       price ??= (await unitPriceFor(tx, pr.id, null)) ?? 0;
     }
@@ -140,7 +141,7 @@ export async function addLabour(
         .select({ id: bookableResource.id })
         .from(bookableResource)
         .where(eq(bookableResource.id, p.data.resourceId));
-      if (!r) return fail("invalid", "That resource doesn't exist.");
+      if (!r) return fail("invalid", "That team member doesn't exist.");
     }
     const [last] = await tx
       .select({ n: sql<number>`coalesce(max(${workOrderService.lineNumber}), 0)` })

@@ -23,9 +23,9 @@ export default async function ServiceDashboardPage() {
       <div className="dash-grid">
         {r.casesByPriority ? (
           <BarCard
-            title="Active cases by priority"
+            title="Active support requests by priority"
             data={r.casesByPriority}
-            empty="No active cases."
+            empty="No active support requests."
           />
         ) : (
           none
@@ -34,12 +34,12 @@ export default async function ServiceDashboardPage() {
           <section className="crm-card dash-card" aria-label="SLA breaches">
             <h2>SLA breaches ({r.breachCount})</h2>
             {r.breaches.length === 0 ? (
-              <p className="crm-muted">No case is past its due time.</p>
+              <p className="crm-muted">No support request is past its due time.</p>
             ) : (
               <ul className="dash-list">
                 {r.breaches.map((b) => (
                   <li key={b.id}>
-                    <Link href={`/app/cases/${b.id}`}>
+                    <Link href={`/app/support-requests/${b.id}`}>
                       {b.ticketNumber} {b.title}
                     </Link>
                     <span className="crm-muted">
@@ -56,7 +56,7 @@ export default async function ServiceDashboardPage() {
         )}
         {r.bookingsToday ? (
           <BarCard
-            title="Today's bookings by resource"
+            title="Today's visits by team member"
             data={r.bookingsToday}
             empty="Nothing booked today."
             color="#107c10"

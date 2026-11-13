@@ -117,7 +117,7 @@ export function QuoteBuilder(props: {
                   checked={closeOpp}
                   onChange={(e) => setCloseOpp(e.target.checked)}
                 />{" "}
-                Also close the opportunity as won
+                Also close the deal as won
               </label>
             )}
             <button className="crm-btn" disabled={pending} onClick={() => cmd("lose")}>
@@ -140,7 +140,7 @@ export function QuoteBuilder(props: {
             Download PDF
           </a>
         )}
-        {q.opportunityId && <Link href={`/app/opportunities/${q.opportunityId}`}>Opportunity</Link>}
+        {q.opportunityId && <Link href={`/app/deals/${q.opportunityId}`}>Deal</Link>}
       </div>
       {res && !res.ok && (
         <div role="alert" className="crm-error">
@@ -299,10 +299,10 @@ export function QuoteBuilder(props: {
           fields={[
             {
               name: "productId",
-              label: "Product",
+              label: "Product or service",
               type: "select",
               options: [
-                { value: "", label: "Write-in (no product)" },
+                { value: "", label: "Write-in (not in your list)" },
                 ...products.map((p) => ({ value: p.id, label: p.label })),
               ],
             },
@@ -311,14 +311,14 @@ export function QuoteBuilder(props: {
             {
               name: "unitPrice",
               label: "Unit price ($)",
-              placeholder: "From price list",
+              placeholder: "From pricing list",
               inputMode: "decimal",
             },
             { name: "discount", label: "Line discount ($)", inputMode: "decimal" },
             {
               name: "taxPercent",
               label: "Tax (%)",
-              placeholder: "From product",
+              placeholder: "From product or service",
               inputMode: "decimal",
             },
           ]}

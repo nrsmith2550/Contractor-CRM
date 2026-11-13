@@ -38,11 +38,11 @@ test.describe("sales UI", () => {
     await expect(page.getByRole("heading", { name: "Sales Hub" })).toBeVisible();
 
     // New lead through the metadata-driven form.
-    await page.goto("/app/leads/new");
+    await page.goto("/app/prospects/new");
     await page.getByLabel("Last name").fill(`Rivera${id}`);
     await page.getByLabel("Company").fill(`Acme ${id}`);
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page).toHaveURL(/\/app\/leads\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/app\/prospects\/[0-9a-f-]{36}$/);
     await expect(page.getByRole("heading", { name: new RegExp(`Rivera${id}`) })).toBeVisible();
 
     // Notes appear on the timeline.
@@ -51,9 +51,9 @@ test.describe("sales UI", () => {
     await expect(page.getByText("Called, wants a quote")).toBeVisible();
 
     // Qualify creates the account, contact and opportunity and lands on the opportunity.
-    await page.getByRole("button", { name: "Qualify", exact: true }).click();
-    await expect(page).toHaveURL(/\/app\/opportunities\/[0-9a-f-]{36}$/);
-    await expect(page.getByRole("list", { name: "Business process flow" })).toBeVisible();
+    await page.getByRole("button", { name: "Turn into a customer", exact: true }).click();
+    await expect(page).toHaveURL(/\/app\/deals\/[0-9a-f-]{36}$/);
+    await expect(page.getByRole("list", { name: "Progress bar" })).toBeVisible();
 
     // Closing as won needs the actual revenue.
     await page.getByRole("button", { name: "Close as won" }).click();
@@ -62,7 +62,7 @@ test.describe("sales UI", () => {
     await expect(page.getByRole("status")).toContainText("Won");
 
     // The grid lists the new account as a customer.
-    await page.goto("/app/accounts?view=customers");
+    await page.goto("/app/customers?view=customers");
     await expect(page.getByRole("link", { name: `Acme ${id}` })).toBeVisible();
   });
 });

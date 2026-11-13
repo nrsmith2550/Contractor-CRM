@@ -60,7 +60,7 @@ export function Board({ columns }: { columns: Col[] }) {
                 draggable
                 onDragStart={(e) => e.dataTransfer.setData("text/plain", o.id)}
               >
-                <Link href={`/app/opportunities/${o.id}`}>{o.name}</Link>
+                <Link href={`/app/deals/${o.id}`}>{o.name}</Link>
                 <div>{formatMoney(o.estRevenueCents)}</div>
                 <select
                   aria-label={`Move ${o.name} to stage`}

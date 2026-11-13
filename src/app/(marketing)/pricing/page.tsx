@@ -19,7 +19,7 @@ export default async function PricingPage({
       <h1>Pricing</h1>
       <p>
         Pay once, own your license. Priced by the number of active users; every plan includes Sales,
-        Quotes, Service and the Schedule Board.
+        Quotes, Service and the Schedule.
       </p>
       {error && MESSAGES[error] ? <p role="alert">{MESSAGES[error]}</p> : null}
       <PricingCards />

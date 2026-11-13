@@ -15,6 +15,7 @@ import { FORBIDDEN, NOT_FOUND, checkRecord, fail, type Ctx, type Result } from "
 import { addressFields, invalid } from "./leads";
 import { defaultWorkHours, workHoursSchema, type WorkHours } from "./work-hours";
 import { isEditable, type WoStatus } from "./work-order-status";
+import { say } from "@/lib/vocabulary";
 
 // Bookable resources (people, crews, equipment), the skills ("characteristics") they have, and
 // the skills a work order needs. Administrators configure resources and skills; dispatchers
@@ -150,7 +151,8 @@ export async function createResource(
       return { ok: true as const, resource: row as Resource, skillIds: [...new Set(skillIds)] };
     });
   } catch (err) {
-    if (uniqueViolation(err)) return fail("conflict", "A resource with that name already exists.");
+    if (uniqueViolation(err))
+      return fail("conflict", "A team member with that name already exists.");
     throw err;
   }
 }
@@ -197,7 +199,8 @@ export async function updateResource(
       return { ok: true as const, resource: row as Resource, skillIds: skills.map((s) => s.id) };
     });
   } catch (err) {
-    if (uniqueViolation(err)) return fail("conflict", "A resource with that name already exists.");
+    if (uniqueViolation(err))
+      return fail("conflict", "A team member with that name already exists.");
     throw err;
   }
 }
@@ -258,7 +261,7 @@ export async function setWorkOrderSkills(
     const denied = checkRecord(ctx, "work_order", "write", wo);
     if (denied) return denied;
     if (!isEditable(wo!.status as WoStatus))
-      return fail("read_only", `This work order is ${wo!.status} and can't be edited.`);
+      return fail("read_only", `This job is ${say(wo!.status)} and can't be edited.`);
     const bad = await checkLinks(tx, { skillIds: p.data });
     if (bad) return bad;
     const unique = [...new Set(p.data)];

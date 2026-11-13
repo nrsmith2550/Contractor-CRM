@@ -46,6 +46,6 @@ describe("entity metadata", () => {
     expect(recordTitle(ENTITIES.contact, { firstName: "Ada", lastName: "Lovelace" })).toBe(
       "Ada Lovelace",
     );
-    expect(recordTitle(ENTITIES.account, { name: "", accountNumber: "ACC-1" })).toBe("ACC-1");
+    expect(recordTitle(ENTITIES.account, { name: "", accountNumber: "CUST-1" })).toBe("CUST-1");
   });
 });

@@ -159,7 +159,7 @@ export async function createPriceListAction(v: V): Promise<CmdResult> {
   const r = await createPriceList(await ctx(), { name: v.name });
   if (!r.ok) return failed(r);
   refresh();
-  redirect(`/app/price-lists/${r.priceList.id}`);
+  redirect(`/app/pricing/${r.priceList.id}`);
 }
 
 export async function setPriceAction(priceListId: string, v: V): Promise<CmdResult> {

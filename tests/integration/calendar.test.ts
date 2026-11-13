@@ -120,7 +120,7 @@ describe.skipIf(!enabled)("Calendar events", () => {
     expect(r.events.map((e) => e.kind)).toEqual(["appointment", "booking", "task"]);
     const booking = r.events[1]!;
     expect(booking).toMatchObject({
-      href: `/app/work-orders/${wo.id}`,
+      href: `/app/jobs/${wo.id}`,
       detail: "Tess",
       status: "scheduled",
       ownerId: tech.userId,
@@ -184,7 +184,7 @@ describe.skipIf(!enabled)("Calendar events", () => {
     );
     must(await appt(c, "Plain", "2030-05-03T09:00:00Z", "2030-05-03T10:00:00Z"));
     const r = must(await listCalendarEvents(c, RANGE));
-    expect(r.events.find((e) => e.title === "Site walk")!.href).toBe(`/app/work-orders/${wo.id}`);
+    expect(r.events.find((e) => e.title === "Site walk")!.href).toBe(`/app/jobs/${wo.id}`);
     expect(r.events.find((e) => e.title === "Plain")!.href).toBeNull();
   });
 

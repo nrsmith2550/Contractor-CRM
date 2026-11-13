@@ -7,7 +7,7 @@ export default async function ImportPage() {
   await requireUser();
   return (
     <>
-      <h1>Import leads</h1>
+      <h1>Import prospects</h1>
       <ImportLeads
         fields={IMPORT_FIELDS.map((f) => ({
           name: f,

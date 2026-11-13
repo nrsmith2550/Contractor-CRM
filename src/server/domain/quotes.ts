@@ -144,12 +144,12 @@ async function checkLinks(
   if (d.opportunityId) {
     const [o] = await tx.select().from(opportunity).where(eq(opportunity.id, d.opportunityId));
     if (checkRecord(ctx, "opportunity", "read", o))
-      return fail("invalid", "That opportunity doesn't exist or you don't have access to it.");
+      return fail("invalid", "That deal doesn't exist or you don't have access to it.");
   }
   if (d.customerAccountId) {
     const [a] = await tx.select().from(account).where(eq(account.id, d.customerAccountId));
     if (checkRecord(ctx, "account", "read", a))
-      return fail("invalid", "That account doesn't exist or you don't have access to it.");
+      return fail("invalid", "That customer doesn't exist or you don't have access to it.");
   }
   return null;
 }
@@ -329,7 +329,7 @@ export async function addLine(
     let taxRateBp = p.data.taxRateBp;
     if (p.data.productId) {
       const [pr] = await tx.select().from(product).where(eq(product.id, p.data.productId));
-      if (!pr) return fail("invalid", "That product doesn't exist.");
+      if (!pr) return fail("invalid", "That product or service doesn't exist.");
       description ||= pr.name;
       unitPrice ??= (await unitPriceFor(tx, pr.id, row.priceListId)) ?? 0;
       if (taxRateBp === undefined && pr.taxRateId) {

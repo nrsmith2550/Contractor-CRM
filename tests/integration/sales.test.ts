@@ -125,7 +125,7 @@ describe.skipIf(!enabled)("Phase 2 acceptance criteria", () => {
   it("Qualify a lead creates Account + Contact + Opportunity linked to the lead, which becomes read-only", async () => {
     const { admin: c } = await newBusiness();
     const l = await mkLead(c, { topic: "Roof wash", jobTitle: "Owner", addressCity: "Pittsburgh" });
-    expect(l.leadNumber).toBe("LEAD-01001");
+    expect(l.leadNumber).toBe("PROS-01001");
     expect(l.status).toBe("new");
 
     const q = must(await qualifyLead(c, l.id));
@@ -139,7 +139,7 @@ describe.skipIf(!enabled)("Phase 2 acceptance criteria", () => {
     expect(account).toMatchObject({
       name: l.companyName,
       relationshipType: "prospect",
-      accountNumber: "ACC-01001",
+      accountNumber: "CUST-01001",
       primaryContactId: contact.id,
       addressCity: "Pittsburgh",
     });
@@ -148,7 +148,7 @@ describe.skipIf(!enabled)("Phase 2 acceptance criteria", () => {
       email: l.email,
       jobTitle: "Owner",
       parentAccountId: account.id,
-      contactNumber: "CON-01001",
+      contactNumber: "PERS-01001",
     });
     expect(opp).toMatchObject({
       name: "Roof wash",
@@ -158,7 +158,7 @@ describe.skipIf(!enabled)("Phase 2 acceptance criteria", () => {
       estRevenueCents: 250_000,
       stage: "qualify",
       status: "open",
-      opportunityNumber: "OPP-01001",
+      opportunityNumber: "DEAL-01001",
     });
     expect(lead).toMatchObject({
       status: "qualified",
@@ -200,7 +200,7 @@ describe.skipIf(!enabled)("Phase 2 acceptance criteria", () => {
 
     const r1 = await moveStage(c, opp.id, "develop");
     expect(r1).toMatchObject({ ok: false, code: "missing_fields" });
-    expect(labelsOf(r1)).toEqual(["Account", "Estimated close date"]);
+    expect(labelsOf(r1)).toEqual(["Customer", "Estimated close date"]);
 
     const account = must(await createAccount(c, { name: `Buyer ${rand()}` })).account;
     must(
@@ -217,7 +217,7 @@ describe.skipIf(!enabled)("Phase 2 acceptance criteria", () => {
     expect(await moveStage(c, opp.id, "close")).toMatchObject({ ok: false, code: "invalid" }); // no skipping
     const r2 = await moveStage(c, opp.id, "propose");
     expect(r2).toMatchObject({ ok: false, code: "missing_fields" });
-    expect(labelsOf(r2)).toEqual(["Decision-maker contact", "Budget", "Purchase timeframe"]);
+    expect(labelsOf(r2)).toEqual(["Decision-maker", "Budget", "Purchase timeframe"]);
 
     const contact = must(
       await createContact(c, { lastName: "Buyer", parentAccountId: account.id }),
@@ -350,8 +350,8 @@ describe.skipIf(!enabled)("Leads", () => {
     const leads = await Promise.all(Array.from({ length: 12 }, () => mkLead(c)));
     const numbers = leads.map((l) => l.leadNumber).sort();
     expect(new Set(numbers).size).toBe(12);
-    expect(numbers[0]).toBe("LEAD-01001");
-    expect(numbers.at(-1)).toBe("LEAD-01012");
+    expect(numbers[0]).toBe("PROS-01001");
+    expect(numbers.at(-1)).toBe("PROS-01012");
   });
 
   it("validates input, defaults the topic and normalises the email", async () => {
@@ -657,7 +657,7 @@ describe.skipIf(!enabled)("Accounts, contacts and role permissions", () => {
         website: "https://child.test",
       }),
     ).account;
-    expect(child.accountNumber).toBe("ACC-01002");
+    expect(child.accountNumber).toBe("CUST-01002");
     expect(await createAccount(c, { name: "" })).toMatchObject({ ok: false, code: "invalid" });
     expect(await createAccount(c, { name: "x", relationshipType: "enemy" })).toMatchObject({
       ok: false,
@@ -687,7 +687,7 @@ describe.skipIf(!enabled)("Accounts, contacts and role permissions", () => {
         parentAccountId: child.id,
       }),
     ).contact;
-    expect(k).toMatchObject({ contactNumber: "CON-01001", email: "kim@x.test" });
+    expect(k).toMatchObject({ contactNumber: "PERS-01001", email: "kim@x.test" });
     expect(await createContact(c, { lastName: "X", email: "bad" })).toMatchObject({
       ok: false,
       code: "invalid",
@@ -858,7 +858,7 @@ describe.skipIf(!enabled)("CSV lead import", () => {
       estValueCents: null,
     });
     expect(all.find((l) => l.lastName === "Turing")!.estValueCents).toBe(30_000);
-    expect(all.map((l) => l.leadNumber).sort()).toEqual(["LEAD-01001", "LEAD-01002", "LEAD-01003"]);
+    expect(all.map((l) => l.leadNumber).sort()).toEqual(["PROS-01001", "PROS-01002", "PROS-01003"]);
   });
 
   it("requires a last-name mapping, rejects malformed CSV, and respects create permission", async () => {
@@ -889,8 +889,8 @@ describe.skipIf(!enabled)("Tenant isolation", () => {
     const b = await newBusiness();
     const leadA = await mkLead(a.admin);
     const leadB = await mkLead(b.admin);
-    expect(leadA.leadNumber).toBe("LEAD-01001");
-    expect(leadB.leadNumber).toBe("LEAD-01001"); // independent sequences
+    expect(leadA.leadNumber).toBe("PROS-01001");
+    expect(leadB.leadNumber).toBe("PROS-01001"); // independent sequences
 
     // B's (even most-privileged) user can't see A's lead by id, in lists, or change it.
     expect(await getLead(b.admin, leadA.id)).toMatchObject({ ok: false, code: "not_found" });

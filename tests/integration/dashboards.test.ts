@@ -187,7 +187,7 @@ describe.skipIf(!enabled)("Sales dashboard", () => {
 
     const d = must(await salesDashboard(c, OPTS));
     expect(d.myActivities!.map((a) => a.subject)).toEqual(["Sooner", "Later", "Undated"]);
-    expect(d.myActivities![0]).toMatchObject({ type: "Task", href: `/app/work-orders/${wo.id}` });
+    expect(d.myActivities![0]).toMatchObject({ type: "Task", href: `/app/jobs/${wo.id}` });
   });
 
   it("a user-level role sees only their own records, and a role without access gets nothing", async () => {

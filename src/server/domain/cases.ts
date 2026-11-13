@@ -17,6 +17,7 @@ import { invalid, text } from "./leads";
 import { nextNumber } from "./numbering";
 import { PRIORITIES, slaDueAt, type Priority } from "./sla";
 import type { WorkOrder } from "./work-orders";
+import { say } from "@/lib/vocabulary";
 
 // Cases ("incidents"): a customer's service request. Active statuses are In Progress, On Hold
 // and Waiting on Customer; Resolved and Cancelled are closed (and can be reactivated). The SLA
@@ -30,9 +31,9 @@ const isActive = (s: string) => (ACTIVE_STATUSES as readonly string[]).includes(
 const OPEN_WO = ["unscheduled", "scheduled", "in_progress"];
 
 export const CASE_VIEWS = [
-  { id: "my_active", label: "My Active Cases" },
-  { id: "all_active", label: "All Active Cases" },
-  { id: "resolved", label: "Resolved Cases" },
+  { id: "my_active", label: "My Active Requests" },
+  { id: "all_active", label: "All Active Requests" },
+  { id: "resolved", label: "Resolved Requests" },
 ] as const;
 export type CaseView = (typeof CASE_VIEWS)[number]["id"];
 
@@ -61,7 +62,7 @@ async function checkLinks(
   if (d.customerAccountId) {
     const [a] = await tx.select().from(account).where(eq(account.id, d.customerAccountId));
     if (checkRecord(ctx, "account", "read", a))
-      return fail("invalid", "That account doesn't exist or you don't have access to it.");
+      return fail("invalid", "That customer doesn't exist or you don't have access to it.");
   }
   if (d.subjectId) {
     const [s] = await tx
@@ -169,7 +170,10 @@ export async function updateCase(
     const { row, denied } = await load(tx, ctx, id);
     if (denied) return denied;
     if (!isActive(row.status))
-      return fail("read_only", `This case is ${row.status}. Reactivate it to make changes.`);
+      return fail(
+        "read_only",
+        `This request is ${say(row.status)}. Reactivate it to make changes.`,
+      );
     const bad = await checkLinks(tx, ctx, p.data);
     if (bad) return bad;
     const patch: Record<string, unknown> = defined(p.data);
@@ -208,7 +212,7 @@ export async function setCaseStatus(
     const { row, denied } = await load(tx, ctx, id);
     if (denied) return denied;
     if (!isActive(row.status))
-      return fail("read_only", `This case is ${row.status}. Reactivate it first.`);
+      return fail("read_only", `This request is ${say(row.status)}. Reactivate it first.`);
     if (row.status === to) return { ok: true as const, case: row };
     const [updated] = await tx
       .update(incident)
@@ -236,7 +240,7 @@ async function openWorkOrders(tx: Tx, caseId: string) {
 }
 
 const resolveInput = z.object({
-  resolution: z.string().trim().min(1, "Describe how the case was resolved").max(5000),
+  resolution: z.string().trim().min(1, "Describe how the request was resolved").max(5000),
   billableMinutes: z.number().int().min(0).max(100_000).nullable().optional(),
 });
 
@@ -251,12 +255,13 @@ export async function resolveCase(
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await load(tx, ctx, id);
     if (denied) return denied;
-    if (!isActive(row.status)) return fail("read_only", `This case is already ${row.status}.`);
+    if (!isActive(row.status))
+      return fail("read_only", `This request is already ${say(row.status)}.`);
     const open = await openWorkOrders(tx, id);
     if (open.length > 0) {
       return fail(
         "conflict",
-        `Finish or cancel its work orders first: ${open.map((o) => o.n).join(", ")}.`,
+        `Finish or cancel its jobs first: ${open.map((o) => o.n).join(", ")}.`,
       );
     }
     const now = new Date();
@@ -297,10 +302,11 @@ export async function cancelCase(
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await load(tx, ctx, id);
     if (denied) return denied;
-    if (!isActive(row.status)) return fail("read_only", `This case is already ${row.status}.`);
+    if (!isActive(row.status))
+      return fail("read_only", `This request is already ${say(row.status)}.`);
     const open = await openWorkOrders(tx, id);
     if (open.length > 0) {
-      return fail("conflict", `Cancel its work orders first: ${open.map((o) => o.n).join(", ")}.`);
+      return fail("conflict", `Cancel its jobs first: ${open.map((o) => o.n).join(", ")}.`);
     }
     const [updated] = await tx
       .update(incident)
@@ -325,7 +331,7 @@ export async function reactivateCase(ctx: Ctx, id: string): Promise<Result<{ cas
   return withTenant(ctx.tenantId, async (tx) => {
     const { row, denied } = await load(tx, ctx, id);
     if (denied) return denied;
-    if (isActive(row.status)) return fail("conflict", "This case is already active.");
+    if (isActive(row.status)) return fail("conflict", "This request is already active.");
     const now = new Date();
     const [updated] = await tx
       .update(incident)
@@ -376,7 +382,7 @@ export async function convertToWorkOrder(
     if (!isActive(row.status))
       return fail(
         "read_only",
-        `This case is ${row.status}. Reactivate it before creating work orders.`,
+        `This request is ${say(row.status)}. Reactivate it before creating jobs.`,
       );
 
     let addr: Partial<typeof account.$inferSelect> = {};

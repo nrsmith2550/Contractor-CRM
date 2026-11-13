@@ -191,7 +191,7 @@ export function ScheduleBoard(props: {
       if (b.status !== "scheduled") {
         setMsg({
           kind: "error",
-          text: `A ${humanize(b.status).toLowerCase()} booking can't be moved.`,
+          text: `A ${humanize(b.status).toLowerCase()} visit can't be moved.`,
         });
         return;
       }
@@ -264,7 +264,7 @@ export function ScheduleBoard(props: {
     if (b.status !== "scheduled") {
       setMsg({
         kind: "error",
-        text: `A ${humanize(b.status).toLowerCase()} booking can't be moved.`,
+        text: `A ${humanize(b.status).toLowerCase()} visit can't be moved.`,
       });
       return;
     }
@@ -307,7 +307,7 @@ export function ScheduleBoard(props: {
           </div>
         )}
         {msg && msg.kind === "warn" && (
-          <div role="group" aria-label="Booking warnings" className="crm-warn">
+          <div role="group" aria-label="Visit warnings" className="crm-warn">
             <strong>{msg.text} Check:</strong>
             <ul>
               {msg.warnings!.map((w) => (
@@ -324,12 +324,12 @@ export function ScheduleBoard(props: {
         data-testid="schedule-grid"
         aria-busy={busy}
         role="group"
-        aria-label="Schedule board"
+        aria-label="Schedule"
       >
         <div className="sb-inner" style={{ width: LABEL_W + range.widthPx }}>
           <div className="sb-header" style={{ height: HEADER_H }}>
             <div className="sb-corner" style={{ width: LABEL_W }}>
-              Resource
+              Team member
             </div>
             <div className="sb-axis" style={{ width: range.widthPx }}>
               {range.ticks.map((t) => (
@@ -347,7 +347,7 @@ export function ScheduleBoard(props: {
           </div>
 
           {rows.length === 0 && (
-            <p style={{ padding: 12 }}>No resources match. Add some under Resources.</p>
+            <p style={{ padding: 12 }}>No team members match. Add some under Team members.</p>
           )}
           {rows.map((row, ri) => (
             <div
@@ -412,8 +412,8 @@ export function ScheduleBoard(props: {
         >
           {menuBooking.woId && (
             <li role="none">
-              <Link role="menuitem" href={`/app/work-orders/${menuBooking.woId}`}>
-                Open work order
+              <Link role="menuitem" href={`/app/jobs/${menuBooking.woId}`}>
+                Open job
               </Link>
             </li>
           )}
@@ -432,23 +432,23 @@ export function ScheduleBoard(props: {
                     }
                   }}
                 >
-                  {to === "cancelled" ? "Cancel booking" : `Mark ${humanize(to).toLowerCase()}`}
+                  {to === "cancelled" ? "Cancel visit" : `Mark ${humanize(to).toLowerCase()}`}
                 </button>
               </li>
             ))}
         </ul>
       )}
 
-      <section aria-label="Unscheduled work orders">
-        <h2>Unscheduled work orders</h2>
+      <section aria-label="Unscheduled jobs">
+        <h2>Unscheduled jobs</h2>
         {props.unscheduled.length === 0 ? (
           <p>Nothing waiting to be scheduled.</p>
         ) : (
           <>
             <p className="crm-muted">
               {props.canEdit
-                ? "Drag one onto a resource and time to book it."
-                : "Only dispatchers can book work orders."}
+                ? "Drag one onto a team member and time to book it."
+                : "Only dispatchers can book jobs."}
             </p>
             <div className="sb-pane">
               {props.unscheduled.map((w) => (
@@ -479,7 +479,7 @@ function Block(props: {
     disabled: !props.draggable,
   });
   const time = `${utcToZonedInput(b.startD, props.tz).slice(11)}–${utcToZonedInput(b.endD, props.tz).slice(11)}`;
-  const label = `${b.woNumber ?? "Booking"} ${b.woTitle ?? ""}, ${time}, ${humanize(b.status).toLowerCase()}`;
+  const label = `${b.woNumber ?? "Visit"} ${b.woTitle ?? ""}, ${time}, ${humanize(b.status).toLowerCase()}`;
   return (
     <div
       ref={setNodeRef}
@@ -552,7 +552,7 @@ function UnscheduledCard({ w, draggable }: { w: BoardUnscheduled; draggable: boo
           {humanize(w.priority)}
         </div>
       </div>
-      <Link className="sb-card-open" href={`/app/work-orders/${w.id}`}>
+      <Link className="sb-card-open" href={`/app/jobs/${w.id}`}>
         Open
       </Link>
     </div>

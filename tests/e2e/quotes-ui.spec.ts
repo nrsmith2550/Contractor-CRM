@@ -66,7 +66,7 @@ test.describe("quotes UI", () => {
     await page.getByRole("button", { name: "Create quote" }).click();
     await expect(page).toHaveURL(/\/app\/quotes\/[0-9a-f-]{36}$/);
     await page
-      .getByRole("combobox", { name: "Product", exact: true })
+      .getByRole("combobox", { name: "Product or service", exact: true })
       .selectOption({ label: `Widget (${sku})` });
     await page.getByLabel("Quantity").fill("3");
     await page.getByRole("button", { name: "Add line" }).click();
@@ -156,41 +156,41 @@ test.describe("quotes UI", () => {
     await expect(page).toHaveURL(/\/app\/products\/[0-9a-f-]{36}$/);
 
     // An opportunity via a qualified lead.
-    await page.goto("/app/leads/new");
+    await page.goto("/app/prospects/new");
     await page.getByLabel("Last name").fill(`Lines${id}`);
     await page.getByLabel("Company").fill(`Roofers ${id}`);
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page).toHaveURL(/\/app\/leads\/[0-9a-f-]{36}$/);
-    await page.getByRole("button", { name: "Qualify", exact: true }).click();
-    await expect(page).toHaveURL(/\/app\/opportunities\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/app\/prospects\/[0-9a-f-]{36}$/);
+    await page.getByRole("button", { name: "Turn into a customer", exact: true }).click();
+    await expect(page).toHaveURL(/\/app\/deals\/[0-9a-f-]{36}$/);
 
     // Products: 4 x $12.50 = $50.00, plus a $30.00 write-in with a $5.00 discount.
     await page
-      .getByRole("combobox", { name: "Product", exact: true })
+      .getByRole("combobox", { name: "Product or service", exact: true })
       .selectOption({ label: `Gutter guard (${sku})` });
     await page.getByLabel("Quantity").fill("4");
-    await page.getByRole("button", { name: "Add product" }).click();
+    await page.getByRole("button", { name: "Add product or service" }).click();
     await expect(
       page.getByText("Estimated revenue is calculated from these lines: $50.00."),
     ).toBeVisible();
     await page
-      .getByRole("combobox", { name: "Product", exact: true })
-      .selectOption({ label: "Write-in (no product)" });
+      .getByRole("combobox", { name: "Product or service", exact: true })
+      .selectOption({ label: "Write-in (not in your list)" });
     await page.getByLabel("Description").fill("Install");
     await page.getByLabel("Quantity").fill("1");
     await page.getByLabel("Unit price ($)").fill("30");
     await page.getByLabel("Discount ($)").fill("5");
-    await page.getByRole("button", { name: "Add product" }).click();
+    await page.getByRole("button", { name: "Add product or service" }).click();
     await expect(
       page.getByText("Estimated revenue is calculated from these lines: $75.00."),
     ).toBeVisible();
-    await expect(page.getByRole("table", { name: "Opportunity products" })).toContainText(
+    await expect(page.getByRole("table", { name: "Deal products and services" })).toContainText(
       "Install",
     );
 
     // The header shows the calculated revenue; remove a line and it follows.
     await expect(page.getByText("$75.00").first()).toBeVisible();
-    await page.getByRole("button", { name: "Remove product 2" }).click();
+    await page.getByRole("button", { name: "Remove product or service 2" }).click();
     await expect(
       page.getByText("Estimated revenue is calculated from these lines: $50.00."),
     ).toBeVisible();
@@ -198,7 +198,7 @@ test.describe("quotes UI", () => {
     await page.getByLabel("Quantity").fill("1");
     await page.getByLabel("Unit price ($)").fill("30");
     await page.getByLabel("Discount ($)").fill("5");
-    await page.getByRole("button", { name: "Add product" }).click();
+    await page.getByRole("button", { name: "Add product or service" }).click();
     await expect(page.getByText("calculated from these lines: $75.00.")).toBeVisible();
 
     // + New quote copies the lines.

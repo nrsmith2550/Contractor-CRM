@@ -42,13 +42,13 @@ const filled = (v: string | null) => v !== null && v.trim() !== "";
 export const REQUIRED_TO_LEAVE: Record<Stage, Requirement[]> = {
   qualify: [
     { field: "name", label: "Topic", ok: (o) => filled(o.name) },
-    { field: "customerAccountId", label: "Account", ok: (o) => o.customerAccountId !== null },
+    { field: "customerAccountId", label: "Customer", ok: (o) => o.customerAccountId !== null },
     { field: "estCloseDate", label: "Estimated close date", ok: (o) => filled(o.estCloseDate) },
   ],
   develop: [
     {
       field: "customerContactId",
-      label: "Decision-maker contact",
+      label: "Decision-maker",
       ok: (o) => o.customerContactId !== null,
     },
     {

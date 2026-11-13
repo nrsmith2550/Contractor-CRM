@@ -58,7 +58,7 @@ test.describe("export", () => {
     ok(await createAccount(c, { name: "Contoso Roofing" }));
 
     await signIn(page, email);
-    await page.goto("/app/accounts");
+    await page.goto("/app/customers");
     await expect(page.getByRole("link", { name: "Northwind Plumbing" })).toBeVisible();
 
     // CSV of the whole view.
@@ -66,7 +66,7 @@ test.describe("export", () => {
       page.waitForEvent("download"),
       page.getByRole("link", { name: "Export to CSV" }).click(),
     ]);
-    expect(download.suggestedFilename()).toMatch(/^accounts-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(download.suggestedFilename()).toMatch(/^customers-\d{4}-\d{2}-\d{2}\.csv$/);
     let text = readFileSync((await download.path())!, "utf8");
     expect(text.startsWith("\ufeff")).toBe(true);
     expect(text.split("\r\n")[0]).toBe(
