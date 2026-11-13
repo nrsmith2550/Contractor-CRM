@@ -98,9 +98,21 @@ Center with downloadable templates and "coming from..." presets:
 5. Product packaging (feature flags per license) and the suite pages.
 6. Visual polish: icons, logo, empty states, mobile bar.
 
-## Open questions
+## Decisions so far
 
-1. Are the proposed names right, or do you prefer others (for example Lead vs Prospect)?
-2. Which existing systems do your first customers use? That decides which import presets come first.
-3. Which product in the suite should be sold first?
-4. Do you have the final Clinch logo file (SVG or PNG)? The mark in the app is a stand-in.
+1. **Names:** the proposed plain-language names are approved (Prospect, Customer, Person, Deal, Support
+   request, Job, Team member, Visit, Schedule, Pricing, Products and services).
+2. **First customers' systems:** not known yet (no marketing so far). So the Import Center starts with
+   the generic Excel/CSV templates plus a "map your own columns" step, and system-specific presets are
+   added as real customers ask for them.
+3. **Suite:** not decided which product sells first. Direction: **one app and one dashboard for
+   everyone**; the license decides how much of it is switched on. A module a license does not include
+   stays visible but locked, with a short "what you'd get" note and an upgrade prompt, so customers
+   can grow into it without moving to a different product.
+4. **Logo:** supplied and now in the app (`public/brand/`, favicons in `src/app/`). Its lettering is
+   black, so it always sits on a light plate (sidebar, sign-in pages).
+
+## Still open
+
+- Final names and prices for the license levels (and what each unlocks).
+- Which module sets are bundled together at each level.

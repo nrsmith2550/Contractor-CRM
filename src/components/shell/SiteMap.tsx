@@ -64,7 +64,7 @@ export function SiteMap() {
   return (
     <nav className="crm-sitemap" aria-label="Site map">
       <Link href="/app" className="crm-brand" aria-label="Clinch CRM home">
-        <Brand />
+        <Brand alt="" />
       </Link>
       {GROUPS.map((g) => (
         <div key={g.title}>
