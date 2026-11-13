@@ -260,7 +260,7 @@ export function EntityForm(props: {
         );
         return optional ? (
           <details key={s} className="crm-more">
-            <summary>More details: {s}</summary>
+            <summary>{s === "Details" ? "More details" : `Add ${s.toLowerCase()}`}</summary>
             {box}
           </details>
         ) : (

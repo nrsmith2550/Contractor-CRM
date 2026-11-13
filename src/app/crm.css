@@ -1373,3 +1373,43 @@
 .crm-more[open] > summary {
   margin-bottom: 8px;
 }
+
+/* Home panels */
+.home-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.home-panel {
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.home-panel h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+.home-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.home-panel li {
+  padding: 6px 0;
+  border-top: 1px solid var(--border-soft);
+}
+.home-panel li:first-child {
+  border-top: 0;
+}
+.home-panel li a {
+  display: inline-block;
+  padding: 2px 0;
+}
+.crm-tile-value {
+  font-size: clamp(22px, 2.1vw, 30px);
+}

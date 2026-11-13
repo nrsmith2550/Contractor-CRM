@@ -38,7 +38,8 @@ export const LEAD: EntityMeta = {
   ],
   defaultView: "my_open",
   headerFields: ["status", "rating", "leadSource", "estValueCents"],
-  moreSections: ["Details"],
+  fallbackView: "all_open",
+  moreSections: ["Details", "Address"],
   fields: [
     {
       name: "topic",
@@ -94,7 +95,7 @@ export const ACCOUNT: EntityMeta = {
   ],
   defaultView: "all",
   headerFields: ["relationshipType", "phone", "industry", "paymentTerms"],
-  moreSections: ["Details"],
+  moreSections: ["Details", "Address"],
   fields: [
     { name: "name", label: "Customer name", type: "text", section: "Summary", required: true },
     { name: "phone", label: "Phone", type: "tel", section: "Summary", recommended: true },
@@ -145,7 +146,7 @@ export const CONTACT: EntityMeta = {
   views: [{ id: "all", label: "All People" }],
   defaultView: "all",
   headerFields: ["jobTitle", "email", "businessPhone", "mobile"],
-  moreSections: ["Details"],
+  moreSections: ["Details", "Address"],
   fields: [
     { name: "firstName", label: "First name", type: "text", section: "Summary" },
     { name: "lastName", label: "Last name", type: "text", section: "Summary", required: true },
@@ -197,6 +198,7 @@ export const OPPORTUNITY: EntityMeta = {
   ],
   defaultView: "my_open",
   headerFields: ["estRevenueCents", "estCloseDate", "probability", "stage"],
+  fallbackView: "open",
   fields: [
     { name: "name", label: "Topic", type: "text", section: "Summary", required: true },
     {
@@ -314,6 +316,7 @@ export const CASE: EntityMeta = {
   ],
   defaultView: "my_active",
   headerFields: ["status", "priority", "caseType", "origin"],
+  fallbackView: "all_active",
   fields: [
     { name: "title", label: "Title", type: "text", section: "Summary", required: true },
     {

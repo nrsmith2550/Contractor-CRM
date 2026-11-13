@@ -64,4 +64,6 @@ export type EntityMeta = {
   headerFields: string[];
   /** Sections tucked under "More details" when creating a record, so the form starts short. */
   moreSections?: string[];
+  /** When the default "My ..." view is empty, show this wider view instead (and say so). */
+  fallbackView?: string;
 };

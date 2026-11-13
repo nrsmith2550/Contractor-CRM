@@ -40,8 +40,8 @@ test.describe("home", () => {
 
     // Counts for each area, each one a link to its list.
     for (const [label, href] of [
-      ["My open prospects", "/app/prospects"],
-      ["My open deals", "/app/deals"],
+      ["Open prospects", "/app/prospects?view=all_open"],
+      ["Open deals", "/app/deals?view=open"],
       ["Active support requests", "/app/support-requests"],
       ["Open jobs", "/app/jobs"],
     ] as const) {
