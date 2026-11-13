@@ -39,6 +39,8 @@ export function EntityGrid(props: {
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const href = (p: number) =>
     `/app/${meta.slug}?view=${encodeURIComponent(view)}&q=${encodeURIComponent(search)}&page=${p}`;
+  const exportHref = (format: string) =>
+    `/app/${meta.slug}/export?view=${encodeURIComponent(view)}&q=${encodeURIComponent(search)}&format=${format}`;
   const first = meta.columns[0]!.name;
 
   return (
@@ -52,6 +54,12 @@ export function EntityGrid(props: {
             Import leads
           </Link>
         )}
+        <a className="crm-btn" href={exportHref("xlsx")}>
+          Export to Excel
+        </a>
+        <a className="crm-btn" href={exportHref("csv")}>
+          Export to CSV
+        </a>
         <form method="get" className="crm-row">
           <label>
             <span className="crm-sr">View</span>

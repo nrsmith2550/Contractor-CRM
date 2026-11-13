@@ -570,7 +570,14 @@ quarter in the business's time zone (by actual close date), open leads by source
 shows active cases by priority, cases past their SLA (most overdue first) and today's bookings by resource (the business's
 local day, DST-aware). Charts are Recharts (MIT) with the same numbers in a table beneath. Every number follows the user's
 read scope, and a section a role can't read says so. 6 unit + 9 integration + 1 Playwright tests.
-**Still to build in Phase 6:** Export to Excel, dark theme and accessibility pass, demo seed, production deploy, backups.
+**Export to Excel (done):** every list has "Export to Excel" and "Export to CSV" (`/app/<entity>/export`). It exports
+every record in the current view and search (not just the visible page) using the grid's columns, through the same list
+function as the screen so a user only gets what they may read. Excel files are real workbooks (bold frozen header,
+filter, numbers, money and dates that sort and sum) written by a small dependency-free writer (`src/lib/xlsx.ts`,
+`src/lib/zip.ts`, checked against openpyxl); text is stored as strings so a spreadsheet never runs it as a formula, and CSV
+cells that start with `=`, `+`, `-` or `@` are defused. A view over 10,000 records is refused with a message instead of
+being silently cut off, and each export is written to the audit log. 12 unit, 8 integration and 1 Playwright test.
+**Still to build in Phase 6:** dark theme and accessibility pass, demo seed, production deploy, backups.
 
 - [ ] Lighthouse accessibility ≥ 90 on grid and form pages
 - [ ] Production deploy from `main` via CI, with migrations applied automatically

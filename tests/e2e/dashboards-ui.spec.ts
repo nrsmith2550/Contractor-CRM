@@ -56,6 +56,7 @@ test.describe("dashboards", () => {
   test.skip(!process.env.DATABASE_URL, "DATABASE_URL not set");
 
   test("the sales and service dashboards show the business's numbers", async ({ page }) => {
+    await page.context().setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
     const { email, tenantId, ownerId } = await newBusiness();
     const c = await buildCtx(tenantId, ownerId);
 

@@ -27,7 +27,7 @@ export async function recordAudit(
     tenantId: string;
     userId: string;
     entity: string;
-    recordId: string;
+    recordId?: string | null;
     action: string;
     changes?: Changes | Record<string, unknown>;
   },
