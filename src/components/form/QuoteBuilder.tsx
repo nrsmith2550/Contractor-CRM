@@ -253,7 +253,11 @@ export function QuoteBuilder(props: {
             <th scope="col">Discount</th>
             <th scope="col">Tax</th>
             <th scope="col">Amount</th>
-            {draft && <th scope="col" />}
+            {draft && (
+              <th scope="col">
+                <span className="crm-sr">Actions</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>

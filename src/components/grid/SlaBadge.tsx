@@ -12,14 +12,6 @@ const LABEL: Record<string, string> = {
   missed: "SLA missed",
   stopped: "Cancelled",
 };
-const COLOR: Record<string, string> = {
-  on_track: "#107c10",
-  due_soon: "#bc4b09",
-  breached: "#a4262c",
-  missed: "#a4262c",
-  met: "#107c10",
-};
-
 export function SlaBadge(props: {
   status: string;
   createdAt: string | Date;
@@ -51,7 +43,7 @@ export function SlaBadge(props: {
     <span
       className="crm-badge"
       data-sla={info.state}
-      style={{ color: COLOR[info.state], fontWeight: info.state === "breached" ? 700 : undefined }}
+      style={{ fontWeight: info.state === "breached" ? 700 : undefined }}
       title={info.state === "breached" ? "Past its SLA due time" : undefined}
     >
       {info.state === "breached" ? `Breached · ${text}` : text}

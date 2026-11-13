@@ -583,10 +583,17 @@ themes, chosen in the top bar, remembered in a cookie and applied on the first p
 reads the real tokens and enforces WCAG AA contrast (4.5:1 text, 3:1 focus rings) for every text/background pair in both
 themes. Charts and the calendar follow the theme. The supplied logo is used in the sidebar, on the sign-in pages and as the favicon. The plan for making the product simpler, packaging it as a suite and
 adding import templates is in `docs/POST-LAUNCH.md`.
-**Still to build in Phase 6:** the rest of the accessibility pass (measured Lighthouse score, keyboard walk-through), demo seed,
-production deploy, backups.
+**Accessibility pass (done):** `tests/e2e/a11y.spec.ts` runs axe-core (the rule engine behind Lighthouse's accessibility score,
+here with the WCAG 2.2 A/AA and best-practice sets) on 28 signed-in pages (lists, forms, dashboards, calendar, schedule,
+settings) and the public pages, in light and dark, and requires zero violations. Lighthouse itself was run on the sign-in page
+(100); its signed-in runs could not keep the session, so axe is the check that covers the app pages. The pass fixed a nested
+`<main>` on the Users page, SLA badge colours (now theme tokens, with a contrast test), empty table headers (now labelled
+"Actions"), faded other-month days and unnamed arrows on the calendar. A "Skip to main content" link was added, and
+`tests/e2e/keyboard.spec.ts` drives the app with the keyboard only: sign in, skip link, a visible focus indicator on every stop
+of the list page in both themes, creating a lead, the theme switch and the calendar toolbar.
+**Still to build in Phase 6:** demo seed, production deploy, backups.
 
-- [ ] Lighthouse accessibility ≥ 90 on grid and form pages
+- [x] Lighthouse accessibility ≥ 90 on grid and form pages (measured with axe-core, see below)
 - [ ] Production deploy from `main` via CI, with migrations applied automatically
 - [ ] Restore drill: recover the DB from a Neon branch/snapshot into a test branch
 

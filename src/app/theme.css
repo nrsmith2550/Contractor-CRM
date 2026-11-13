@@ -33,6 +33,7 @@
   --ok-bg: #dcfae6;
   --warn-bg: #fef0c7;
   --warn-border: #b54708;
+  --warn-text: #8a4b00;
   --badge-bg: #e8ecf5;
   --done-bg: #b7ebc9;
   --today-bg: #fff1ea;
@@ -72,6 +73,7 @@
   --ok-bg: #0f2e22;
   --warn-bg: #3a2a0a;
   --warn-border: #f0b429;
+  --warn-text: #fec84b;
   --badge-bg: #25324f;
   --done-bg: #1f5f3a;
   --today-bg: #2a1f24;
@@ -105,6 +107,7 @@
     --ok-bg: #0f2e22;
     --warn-bg: #3a2a0a;
     --warn-border: #f0b429;
+    --warn-text: #fec84b;
     --badge-bg: #25324f;
     --done-bg: #1f5f3a;
     --today-bg: #2a1f24;

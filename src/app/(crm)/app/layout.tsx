@@ -14,6 +14,9 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="crm-shell">
+      <a href="#main" className="crm-skip">
+        Skip to main content
+      </a>
       <header className="crm-topbar">
         <form action="/app/search" method="get" role="search">
           <input
@@ -28,7 +31,9 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
         <SignOutButton />
       </header>
       <SiteMap />
-      <main className="crm-main">{children}</main>
+      <main id="main" tabIndex={-1} className="crm-main">
+        {children}
+      </main>
     </div>
   );
 }

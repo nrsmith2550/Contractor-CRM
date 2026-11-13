@@ -7,7 +7,7 @@ import type { EventInput } from "@fullcalendar/core";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import Link from "next/link";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CmdResult } from "@/server/actions/entities";
 import { createAppointmentAction } from "@/server/actions/calendar";
 import { humanize } from "@/lib/format";
@@ -35,6 +35,34 @@ export function CalendarView(props: {
   canCreate: boolean;
 }) {
   const cal = useRef<FullCalendar>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  // Two things FullCalendar does that assistive technology trips over, fixed after each redraw:
+  // the previous/next arrows are role="img" spans with no text (the buttons already carry their
+  // names, so the icons become decorative), and each day cell is named with just its date, which
+  // doesn't match the events written inside it. The date stays available on the day's number link.
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const tidy = () => {
+      el.querySelectorAll(".fc-icon:not([aria-hidden])").forEach((i) => {
+        i.setAttribute("aria-hidden", "true");
+        i.removeAttribute("role");
+      });
+      el.querySelectorAll("td.fc-daygrid-day[aria-labelledby]").forEach((td) =>
+        td.removeAttribute("aria-labelledby"),
+      );
+    };
+    tidy();
+    const obs = new MutationObserver(tidy);
+    obs.observe(el, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["aria-labelledby"],
+    });
+    return () => obs.disconnect();
+  }, []);
   const [who, setWho] = useState("mine");
   const [picked, setPicked] = useState<Picked | null>(null);
   const [form, setForm] = useState<{ subject: string; start: string; end: string } | null>(null);
@@ -103,7 +131,7 @@ export function CalendarView(props: {
         </div>
       )}
 
-      <div className="cal-wrap" data-testid="calendar">
+      <div className="cal-wrap" data-testid="calendar" ref={wrap}>
         <FullCalendar
           ref={cal}
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
