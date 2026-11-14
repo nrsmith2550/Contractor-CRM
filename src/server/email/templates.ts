@@ -1,4 +1,4 @@
-import { TIERS, type Tier } from "@/lib/tiers";
+import { PLANS, seatsFor, type Edition } from "@/lib/plans";
 import type { Email } from "./mailer";
 
 const esc = (s: string) =>
@@ -8,10 +8,11 @@ const esc = (s: string) =>
 export function licenseKeyEmail(args: {
   to: string;
   key: string;
-  tier: Tier;
+  edition: Edition;
+  extraUsers: number;
   appUrl: string;
 }): Email {
-  const t = TIERS[args.tier];
+  const t = { label: PLANS[args.edition].name, seatLimit: seatsFor(args.extraUsers) };
   const url = `${args.appUrl.replace(/\/$/, "")}/activate`;
   const text = [
     `Thank you for your purchase. Here is your ${t.label} license key (up to ${t.seatLimit} users):`,

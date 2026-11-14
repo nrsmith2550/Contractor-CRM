@@ -1,118 +1,134 @@
 import type Stripe from "stripe";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { TIER_IDS, TIERS, formatUsd, isTier, upgradePriceCents } from "@/lib/tiers";
-import { createPurchaseCheckout, createUpgradeCheckout } from "@/server/billing/checkout";
+import { MAX_EXTRA_USERS, PLANS, monthlyCentsFor } from "@/lib/plans";
+import {
+  createSubscriptionCheckout,
+  metadataFor,
+  purchaseLineItems,
+} from "@/server/billing/checkout";
+import { assertKeyAllowed, keyMode } from "@/server/billing/stripe";
 import { getOutbox, sendEmail } from "@/server/email/mailer";
 import { licenseKeyEmail } from "@/server/email/templates";
 
 type Params = Stripe.Checkout.SessionCreateParams;
 
-function fakeStripe(url: string | null = "https://checkout.stripe.test/pay/cs_1") {
-  const create = vi.fn(async (_params: Params) => ({ url }));
+function fakeStripe(secret: string | null = "cs_test_secret_123") {
+  const create = vi.fn(async (_params: Params) => ({ client_secret: secret }));
   return {
     stripe: { checkout: { sessions: { create } } } as unknown as Pick<Stripe, "checkout">,
     create,
   };
 }
 
-describe("tiers", () => {
-  it("matches the plan's seat ranges and one-time prices", () => {
-    expect(TIER_IDS).toEqual(["starter", "team", "business", "enterprise"]);
-    expect(TIERS.starter).toMatchObject({ seatLimit: 5, priceCents: 49_900 });
-    expect(TIERS.team).toMatchObject({ seatLimit: 15, priceCents: 129_900 });
-    expect(TIERS.business).toMatchObject({ seatLimit: 40, priceCents: 299_900 });
-    expect(TIERS.enterprise).toMatchObject({ seatLimit: 100, priceCents: 599_900 });
-    expect(formatUsd(129_900)).toBe("$1,299");
+const unit = (l: Stripe.Checkout.SessionCreateParams.LineItem) => l.price_data!.unit_amount!;
+const monthlyTotal = (lines: Stripe.Checkout.SessionCreateParams.LineItem[]) =>
+  lines
+    .filter((l) => l.price_data?.recurring)
+    .reduce((sum, l) => sum + unit(l) * (l.quantity ?? 1), 0);
+
+describe("purchase lines", () => {
+  it("Complete with 10 people: monthly plan plus one-time setup, nothing for extra people", () => {
+    const lines = purchaseLineItems({ edition: "complete", extraUsers: 0 });
+    expect(lines).toHaveLength(2);
+    expect(monthlyTotal(lines)).toBe(7_000);
+    const setup = lines.find((l) => !l.price_data?.recurring)!;
+    expect(unit(setup)).toBe(50_000);
+    expect(setup.quantity).toBe(1);
   });
 
-  it("upgrades cost the difference (Team → Business = $1,700)", () => {
-    expect(upgradePriceCents("team", "business")).toBe(170_000);
-    expect(upgradePriceCents("starter", "enterprise")).toBe(550_000);
+  it("adds a monthly line for extra people, priced per plan", () => {
+    const lines = purchaseLineItems({ edition: "deals", extraUsers: 5 });
+    expect(lines).toHaveLength(3);
+    const seats = lines.find((l) => l.price_data?.product_data?.metadata?.role === "seats")!;
+    expect(seats.quantity).toBe(5);
+    expect(unit(seats)).toBe(PLANS.deals.extraUserCents);
+    expect(monthlyTotal(lines)).toBe(4_500 + 5 * 300);
   });
 
-  it("rejects downgrades and same-tier 'upgrades'", () => {
-    expect(() => upgradePriceCents("business", "team")).toThrow();
-    expect(() => upgradePriceCents("team", "team")).toThrow();
+  it("always matches the price the pricing page shows, for every plan and size", () => {
+    for (const edition of ["complete", "deals", "jobs"] as const) {
+      for (const extraUsers of [0, 1, 5, 15, MAX_EXTRA_USERS]) {
+        const lines = purchaseLineItems({ edition, extraUsers });
+        expect(monthlyTotal(lines)).toBe(monthlyCentsFor(edition, extraUsers));
+      }
+    }
   });
 
-  it("recognises only real tiers", () => {
-    expect(isTier("team")).toBe(true);
-    expect(isTier("platinum")).toBe(false);
-    expect(isTier(undefined)).toBe(false);
+  it("charges the setup fee once: it is the only line without a recurring interval", () => {
+    const lines = purchaseLineItems({ edition: "jobs", extraUsers: 3 });
+    expect(lines.filter((l) => !l.price_data?.recurring)).toHaveLength(1);
   });
 });
 
-describe("purchase checkout", () => {
-  it("creates a one-time payment (never a subscription) at the tier price", async () => {
+describe("embedded checkout", () => {
+  it("creates a subscription shown on our own page, with no redirect to Stripe", async () => {
     const { stripe, create } = fakeStripe();
-    const url = await createPurchaseCheckout(stripe, { tier: "team", appUrl: "https://app.test" });
-    expect(url).toBe("https://checkout.stripe.test/pay/cs_1");
+    const secret = await createSubscriptionCheckout(stripe, { edition: "complete", extraUsers: 4 });
+    expect(secret).toBe("cs_test_secret_123");
 
     const p = create.mock.calls[0]![0];
-    expect(p.mode).toBe("payment");
-    expect(p.customer_creation).toBe("always");
-    expect(p.line_items).toHaveLength(1);
-    expect(p.line_items![0]).toMatchObject({
-      quantity: 1,
-      price_data: { currency: "usd", unit_amount: 129_900 },
-    });
-    expect(p.metadata).toEqual({ kind: "purchase", tier: "team" });
-    expect(p.payment_intent_data?.metadata).toEqual({ kind: "purchase", tier: "team" });
-    expect(p.success_url).toBe(
-      "https://app.test/checkout/success?session_id={CHECKOUT_SESSION_ID}",
-    );
-    expect(p.cancel_url).toBe("https://app.test/pricing");
-    expect(JSON.stringify(p)).not.toMatch(/recurring|subscription/i);
+    expect(p.mode).toBe("subscription");
+    expect(p.ui_mode).toBe("embedded_page");
+    expect(p.redirect_on_completion).toBe("never");
+    expect(p).not.toHaveProperty("success_url");
+    expect(p.metadata).toEqual({ kind: "subscription", edition: "complete", extraUsers: "4" });
+    expect(p.subscription_data?.metadata).toEqual(p.metadata);
+    expect(p.metadata).toEqual(metadataFor({ edition: "complete", extraUsers: 4 }));
   });
 
-  it("fails loudly if Stripe returns no URL", async () => {
+  it("refuses anything that is not a real plan and a whole number of people in range", async () => {
+    const { stripe, create } = fakeStripe();
+    for (const bad of [
+      null,
+      {},
+      { edition: "platinum", extraUsers: 0 },
+      { edition: "complete", extraUsers: -1 },
+      { edition: "complete", extraUsers: 1.5 },
+      { edition: "complete", extraUsers: MAX_EXTRA_USERS + 1 },
+      { edition: "complete", extraUsers: "3" },
+    ]) {
+      await expect(createSubscriptionCheckout(stripe, bad)).rejects.toThrow();
+    }
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("fails loudly if Stripe returns no client secret", async () => {
     const { stripe } = fakeStripe(null);
     await expect(
-      createPurchaseCheckout(stripe, { tier: "starter", appUrl: "https://app.test" }),
-    ).rejects.toThrow(/checkout URL/);
+      createSubscriptionCheckout(stripe, { edition: "jobs", extraUsers: 0 }),
+    ).rejects.toThrow(/client secret/);
   });
 });
 
-describe("upgrade checkout", () => {
-  const base = { licenseId: "7b0a5f5e-9d0b-4a6e-8f5b-3f2f1b9c1d11", appUrl: "https://app.test" };
-
-  it("charges only the difference and tags the license and target tier", async () => {
-    const { stripe, create } = fakeStripe();
-    await createUpgradeCheckout(stripe, {
-      ...base,
-      fromTier: "team",
-      toTier: "business",
-      stripeCustomerId: "cus_123",
-    });
-    const p = create.mock.calls[0]![0];
-    expect(p.mode).toBe("payment");
-    expect(p.line_items![0]).toMatchObject({ price_data: { unit_amount: 170_000 } });
-    expect(p.metadata).toEqual({ kind: "upgrade", licenseId: base.licenseId, toTier: "business" });
-    expect(p.customer).toBe("cus_123");
-    expect(p.customer_creation).toBeUndefined();
+describe("stripe keys", () => {
+  it("tells test and live keys apart, including restricted keys", () => {
+    expect(keyMode("sk_test_abc")).toBe("test");
+    expect(keyMode("rk_test_abc")).toBe("test");
+    expect(keyMode("sk_live_abc")).toBe("live");
+    expect(keyMode("rk_live_abc")).toBe("live");
+    expect(keyMode("nonsense")).toBe("unknown");
   });
 
-  it("creates a customer when the license has none, and refuses non-upgrades", async () => {
-    const { stripe, create } = fakeStripe();
-    await createUpgradeCheckout(stripe, { ...base, fromTier: "starter", toTier: "team" });
-    expect(create.mock.calls[0]![0].customer_creation).toBe("always");
-    await expect(
-      createUpgradeCheckout(stripe, { ...base, fromTier: "team", toTier: "starter" }),
-    ).rejects.toThrow();
-    expect(create).toHaveBeenCalledTimes(1);
+  it("refuses a live key unless live mode was switched on on purpose", () => {
+    expect(() => assertKeyAllowed("sk_live_abc", undefined)).toThrow(/STRIPE_ALLOW_LIVE/);
+    expect(() => assertKeyAllowed("sk_live_abc", "yes")).toThrow();
+    expect(() => assertKeyAllowed("sk_live_abc", "true")).not.toThrow();
+    expect(() => assertKeyAllowed("sk_test_abc", undefined)).not.toThrow();
   });
 });
 
 describe("license email", () => {
-  it("contains the key and the activation link, and escapes HTML", () => {
+  it("names the plan, the number of people, the key and the activation link, and escapes HTML", () => {
     const email = licenseKeyEmail({
       to: "buyer@example.test",
       key: "CRM-AAAAA-BBBBB-CCCCC-DDDDDD",
-      tier: "business",
+      edition: "complete",
+      extraUsers: 5,
       appUrl: "https://app.test/",
     });
     expect(email.to).toBe("buyer@example.test");
-    expect(email.subject).toContain("Business");
+    expect(email.subject).toContain("Gantry Complete");
+    expect(email.text).toContain("up to 15 users");
     expect(email.text).toContain("CRM-AAAAA-BBBBB-CCCCC-DDDDDD");
     expect(email.text).toContain("https://app.test/activate");
     expect(email.html).toContain("CRM-AAAAA-BBBBB-CCCCC-DDDDDD");
@@ -120,7 +136,8 @@ describe("license email", () => {
     const evil = licenseKeyEmail({
       to: "x@example.test",
       key: "<script>alert(1)</script>",
-      tier: "team",
+      edition: "deals",
+      extraUsers: 0,
       appUrl: 'https://app.test"><b>',
     });
     expect(evil.html).not.toContain("<script>");

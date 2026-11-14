@@ -1,5 +1,15 @@
 import { sql } from "drizzle-orm";
-import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 // Platform tables are NOT tenant-scoped (no tenant_id / RLS), except `license.tenant_id`
 // which points at the tenant a key is bound to.
@@ -39,6 +49,19 @@ export const license = pgTable(
     tenantId: uuid("tenant_id").references(() => tenant.id),
     stripeCustomerId: text("stripe_customer_id"),
     stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
+    /** The Stripe subscription that pays for this licence, when it was bought on the site. */
+    stripeSubscriptionId: text("stripe_subscription_id").unique(),
+    /**
+     * How the subscription is doing: active, past_due (a payment failed and Stripe is retrying) or
+     * canceled. Null for a licence that is not billed through Stripe (a comp or a manual one).
+     */
+    billingStatus: text("billing_status"),
+    /** When the current month's access ends and the next payment is due. */
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    /** The owner has asked to stop at the end of the paid month. */
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    /** People beyond the included ones that the subscription pays for. */
+    extraUsers: integer("extra_users").notNull().default(0),
     activatedAt: timestamp("activated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

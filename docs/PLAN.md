@@ -398,6 +398,16 @@ tested with fabricated events. The "Stripe test-mode checkout produces an `issue
 stays unticked until it has been run once against a real test-mode Stripe account and Resend. See
 `docs/decisions/0003-stripe-billing.md`.
 
+**Subscription billing** (branch `claude/billing-engine`, supersedes the one-time model above; see
+`docs/decisions/0009-subscription-billing.md`): a purchase is a Stripe subscription (monthly plan, extra
+people, one-time setup fee) paid in an embedded checkout. The webhook mints the licence, and every
+subscription and invoice event re-reads the subscription and brings the licence in line (plan, people,
+renewal date, past-due flag, cancellation suspends). Live keys are refused unless `STRIPE_ALLOW_LIVE=true`.
+- [x] Subscription checkout creation, licence minting and lifecycle webhook (tested with fabricated events)
+- [ ] Buy page with the on-site payment form (no redirect to Stripe)
+- [ ] Billing page inside the app (change plan or people, update card, invoices, cancel)
+- [ ] Run once against a real test-mode Stripe account
+
 **Auth pages status** (branch `claude/phase-1-auth-pages`): `/activate`, `/login`, `/change-password` and a
 guarded `/app` placeholder are built and covered by unit, integration and browser (Playwright) tests: activate
 once → signed in; a second attempt redirects to `/login` with a masked email hint; wrong password gives a generic

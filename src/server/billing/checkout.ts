@@ -1,84 +1,82 @@
 import type Stripe from "stripe";
-import { TIERS, upgradePriceCents, type Tier } from "@/lib/tiers";
+import { PLANS, isEdition, isValidExtraUsers, type Edition } from "@/lib/plans";
 
 /**
- * Prices are sent inline (`price_data`) from lib/tiers.ts, so nothing has to be created in the
- * Stripe dashboard first and the code stays the single source of truth for prices.
- * Both flows are one-time payments (`mode: "payment"`), never subscriptions.
+ * What a purchase is made of, in Stripe's terms. Prices are sent inline (`price_data`) from
+ * lib/plans.ts, so nothing has to be created in the Stripe dashboard first and the code stays the
+ * single source of truth for prices.
+ *
+ * A purchase is one subscription with up to three lines:
+ *   1. the plan, every month;
+ *   2. the extra people, every month (left out when there are none);
+ *   3. the one-time setup fee, charged on the first invoice only.
+ * `metadata` on the session and on the subscription records what was bought, and the subscription's
+ * copy is what later changes (more people, a different plan) keep up to date.
  */
+export type PurchaseChoice = { edition: Edition; extraUsers: number };
 
-/** Public purchase: buyer picks a tier on /pricing and pays once. Returns the hosted URL. */
-export async function createPurchaseCheckout(
-  stripe: Pick<Stripe, "checkout">,
-  args: { tier: Tier; appUrl: string },
-): Promise<string> {
-  const tier = TIERS[args.tier];
-  const metadata = { kind: "purchase", tier: args.tier };
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer_creation: "always",
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: "usd",
-          unit_amount: tier.priceCents,
-          product_data: {
-            name: `CRM ${tier.label} license`,
-            description: `One-time perpetual license, ${tier.seats}`,
-          },
-        },
-      },
-    ],
-    metadata,
-    payment_intent_data: { metadata },
-    success_url: `${args.appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${args.appUrl}/pricing`,
+export const metadataFor = (c: PurchaseChoice) => ({
+  kind: "subscription",
+  edition: c.edition,
+  extraUsers: String(c.extraUsers),
+});
+
+/** The lines for a new subscription. Exported so tests can check the money exactly. */
+export function purchaseLineItems(
+  c: PurchaseChoice,
+): Stripe.Checkout.SessionCreateParams.LineItem[] {
+  const plan = PLANS[c.edition];
+  const monthly = (name: string, unit: number, role: string) => ({
+    currency: "usd",
+    unit_amount: unit,
+    recurring: { interval: "month" as const },
+    product_data: { name, metadata: { role, edition: c.edition } },
   });
-  if (!session.url) throw new Error("Stripe did not return a checkout URL");
-  return session.url;
+  return [
+    { quantity: 1, price_data: monthly(`${plan.name}, monthly`, plan.monthlyCents, "plan") },
+    ...(c.extraUsers > 0
+      ? [
+          {
+            quantity: c.extraUsers,
+            price_data: monthly("Extra people, monthly", plan.extraUserCents, "seats"),
+          },
+        ]
+      : []),
+    {
+      quantity: 1,
+      price_data: {
+        currency: "usd",
+        unit_amount: plan.setupCents,
+        product_data: { name: `${plan.name}, one-time setup`, metadata: { role: "setup" } },
+      },
+    },
+  ];
 }
 
 /**
- * Owner-initiated upgrade (Settings → License): pays only the price difference between
- * tiers. The webhook then raises the seat limit on the same license; no new key.
+ * Starts a purchase that is paid for on our own page: Stripe's checkout form is embedded in it
+ * (`ui_mode: embedded_page`), so the buyer never leaves the site. `redirect_on_completion: never`
+ * means no return address is needed; the page shows its own thank-you when the form says it is done.
+ * Returns the client secret the browser needs to show the form (it is not a secret key).
  */
-export async function createUpgradeCheckout(
+export async function createSubscriptionCheckout(
   stripe: Pick<Stripe, "checkout">,
-  args: {
-    licenseId: string;
-    fromTier: Tier;
-    toTier: Tier;
-    stripeCustomerId?: string | null;
-    appUrl: string;
-  },
+  choice: unknown,
 ): Promise<string> {
-  const amount = upgradePriceCents(args.fromTier, args.toTier); // throws on a non-upgrade
-  const to = TIERS[args.toTier];
-  const metadata = { kind: "upgrade", licenseId: args.licenseId, toTier: args.toTier };
+  const c = choice as Partial<PurchaseChoice> | null;
+  if (!c || !isEdition(c.edition) || !isValidExtraUsers(c.extraUsers)) {
+    throw new Error("Invalid purchase");
+  }
+  const clean: PurchaseChoice = { edition: c.edition, extraUsers: c.extraUsers };
+  const metadata = metadataFor(clean);
   const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    ...(args.stripeCustomerId
-      ? { customer: args.stripeCustomerId }
-      : { customer_creation: "always" as const }),
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: "usd",
-          unit_amount: amount,
-          product_data: {
-            name: `Upgrade to CRM ${to.label}`,
-            description: `Raises your limit to ${to.seatLimit} active users`,
-          },
-        },
-      },
-    ],
+    mode: "subscription",
+    ui_mode: "embedded_page",
+    redirect_on_completion: "never",
+    line_items: purchaseLineItems(clean),
     metadata,
-    payment_intent_data: { metadata },
-    success_url: `${args.appUrl}/app/settings/license?upgraded=1`,
-    cancel_url: `${args.appUrl}/app/settings/license`,
+    subscription_data: { metadata },
   });
-  if (!session.url) throw new Error("Stripe did not return a checkout URL");
-  return session.url;
+  if (!session.client_secret) throw new Error("Stripe did not return a checkout client secret");
+  return session.client_secret;
 }

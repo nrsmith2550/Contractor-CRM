@@ -1,19 +1,40 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { z } from "zod";
-import { TIER_IDS } from "@/lib/tiers";
-import { createPurchaseCheckout } from "@/server/billing/checkout";
-import { appUrl, getStripe, isStripeConfigured } from "@/server/billing/stripe";
+import { EDITIONS, MAX_EXTRA_USERS } from "@/lib/plans";
+import { requestContext } from "@/server/auth/http";
+import { hitRateLimit } from "@/server/auth/rate-limit";
+import { createSubscriptionCheckout } from "@/server/billing/checkout";
+import { getStripe, isStripeConfigured } from "@/server/billing/stripe";
 
-const TierInput = z.enum(TIER_IDS);
+const Input = z.object({
+  edition: z.enum(EDITIONS),
+  extraUsers: z.number().int().min(0).max(MAX_EXTRA_USERS),
+});
 
-/** /pricing "Buy" button: validates the tier, creates a Checkout session, redirects to Stripe. */
-export async function startCheckout(formData: FormData): Promise<void> {
-  const parsed = TierInput.safeParse(formData.get("tier"));
-  if (!parsed.success) redirect("/pricing?error=invalid");
-  if (!isStripeConfigured()) redirect("/pricing?error=unavailable");
+export type CheckoutStart =
+  | { ok: true; clientSecret: string }
+  | { ok: false; error: "invalid" | "unavailable" | "busy" | "failed" };
 
-  const url = await createPurchaseCheckout(getStripe(), { tier: parsed.data, appUrl: appUrl() });
-  redirect(url);
+/**
+ * Starts an on-site checkout for the plan and number of people chosen. Returns the client secret
+ * the page needs to show the payment form inside Gantry, so nobody is sent away to Stripe.
+ * The price is never taken from the browser: it is rebuilt here from the plan table.
+ */
+export async function createCheckoutSessionAction(input: unknown): Promise<CheckoutStart> {
+  const parsed = Input.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  if (!isStripeConfigured()) return { ok: false, error: "unavailable" };
+
+  const { ip } = await requestContext();
+  const limit = await hitRateLimit(`checkout:${ip}`, { max: 20, windowSeconds: 3600 });
+  if (!limit.allowed) return { ok: false, error: "busy" };
+
+  try {
+    const clientSecret = await createSubscriptionCheckout(getStripe(), parsed.data);
+    return { ok: true, clientSecret };
+  } catch (err) {
+    console.error("checkout session failed", err instanceof Error ? err.message : "unknown");
+    return { ok: false, error: "failed" };
+  }
 }

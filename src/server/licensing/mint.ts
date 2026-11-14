@@ -26,6 +26,12 @@ export type MintArgs = {
   amountPaidCents?: number;
   stripeCustomerId?: string;
   stripePaymentIntentId?: string;
+  /** The subscription that pays for it, for a licence bought on the site. */
+  stripeSubscriptionId?: string;
+  /** People beyond the included ones that the subscription pays for. */
+  extraUsers?: number;
+  billingStatus?: "active" | "past_due" | "canceled";
+  currentPeriodEnd?: Date;
   /** Override for custom quotes (over 100 users) minted by the platform admin. */
   seatLimit?: number;
 };
@@ -36,12 +42,12 @@ export type Minted = { key: string; licenseId: string; last5: string };
  * Creates an `issued` license and returns the full key, which exists only in this return
  * value: show it once and email it. Only its hash is stored.
  *
- * If `args.stripePaymentIntentId` already has a license, nothing is created and `null` is
+ * If the payment or subscription already has a license, nothing is created and `null` is
  * returned, so a repeated payment event can never mint a second key.
  */
 export async function mintLicense(args: MintArgs, tx?: Tx): Promise<Minted>;
 export async function mintLicense(
-  args: MintArgs & { stripePaymentIntentId: string },
+  args: MintArgs & ({ stripePaymentIntentId: string } | { stripeSubscriptionId: string }),
   tx?: Tx,
 ): Promise<Minted | null>;
 export async function mintLicense(args: MintArgs, tx?: Tx): Promise<Minted | null> {
@@ -60,8 +66,13 @@ export async function mintLicense(args: MintArgs, tx?: Tx): Promise<Minted | nul
         buyerEmail: args.buyerEmail?.toLowerCase(),
         stripeCustomerId: args.stripeCustomerId,
         stripePaymentIntentId: args.stripePaymentIntentId,
+        stripeSubscriptionId: args.stripeSubscriptionId,
+        extraUsers: args.extraUsers ?? 0,
+        billingStatus: args.billingStatus,
+        currentPeriodEnd: args.currentPeriodEnd,
       })
-      .onConflictDoNothing({ target: license.stripePaymentIntentId })
+      // A repeated payment or subscription event hits a unique id and creates nothing.
+      .onConflictDoNothing()
       .returning({ id: license.id });
     return row?.id ?? null;
   };

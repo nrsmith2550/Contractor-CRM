@@ -9,37 +9,69 @@ import { activateLicense } from "@/server/auth/activation";
 import { createSession, validateSession } from "@/server/auth/session";
 import { handleStripeEvent } from "@/server/billing/webhook";
 import { getOutbox, type Email } from "@/server/email/mailer";
-import { mintLicense } from "@/server/licensing/mint";
+
+// The route calls the real Stripe client to read a subscription back. Tests give it this one,
+// which answers from `subs`, so nothing here ever reaches Stripe.
+const subs = vi.hoisted(() => new Map<string, unknown>());
+vi.mock("@/server/billing/stripe", () => ({
+  getStripe: () => ({
+    subscriptions: { retrieve: async (id: string) => subs.get(id) },
+    charges: { retrieve: async () => ({ customer: null }) },
+  }),
+}));
 
 const enabled = Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL_OWNER);
 const rand = () => randomBytes(5).toString("hex");
 const APP_URL = "https://app.example.test";
 const PASSWORD = "violet-lantern-orbit-42";
+const PERIOD_END = 1_900_000_000; // seconds, far in the future
 
 type Obj = Record<string, unknown>;
 const evt = (type: string, object: Obj, id = `evt_${rand()}`) =>
   ({ id, type, data: { object } }) as unknown as Stripe.Event;
 
-function purchase(over: Obj = {}, tier = "team") {
-  const email = `buyer-${rand()}@example.test`;
-  const pi = `pi_${rand()}`;
-  const object: Obj = {
-    id: `cs_${rand()}`,
-    payment_status: "paid",
-    amount_total: 129_900,
+/** A subscription as Stripe would hand it back, with the metadata our checkout puts on it. */
+function sub(id: string, over: Obj = {}, meta: Obj = {}) {
+  const s = {
+    id,
+    status: "active",
+    cancel_at_period_end: false,
     customer: `cus_${rand()}`,
-    customer_details: { email },
-    payment_intent: pi,
-    metadata: { kind: "purchase", tier },
+    metadata: { kind: "subscription", edition: "complete", extraUsers: "0", ...meta },
+    items: { data: [{ current_period_end: PERIOD_END }] },
     ...over,
   };
-  return { email, pi, object, event: evt("checkout.session.completed", object) };
+  subs.set(id, s);
+  return s;
 }
 
-const licenseByPi = async (pi: string) =>
+const fakeStripe = () => ({
+  subscriptions: { retrieve: async (id: string) => subs.get(id) as Stripe.Subscription },
+});
+
+function purchase(meta: Obj = {}, over: Obj = {}) {
+  const email = `buyer-${rand()}@example.test`;
+  const subId = `sub_${rand()}`;
+  const customer = `cus_${rand()}`;
+  const s = sub(subId, { customer }, meta);
+  const object: Obj = {
+    id: `cs_${rand()}`,
+    mode: "subscription",
+    payment_status: "paid",
+    amount_total: 57_000,
+    customer,
+    subscription: subId,
+    customer_details: { email },
+    metadata: s.metadata,
+    ...over,
+  };
+  return { email, subId, customer, object, event: evt("checkout.session.completed", object) };
+}
+
+const bySub = async (id: string) =>
   (
     await withPlatform((tx) =>
-      tx.select().from(license).where(eq(license.stripePaymentIntentId, pi)),
+      tx.select().from(license).where(eq(license.stripeSubscriptionId, id)),
     )
   )[0];
 
@@ -61,196 +93,316 @@ async function activate(key: string, label: string) {
   });
 }
 
+/** Buys a plan and returns what later lifecycle tests need. */
+async function bought(meta: Obj = {}) {
+  const p = purchase(meta);
+  const send = vi.fn(async (_e: Email) => {});
+  await handleStripeEvent(p.event, { send, appUrl: APP_URL, ...fakeStripe() });
+  return { ...p, send };
+}
+
+const invoice = (subId: string, over: Obj = {}) => ({
+  id: `in_${rand()}`,
+  amount_paid: 7_000,
+  billing_reason: "subscription_cycle",
+  parent: { subscription_details: { subscription: subId } },
+  ...over,
+});
+
 describe.skipIf(!enabled)("Stripe webhook (real Postgres, fabricated events)", () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it("a paid purchase mints an issued license and emails a key that really activates", async () => {
-    const p = purchase();
-    const send = vi.fn(async (_e: Email) => {});
-    expect(await handleStripeEvent(p.event, { send, appUrl: APP_URL })).toBe("processed");
-
-    const lic = await licenseByPi(p.pi);
-    expect(lic).toMatchObject({
-      status: "issued",
-      tier: "team",
-      seatLimit: 15,
-      amountPaidCents: 129_900,
-      buyerEmail: p.email,
-      tenantId: null,
-    });
-    expect(send).toHaveBeenCalledTimes(1);
-    const mail = send.mock.calls[0]![0];
-    expect(mail.to).toBe(p.email);
-    expect(mail.text).toContain(`${APP_URL}/activate`);
-
-    // The emailed key is the one whose hash is stored, and it activates exactly that license.
-    const key = keyFrom(mail);
-    expect(lic!.keyLast5).toBe(key.replace(/-/g, "").slice(-5));
-    expect((await activate(key, "Buyer Co")).ok).toBe(true);
-    expect((await licenseByPi(p.pi))!.status).toBe("active");
-
-    const audit = await withPlatform((tx) =>
-      tx.select().from(adminAuditLog).where(eq(adminAuditLog.targetId, lic!.id)),
-    );
-    expect(audit.map((a) => a.action)).toContain("stripe.license_minted");
-    expect(audit[0]!.adminId).toBeNull();
-  });
-
-  it("a redelivered event is a no-op: no second license, no second email", async () => {
-    const p = purchase();
-    const send = vi.fn(async (_e: Email) => {});
-    expect(await handleStripeEvent(p.event, { send, appUrl: APP_URL })).toBe("processed");
-    expect(await handleStripeEvent(p.event, { send, appUrl: APP_URL })).toBe("duplicate");
-    expect(send).toHaveBeenCalledTimes(1);
-    const rows = await withPlatform((tx) =>
-      tx.select().from(license).where(eq(license.stripePaymentIntentId, p.pi)),
-    );
-    expect(rows).toHaveLength(1);
-  });
-
-  it("a different event for the same payment (async success after completed) mints nothing new", async () => {
-    const p = purchase();
-    const send = vi.fn(async (_e: Email) => {});
-    await handleStripeEvent(p.event, { send, appUrl: APP_URL });
-    const again = evt("checkout.session.async_payment_succeeded", p.object);
-    expect(await handleStripeEvent(again, { send, appUrl: APP_URL })).toBe("duplicate");
-    expect(send).toHaveBeenCalledTimes(1);
-  });
-
-  it("if the email fails nothing is committed, so Stripe's retry delivers a key", async () => {
-    const p = purchase();
-    const failing = vi.fn(async (_e: Email) => {
-      throw new Error("provider down");
-    });
-    await expect(handleStripeEvent(p.event, { send: failing, appUrl: APP_URL })).rejects.toThrow(
-      /provider down/,
-    );
-    expect(await licenseByPi(p.pi)).toBeUndefined(); // no orphaned license without a delivered key
-    const recorded = await withPlatform((tx) =>
-      tx.select().from(stripeEvent).where(eq(stripeEvent.id, p.event.id)),
-    );
-    expect(recorded).toEqual([]);
-
-    const send = vi.fn(async (_e: Email) => {});
-    expect(await handleStripeEvent(p.event, { send, appUrl: APP_URL })).toBe("processed");
-    expect(send).toHaveBeenCalledTimes(1);
-  });
-
-  it("ignores unpaid sessions, unknown kinds and unrelated events", async () => {
-    const send = vi.fn(async (_e: Email) => {});
-    const unpaid = purchase({ payment_status: "unpaid" });
-    expect(await handleStripeEvent(unpaid.event, { send })).toBe("ignored");
-    expect(await licenseByPi(unpaid.pi)).toBeUndefined();
-
-    const other = purchase({ metadata: { kind: "something-else" } });
-    expect(await handleStripeEvent(other.event, { send })).toBe("ignored");
-
-    expect(await handleStripeEvent(evt("customer.created", {}), { send })).toBe("ignored");
-    expect(send).not.toHaveBeenCalled();
-  });
-
-  it("rejects a purchase with an unknown tier or no email so Stripe retries", async () => {
-    const send = vi.fn(async (_e: Email) => {});
-    await expect(handleStripeEvent(purchase({}, "platinum").event, { send })).rejects.toThrow(
-      /Unknown tier/,
-    );
-    await expect(
-      handleStripeEvent(purchase({ customer_details: {} }).event, { send }),
-    ).rejects.toThrow(/customer email/);
-    expect(send).not.toHaveBeenCalled();
-  });
-
-  describe("upgrades", () => {
-    const upgrade = (licenseId: string, toTier: string, amount = 170_000) =>
-      evt("checkout.session.completed", {
-        id: `cs_${rand()}`,
-        payment_status: "paid",
-        amount_total: amount,
-        customer: "cus_upgrade",
-        metadata: { kind: "upgrade", licenseId, toTier },
-      });
-
-    it("raises the seat limit on the same license, no new key", async () => {
-      const { licenseId } = await mintLicense({ tier: "team", amountPaidCents: 129_900 });
+  describe("buying", () => {
+    it("a paid subscription mints an issued licence for the plan and people bought, and emails a key that activates", async () => {
+      const p = purchase({ edition: "deals", extraUsers: "5" });
       const send = vi.fn(async (_e: Email) => {});
-      expect(await handleStripeEvent(upgrade(licenseId, "business"), { send })).toBe("processed");
-      const [lic] = await withPlatform((tx) =>
-        tx.select().from(license).where(eq(license.id, licenseId)),
+      expect(await handleStripeEvent(p.event, { send, appUrl: APP_URL, ...fakeStripe() })).toBe(
+        "processed",
       );
-      expect(lic).toMatchObject({ tier: "business", seatLimit: 40, amountPaidCents: 299_900 });
+
+      const lic = await bySub(p.subId);
+      expect(lic).toMatchObject({
+        status: "issued",
+        edition: "deals",
+        extraUsers: 5,
+        seatLimit: 15,
+        amountPaidCents: 57_000,
+        buyerEmail: p.email,
+        tenantId: null,
+        billingStatus: "active",
+        cancelAtPeriodEnd: false,
+        stripeCustomerId: p.customer,
+      });
+      expect(lic!.currentPeriodEnd?.getTime()).toBe(PERIOD_END * 1000);
+
+      expect(send).toHaveBeenCalledTimes(1);
+      const mail = send.mock.calls[0]![0];
+      expect(mail.to).toBe(p.email);
+      expect(mail.subject).toContain("Gantry Deals");
+      expect(mail.text).toContain("up to 15 users");
+      expect(mail.text).toContain(`${APP_URL}/activate`);
+
+      const key = keyFrom(mail);
+      expect(lic!.keyLast5).toBe(key.replace(/-/g, "").slice(-5));
+      expect((await activate(key, "Buyer Co")).ok).toBe(true);
+      expect((await bySub(p.subId))!.status).toBe("active");
+
+      const audit = await withPlatform((tx) =>
+        tx.select().from(adminAuditLog).where(eq(adminAuditLog.targetId, lic!.id)),
+      );
+      expect(audit.map((a) => a.action)).toContain("stripe.license_minted");
+      expect(audit[0]!.adminId).toBeNull();
+    });
+
+    it("a redelivered event, or a second event for the same subscription, mints nothing new", async () => {
+      const p = purchase();
+      const send = vi.fn(async (_e: Email) => {});
+      const deps = { send, appUrl: APP_URL, ...fakeStripe() };
+      expect(await handleStripeEvent(p.event, deps)).toBe("processed");
+      expect(await handleStripeEvent(p.event, deps)).toBe("duplicate");
+      const again = evt("checkout.session.async_payment_succeeded", p.object);
+      expect(await handleStripeEvent(again, deps)).toBe("duplicate");
+      expect(send).toHaveBeenCalledTimes(1);
+      const rows = await withPlatform((tx) =>
+        tx.select().from(license).where(eq(license.stripeSubscriptionId, p.subId)),
+      );
+      expect(rows).toHaveLength(1);
+    });
+
+    it("if the email fails nothing is committed, so Stripe's retry delivers a key", async () => {
+      const p = purchase();
+      const failing = vi.fn(async (_e: Email) => {
+        throw new Error("provider down");
+      });
+      await expect(
+        handleStripeEvent(p.event, { send: failing, appUrl: APP_URL, ...fakeStripe() }),
+      ).rejects.toThrow(/provider down/);
+      expect(await bySub(p.subId)).toBeUndefined();
+      const recorded = await withPlatform((tx) =>
+        tx.select().from(stripeEvent).where(eq(stripeEvent.id, p.event.id)),
+      );
+      expect(recorded).toEqual([]);
+
+      const send = vi.fn(async (_e: Email) => {});
+      expect(await handleStripeEvent(p.event, { send, appUrl: APP_URL, ...fakeStripe() })).toBe(
+        "processed",
+      );
+      expect(send).toHaveBeenCalledTimes(1);
+    });
+
+    it("ignores unpaid sessions, one-off payments, other kinds and unrelated events", async () => {
+      const send = vi.fn(async (_e: Email) => {});
+      const deps = { send, ...fakeStripe() };
+      const unpaid = purchase({}, { payment_status: "unpaid" });
+      expect(await handleStripeEvent(unpaid.event, deps)).toBe("ignored");
+      expect(await bySub(unpaid.subId)).toBeUndefined();
+
+      expect(await handleStripeEvent(purchase({}, { mode: "payment" }).event, deps)).toBe(
+        "ignored",
+      );
+      expect(
+        await handleStripeEvent(purchase({}, { metadata: { kind: "something-else" } }).event, deps),
+      ).toBe("ignored");
+      expect(await handleStripeEvent(evt("customer.created", {}), deps)).toBe("ignored");
       expect(send).not.toHaveBeenCalled();
     });
 
-    it("ignores a downgrade, same tier and revoked licenses; throws for bad or unknown ones", async () => {
-      const { licenseId } = await mintLicense({ tier: "business" });
-      expect(await handleStripeEvent(upgrade(licenseId, "team"))).toBe("ignored");
-      expect(await handleStripeEvent(upgrade(licenseId, "business"))).toBe("ignored");
-
-      const revoked = await mintLicense({ tier: "starter" });
-      await withPlatform((tx) =>
-        tx.update(license).set({ status: "revoked" }).where(eq(license.id, revoked.licenseId)),
-      );
-      expect(await handleStripeEvent(upgrade(revoked.licenseId, "team"))).toBe("ignored");
-
+    it("throws for a purchase it cannot make sense of, so Stripe retries and we are alerted", async () => {
+      const send = vi.fn(async (_e: Email) => {});
+      const deps = { send, ...fakeStripe() };
       await expect(
-        handleStripeEvent(upgrade("7b0a5f5e-9d0b-4a6e-8f5b-3f2f1b9c1d11", "team")),
-      ).rejects.toThrow(/unknown license/);
-      await expect(handleStripeEvent(upgrade("not-a-uuid", "team"))).rejects.toThrow(/Bad upgrade/);
+        handleStripeEvent(purchase({ edition: "platinum" }).event, deps),
+      ).rejects.toThrow(/Bad purchase metadata/);
+      await expect(handleStripeEvent(purchase({ extraUsers: "999" }).event, deps)).rejects.toThrow(
+        /Bad purchase metadata/,
+      );
+      await expect(
+        handleStripeEvent(purchase({}, { customer_details: {} }).event, deps),
+      ).rejects.toThrow(/customer email/);
+      await expect(
+        handleStripeEvent(purchase({}, { subscription: null }).event, deps),
+      ).rejects.toThrow(/No subscription/);
+      expect(send).not.toHaveBeenCalled();
     });
   });
 
-  describe("refunds and chargebacks", () => {
-    it("a full refund revokes the license and signs the tenant out; a partial refund does not", async () => {
-      const p = purchase();
-      const send = vi.fn(async (_e: Email) => {});
-      await handleStripeEvent(p.event, { send, appUrl: APP_URL });
-      const act = await activate(keyFrom(send.mock.calls[0]![0]), "Refund Co");
+  describe("keeping the licence in line with the subscription", () => {
+    const deps = (send = vi.fn(async (_e: Email) => {})) => ({
+      send,
+      appUrl: APP_URL,
+      ...fakeStripe(),
+    });
+
+    it("a failed payment flags the account but keeps it working; paying restores it and adds to the total", async () => {
+      const b = await bought();
+      sub(b.subId, { customer: b.customer, status: "past_due" });
+      expect(await handleStripeEvent(evt("invoice.payment_failed", invoice(b.subId)), deps())).toBe(
+        "processed",
+      );
+      expect(await bySub(b.subId)).toMatchObject({ billingStatus: "past_due", status: "issued" });
+
+      sub(b.subId, { customer: b.customer, status: "active" });
+      await handleStripeEvent(evt("invoice.paid", invoice(b.subId)), deps());
+      expect(await bySub(b.subId)).toMatchObject({
+        billingStatus: "active",
+        amountPaidCents: 57_000 + 7_000,
+      });
+    });
+
+    it("the first invoice is not counted twice", async () => {
+      const b = await bought();
+      await handleStripeEvent(
+        evt("invoice.paid", invoice(b.subId, { billing_reason: "subscription_create" })),
+        deps(),
+      );
+      expect((await bySub(b.subId))!.amountPaidCents).toBe(57_000);
+    });
+
+    it("an invoice that is not for a subscription is ignored", async () => {
+      expect(
+        await handleStripeEvent(evt("invoice.paid", { id: "in_x", amount_paid: 100 }), deps()),
+      ).toBe("ignored");
+    });
+
+    it("adding people or changing plan updates the licence from the subscription", async () => {
+      const b = await bought();
+      sub(b.subId, { customer: b.customer }, { edition: "complete", extraUsers: "12" });
+      expect(
+        await handleStripeEvent(evt("customer.subscription.updated", { id: b.subId }), deps()),
+      ).toBe("processed");
+      expect(await bySub(b.subId)).toMatchObject({
+        edition: "complete",
+        extraUsers: 12,
+        seatLimit: 22,
+      });
+
+      sub(b.subId, { customer: b.customer }, { edition: "jobs", extraUsers: "0" });
+      await handleStripeEvent(evt("customer.subscription.updated", { id: b.subId }), deps());
+      const lic = (await bySub(b.subId))!;
+      expect(lic).toMatchObject({ edition: "jobs", extraUsers: 0, seatLimit: 10 });
+
+      const audit = await withPlatform((tx) =>
+        tx.select().from(adminAuditLog).where(eq(adminAuditLog.targetId, lic.id)),
+      );
+      expect(audit.filter((a) => a.action === "stripe.license_changed")).toHaveLength(2);
+    });
+
+    it("remembers when a cancellation is scheduled and keeps working until then", async () => {
+      const b = await bought();
+      sub(b.subId, { customer: b.customer, cancel_at_period_end: true });
+      await handleStripeEvent(evt("customer.subscription.updated", { id: b.subId }), deps());
+      expect(await bySub(b.subId)).toMatchObject({ cancelAtPeriodEnd: true, status: "issued" });
+
+      sub(b.subId, { customer: b.customer, cancel_at_period_end: false });
+      await handleStripeEvent(evt("customer.subscription.updated", { id: b.subId }), deps());
+      expect((await bySub(b.subId))!.cancelAtPeriodEnd).toBe(false);
+    });
+
+    it("a cancelled subscription suspends the licence and signs the business out; coming back restores it", async () => {
+      const b = await bought();
+      const act = await activate(keyFrom(b.send.mock.calls[0]![0]), "Cancel Co");
       if (!act.ok) throw new Error("activation failed");
       const { token } = await createSession({ tenantId: act.tenantId, userId: act.userId });
       expect((await validateSession(token)).ok).toBe(true);
 
-      const partial = evt("charge.refunded", {
-        payment_intent: p.pi,
-        amount: 129_900,
-        amount_refunded: 5_000,
+      sub(b.subId, { customer: b.customer, status: "canceled" });
+      expect(
+        await handleStripeEvent(evt("customer.subscription.deleted", { id: b.subId }), deps()),
+      ).toBe("processed");
+      expect(await bySub(b.subId)).toMatchObject({
+        status: "suspended",
+        billingStatus: "canceled",
       });
-      expect(await handleStripeEvent(partial)).toBe("ignored");
-      expect((await licenseByPi(p.pi))!.status).toBe("active");
-
-      const full = evt("charge.refunded", {
-        payment_intent: p.pi,
-        amount: 129_900,
-        amount_refunded: 129_900,
-      });
-      expect(await handleStripeEvent(full)).toBe("processed");
-      expect((await licenseByPi(p.pi))!.status).toBe("revoked");
       expect(await validateSession(token)).toEqual({ ok: false, reason: "license_inactive" });
+
+      sub(b.subId, { customer: b.customer, status: "active" });
+      await handleStripeEvent(evt("customer.subscription.updated", { id: b.subId }), deps());
+      expect(await bySub(b.subId)).toMatchObject({ status: "active", billingStatus: "active" });
+      expect((await validateSession(token)).ok).toBe(true);
     });
 
-    it("dispute opened suspends; won restores; lost revokes", async () => {
-      const send = vi.fn(async (_e: Email) => {});
-      const a = purchase();
-      await handleStripeEvent(a.event, { send, appUrl: APP_URL });
+    it("never restores a licence an administrator suspended or revoked", async () => {
+      const b = await bought();
+      await withPlatform((tx) =>
+        tx
+          .update(license)
+          .set({ status: "suspended" })
+          .where(eq(license.stripeSubscriptionId, b.subId)),
+      );
+      await handleStripeEvent(evt("customer.subscription.updated", { id: b.subId }), deps());
+      expect((await bySub(b.subId))!.status).toBe("suspended");
 
-      const opened = () => evt("charge.dispute.created", { payment_intent: a.pi });
-      const closed = (status: string) =>
-        evt("charge.dispute.closed", { payment_intent: a.pi, status });
+      await withPlatform((tx) =>
+        tx
+          .update(license)
+          .set({ status: "revoked", billingStatus: "canceled" })
+          .where(eq(license.stripeSubscriptionId, b.subId)),
+      );
+      await handleStripeEvent(evt("customer.subscription.updated", { id: b.subId }), deps());
+      expect((await bySub(b.subId))!.status).toBe("revoked");
+    });
 
-      expect(await handleStripeEvent(opened())).toBe("processed");
-      expect((await licenseByPi(a.pi))!.status).toBe("suspended");
+    it("events for a subscription we have no licence for, or one still being set up, change nothing", async () => {
+      sub("sub_unknown");
+      expect(
+        await handleStripeEvent(
+          evt("customer.subscription.updated", { id: "sub_unknown" }),
+          deps(),
+        ),
+      ).toBe("ignored");
+
+      const b = await bought();
+      sub(b.subId, { customer: b.customer, status: "incomplete" });
+      expect(
+        await handleStripeEvent(evt("customer.subscription.updated", { id: b.subId }), deps()),
+      ).toBe("ignored");
+      expect((await bySub(b.subId))!.status).toBe("issued");
+    });
+  });
+
+  describe("chargebacks", () => {
+    it("a dispute suspends, winning restores, losing revokes; refunds alone change nothing", async () => {
+      const b = await bought();
+      const deps = {
+        charges: { retrieve: async () => ({ customer: b.customer }) as unknown as Stripe.Charge },
+        ...fakeStripe(),
+      };
+      const dispute = (status?: string) => ({ charge: "ch_1", ...(status ? { status } : {}) });
+
+      expect(await handleStripeEvent(evt("charge.dispute.created", dispute()), deps)).toBe(
+        "processed",
+      );
+      expect((await bySub(b.subId))!.status).toBe("suspended");
 
       // Won while never activated: back to issued.
-      expect(await handleStripeEvent(closed("won"))).toBe("processed");
-      expect((await licenseByPi(a.pi))!.status).toBe("issued");
+      expect(await handleStripeEvent(evt("charge.dispute.closed", dispute("won")), deps)).toBe(
+        "processed",
+      );
+      expect((await bySub(b.subId))!.status).toBe("issued");
 
-      expect(await handleStripeEvent(opened())).toBe("processed");
-      expect(await handleStripeEvent(closed("lost"))).toBe("processed");
-      expect((await licenseByPi(a.pi))!.status).toBe("revoked");
+      await handleStripeEvent(evt("charge.dispute.created", dispute()), deps);
+      expect(await handleStripeEvent(evt("charge.dispute.closed", dispute("lost")), deps)).toBe(
+        "processed",
+      );
+      expect((await bySub(b.subId))!.status).toBe("revoked");
 
-      // Nothing matches an unknown payment intent.
       expect(
-        await handleStripeEvent(evt("charge.dispute.created", { payment_intent: "pi_unknown" })),
+        await handleStripeEvent(
+          evt("charge.refunded", { amount: 100, amount_refunded: 100 }),
+          deps,
+        ),
       ).toBe("ignored");
+      expect((await bySub(b.subId))!.status).toBe("revoked");
+    });
+
+    it("a dispute on a charge with no known customer changes nothing", async () => {
+      const deps = {
+        charges: { retrieve: async () => ({ customer: "cus_nobody" }) as unknown as Stripe.Charge },
+        ...fakeStripe(),
+      };
+      expect(await handleStripeEvent(evt("charge.dispute.created", { charge: "ch_2" }), deps)).toBe(
+        "ignored",
+      );
     });
   });
 
@@ -277,23 +429,27 @@ describe.skipIf(!enabled)("Stripe webhook (real Postgres, fabricated events)", (
         400,
       );
       expect((await post(body + " ", { "stripe-signature": signed(body) })).status).toBe(400);
-      expect(await licenseByPi(p.pi)).toBeUndefined();
+      expect(await bySub(p.subId)).toBeUndefined();
     });
 
-    it("a correctly signed purchase mints a license and queues the email", async () => {
+    it("a correctly signed purchase mints a licence and queues the email", async () => {
       vi.stubEnv("STRIPE_WEBHOOK_SECRET", SECRET);
       vi.stubEnv("RESEND_API_KEY", "");
       vi.stubEnv("APP_URL", APP_URL);
-      const p = purchase();
+      const p = purchase({ edition: "jobs", extraUsers: "2" });
       const body = JSON.stringify({ ...p.event, object: "event" });
 
       const res = await post(body, { "stripe-signature": signed(body) });
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ received: true, outcome: "processed" });
-      expect(await licenseByPi(p.pi)).toMatchObject({ status: "issued", tier: "team" });
+      expect(await bySub(p.subId)).toMatchObject({
+        status: "issued",
+        edition: "jobs",
+        seatLimit: 12,
+      });
       expect(getOutbox().some((m) => m.to === p.email)).toBe(true);
 
-      // Stripe redelivers: still 200, still one license.
+      // Stripe redelivers: still 200, still one licence.
       const again = await post(body, { "stripe-signature": signed(body) });
       expect(again.status).toBe(200);
       expect(await again.json()).toEqual({ received: true, outcome: "duplicate" });
@@ -301,7 +457,7 @@ describe.skipIf(!enabled)("Stripe webhook (real Postgres, fabricated events)", (
 
     it("returns 500 (so Stripe retries) when a valid event cannot be applied", async () => {
       vi.stubEnv("STRIPE_WEBHOOK_SECRET", SECRET);
-      const p = purchase({}, "platinum");
+      const p = purchase({ edition: "platinum" });
       const body = JSON.stringify({ ...p.event, object: "event" });
       const spy = vi.spyOn(console, "error").mockImplementation(() => {});
       const res = await post(body, { "stripe-signature": signed(body) });
