@@ -45,14 +45,14 @@ One TypeScript codebase on Next.js, Postgres on Neon's free plan, and Microsoft'
 | Calendar | FullCalendar standard (MIT: day/week/month/list) | Calendar tab | $0 |
 | Schedule Board | Custom grid built with dnd-kit | FullCalendar's resource timeline is a paid premium plugin, so we build the board ourselves | $0 |
 | PDF quotes | `@react-pdf/renderer` | Server-side quote PDFs | $0 |
-| Email | Resend free tier (password reset, quote emails) | Simple API; swap for SMTP if preferred | $0 |
+| Email | Resend (free tier to start; Pro $20/mo once volume passes 100 a day) | Simple API; swap for SMTP if preferred | $0 to $20/mo |
 | File attachments | Cloudflare R2 free tier (S3-compatible) | Notes/attachments on records | $0 |
 | Payments → license | Stripe Checkout + webhook | Purchase triggers license-key generation; Stripe charges per transaction only | % per sale |
-| Hosting | Cloudflare Workers via the OpenNext adapter (free plan) | See note below | $0 |
+| Hosting | **Vercel Pro** (decided; see `docs/GO-LIVE.md`) | Everything already lives there; no porting risk | about $20/mo |
 | Tests | Vitest (unit), Playwright (E2E) |  | $0 |
 | CI | GitHub Actions | Lint, typecheck, test, migrate on merge | $0 for typical usage |
 
-**Hosting note:** Vercel is the easiest host for Next.js, but its [Hobby plan is restricted to non-commercial personal use](https://vercel.com/docs/limits/fair-use-guidelines); selling licenses is commercial. Use Vercel Hobby only for private development previews, and deploy production to Cloudflare Workers (free) — or budget for Vercel Pro. Confirm Cloudflare's current free-plan limits before launch.
+**Hosting note:** production runs on **Vercel Pro**. The free Hobby tier is for non-commercial use only, and selling licences is commercial. Cloudflare Workers was the earlier plan; it is cheaper but would need porting and testing, so it is a later option only if usage charges ever become significant. Estimated monthly running costs, and how they were worked out, are at the bottom of `docs/GO-LIVE.md`.
 
 **Scaling note:** the free Neon project caps at 1 GB of storage, and writes that would exceed it fail until space is freed or the plan is upgraded. That comfortably covers early customers (a CRM row is usually under 2 KB); keep attachments in R2, never in Postgres.
 
