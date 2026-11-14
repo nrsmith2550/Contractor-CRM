@@ -4,9 +4,11 @@ import {
   EDITIONS,
   PLANS,
   SHARED_CONTENT,
+  MAX_SELF_SERVE_USERS,
   USERS_INCLUDED,
   firstYearCents,
   formatPlanUsd,
+  monthlyCentsFor,
   type Edition,
 } from "@/lib/plans";
 
@@ -163,9 +165,43 @@ export function PlanCards({ support }: { support: string | undefined }) {
           </tbody>
         </table>
       </div>
+      <h3 className="mk-h3">More than {USERS_INCLUDED} people?</h3>
+      <p>
+        Every plan includes {USERS_INCLUDED} people signing in. Add more for{" "}
+        <strong>{formatPlanUsd(PLANS.complete.extraUserCents)} a month each</strong> on{" "}
+        {PLANS.complete.name}, or{" "}
+        <strong>{formatPlanUsd(PLANS.deals.extraUserCents)} a month each</strong> on{" "}
+        {PLANS.deals.name} or {PLANS.jobs.name}, with no extra setup fee, up to{" "}
+        {MAX_SELF_SERVE_USERS} people. Need more than that? Get in touch for a quote.
+      </p>
+      <div className="mk-table-wrap">
+        <table className="mk-table">
+          <caption className="mk-sr">Monthly price by number of people</caption>
+          <thead>
+            <tr>
+              <th scope="col">People</th>
+              {EDITIONS.map((e) => (
+                <th scope="col" key={e}>
+                  {PLANS[e].name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[USERS_INCLUDED, 15, 25, MAX_SELF_SERVE_USERS].map((people) => (
+              <tr key={people}>
+                <th scope="row">{people === USERS_INCLUDED ? `Up to ${people}` : people}</th>
+                {EDITIONS.map((e) => (
+                  <td key={e}>{formatPlanUsd(monthlyCentsFor(e, people - USERS_INCLUDED))}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <p className="mk-muted">
-        Prices are in US dollars. Every plan covers your whole team, up to {USERS_INCLUDED} people
-        signing in; if you need more, ask us.
+        Prices are in US dollars, a month, plus the one-time setup fee. Adding or removing people
+        changes your next bill.
       </p>
     </>
   );

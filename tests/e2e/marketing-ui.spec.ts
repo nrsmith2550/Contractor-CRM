@@ -37,6 +37,17 @@ test.describe("marketing page", () => {
     await expect(firstYear.getByRole("row", { name: /Gantry Jobs/ })).toContainText("$840");
     await expect(firstYear.getByRole("row", { name: /bought separately/ })).toContainText("$1,680");
 
+    // More than 10 people: the price of each extra person, and a worked table.
+    await expect(pricing.getByRole("heading", { name: "More than 10 people?" })).toBeVisible();
+    await expect(pricing).toContainText("$5 a month each");
+    await expect(pricing).toContainText("$3 a month each");
+    const bySize = pricing.getByRole("table", { name: "Monthly price by number of people" });
+    await expect(bySize.getByRole("row", { name: /^Up to 10/ })).toContainText("$70");
+    await expect(bySize.getByRole("row", { name: /^25/ })).toContainText("$145");
+    await expect(bySize.getByRole("row", { name: /^25/ })).toContainText("$90");
+    await expect(bySize.getByRole("row", { name: /^50/ })).toContainText("$270");
+    await expect(bySize.getByRole("row", { name: /^50/ })).toContainText("$165");
+
     // No payment is taken here: the buttons get in touch, nothing buys.
     await expect(page.getByRole("button", { name: /buy|checkout|pay/i })).toHaveCount(0);
     for (const name of ["Gantry Complete", "Gantry Deals", "Gantry Jobs"]) {
@@ -49,7 +60,9 @@ test.describe("marketing page", () => {
     // Questions open and close.
     const q = page.getByText("How many people can use it?");
     await q.click();
-    await expect(page.getByText("Every plan includes up to 10 people signing in.")).toBeVisible();
+    await expect(
+      page.getByText(/Every plan includes up to 10 people signing in\. Add more for \$5/),
+    ).toBeVisible();
 
     // Ways in.
     await expect(page.getByRole("link", { name: "Sign in" }).first()).toHaveAttribute(

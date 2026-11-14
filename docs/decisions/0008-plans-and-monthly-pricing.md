@@ -19,6 +19,34 @@ the product is **sold**; the Stripe code from 0003 is kept but dormant.
   so any licence can be given a different number from the admin console without a code change. A
   price for extra users has deliberately not been invented.
 
+## More than 10 people
+
+Every plan includes 10 people. Beyond that, each extra person costs a flat monthly amount, with **no
+setup fee**: **$5 a month** on Gantry Complete, **$3 a month** on Gantry Deals or Gantry Jobs. Buying on
+the site stops at **50 people in total**; more than that is a custom quote (the admin console can
+set any limit). The numbers live in `src/lib/plans.ts` (`extraUserCents`, `MAX_SELF_SERVE_USERS`).
+
+| People | Complete | Deals or Jobs |
+| ------ | -------- | ------------- |
+| 10     | $70      | $45           |
+| 15     | $95      | $60           |
+| 25     | $145     | $90           |
+| 50     | $270     | $165          |
+
+Why these numbers:
+
+- **Extras are cheaper per person than the base** ($7 a person on Complete, $4.50 on a single area),
+  so growing a team is rewarded rather than punished, but they are not free, so a licence cannot be
+  stretched indefinitely.
+- **Complete stays the better deal at every size:** an extra person on Complete ($5) is less than an
+  extra person on both single plans together ($3 + $3 = $6). A unit test checks this for every size.
+- **Flat per person, not bands:** the simplest to explain and to bill (one quantity on the
+  subscription), and it has no cliff where adding one person jumps the price.
+- **The cap protects support and the shared database:** a business over 50 people is likely to want
+  something specific (training, imports, more), so it is a conversation, not a form.
+- Costs are tiny per person (see the running-cost estimate in `docs/GO-LIVE.md`), so every extra
+  person is almost pure margin; the prices are set to be easy to say yes to.
+
 ## How it is enforced
 
 - `license.edition` (`complete | deals | jobs`, migration 0010, existing licences become
