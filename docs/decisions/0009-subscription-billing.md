@@ -26,6 +26,16 @@ Status: accepted (replaces the one-time purchase model in 0003)
   transaction as the event record, with the email sent before commit, so a licence without a
   delivered key cannot exist.
 
+## Account options (Settings, Billing)
+
+Owner-only (`license` write). Everything is scoped to the business's own subscription, looked up from
+its licence, never from a browser-supplied id. Changing plan or people previews the cost (Stripe's
+invoice preview, prorations only, plus the setup fee difference when moving up), then charges the
+difference now with `error_if_incomplete`, so a refused card changes nothing. People cannot go below
+those signed up. The card is replaced with a SetupIntent and Payment Element drawn in the page, and an
+overdue invoice is retried with the new card. Cancelling only schedules the end of the paid period.
+A cancelled subscription suspends the licence, so those people cannot sign in to fix it; they contact us.
+
 ## Safety
 
 - `getStripe()` refuses a live key (`sk_live_`, `rk_live_`) unless `STRIPE_ALLOW_LIVE=true`, so a

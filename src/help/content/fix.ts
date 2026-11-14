@@ -89,7 +89,7 @@ export const FIX: Article[] = [
         "See the count on [Settings, Users](/app/settings/users): *X of Y seats in use*.",
         "A pending invitation holds a seat until it is accepted or expires.",
         "If you are at the limit, you cannot invite more people until a seat is free or we raise your limit.",
-        "To move to a larger license, contact support.",
+        "To add people or change plan, open [Settings, Billing](/app/settings/billing) (if you bought on the site). You see the cost first, then confirm. If you do not see Billing, contact support.",
       ),
     ],
     related: ["users-roles"],
