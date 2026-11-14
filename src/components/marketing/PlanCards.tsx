@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   AREAS,
   AREA_CONTENT,
@@ -18,24 +19,19 @@ const bothSingles = {
   monthly: PLANS.deals.monthlyCents + PLANS.jobs.monthlyCents,
 };
 
-function Cta({ edition, support }: { edition: Edition; support: string | undefined }) {
-  const label = `Get ${PLANS[edition].name}`;
-  return support ? (
-    <a
+function Cta({ edition }: { edition: Edition }) {
+  return (
+    <Link
       className={`mk-btn ${edition === "complete" ? "mk-btn-primary" : ""}`}
-      href={`mailto:${support}?subject=${encodeURIComponent(`${PLANS[edition].name} enquiry`)}`}
+      href={`/buy?plan=${edition}`}
     >
-      {label}
-    </a>
-  ) : (
-    <a className="mk-btn" href="#contact">
-      {label}
-    </a>
+      Get {PLANS[edition].name}
+    </Link>
   );
 }
 
 /** The three plans with their prices, and a table of what the first year costs. */
-export function PlanCards({ support }: { support: string | undefined }) {
+export function PlanCards() {
   return (
     <>
       <div className="mk-plans">
@@ -66,7 +62,7 @@ export function PlanCards({ support }: { support: string | undefined }) {
                 <li>Notes, calls, tasks and the calendar</li>
                 <li>Up to {USERS_INCLUDED} people signing in</li>
               </ul>
-              <Cta edition={e} support={support} />
+              <Cta edition={e} />
               {best && (
                 <p className="mk-muted mk-save">
                   Saves {formatPlanUsd(bothSingles.setup - p.setupCents)} on setup and{" "}

@@ -467,3 +467,149 @@
     scroll-behavior: smooth;
   }
 }
+
+/* Buy page: choose a plan, then pay in the page */
+.mk-buy {
+  padding-top: 40px;
+  padding-bottom: 72px;
+}
+.mk-buy h1 {
+  margin: 0 0 8px;
+}
+.mk-buy-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 32px;
+  align-items: start;
+  margin-top: 24px;
+}
+.mk-buy-plans {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  border: 0;
+}
+.mk-buy-plans legend,
+.mk-buy-people label {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 1.05rem;
+}
+.mk-buy-plan {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.mk-buy-plan input {
+  grid-row: 1 / span 3;
+  align-self: center;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+.mk-buy-plan:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.mk-buy-plan:has(input:focus-visible) {
+  outline: 3px solid var(--accent-text);
+  outline-offset: 2px;
+}
+.mk-buy-plan-name {
+  font-weight: 700;
+}
+.mk-buy-people {
+  margin: 0 0 24px;
+}
+.mk-buy-people p {
+  margin: 0 0 8px;
+}
+.mk-buy-people input {
+  width: 120px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.mk-buy-error {
+  margin: 8px 0 16px;
+  color: var(--danger);
+  font-weight: 600;
+}
+.mk-buy-test {
+  margin: 0 0 20px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.mk-buy-summary {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  position: sticky;
+  top: 84px;
+}
+.mk-buy-summary h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+.mk-buy-summary dl {
+  margin: 0;
+}
+.mk-buy-summary dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.mk-buy-summary dt {
+  color: var(--muted);
+}
+.mk-buy-summary dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+.mk-buy-total dt,
+.mk-buy-total dd {
+  color: var(--text);
+  font-weight: 700;
+}
+.mk-buy-card {
+  max-width: 640px;
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.mk-buy-card h2 {
+  margin-top: 0;
+}
+.mk-buy-checkout {
+  min-height: 320px;
+  margin: 16px 0;
+}
+@media (max-width: 800px) {
+  .mk-buy-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk-buy-summary {
+    position: static;
+    order: -1;
+  }
+}

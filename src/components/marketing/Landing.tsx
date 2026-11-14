@@ -312,7 +312,7 @@ export function Landing({ support }: { support: string | undefined }) {
               {USERS_INCLUDED} people, with more available for a small extra each. Choose the whole
               suite, or just the half you need.
             </p>
-            <PlanCards support={support} />
+            <PlanCards />
           </div>
         </section>
 

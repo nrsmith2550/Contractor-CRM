@@ -47,6 +47,12 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.9.0
         version: 4.9.0(react@19.3.1)
+      '@stripe/react-stripe-js':
+        specifier: ^7.1.0
+        version: 7.1.0(@stripe/stripe-js@10.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@stripe/stripe-js':
+        specifier: ^10.3.0
+        version: 10.3.0
       drizzle-orm:
         specifier: ^0.45.4
         version: 0.45.4(@neondatabase/serverless@0.10.4)(@types/pg@8.23.1)(pg@8.23.1)
@@ -1900,6 +1906,17 @@ packages:
 
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
+
+  '@stripe/react-stripe-js@7.1.0':
+    resolution: {integrity: sha512-ehXa04HVJ8j/tPy1hQW9gdgLGY4o1msb7C5Rasd0LpLMiqY9VJIyuLAI6eUUXkeFvgbv6+5kulyNgHoR4FrRfg==}
+    peerDependencies:
+      '@stripe/stripe-js': '>=10.3.0 <11.0.0'
+      react: '>=16.8.0 <20.0.0'
+      react-dom: '>=16.8.0 <20.0.0'
+
+  '@stripe/stripe-js@10.3.0':
+    resolution: {integrity: sha512-/C+qwO7bkDIYbIHypxppg8qGnWXdqQEOM855lJ8wTkd2VPoRAYLTGDOFTpJ8B7kso3o9cjMy2r1KPw8WQregNA==}
+    engines: {node: '>=12.16'}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -5837,6 +5854,15 @@ snapshots:
   '@rushstack/eslint-patch@1.16.1': {}
 
   '@standard-schema/utils@0.3.0': {}
+
+  '@stripe/react-stripe-js@7.1.0(@stripe/stripe-js@10.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@stripe/stripe-js': 10.3.0
+      prop-types: 15.8.1
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+
+  '@stripe/stripe-js@10.3.0': {}
 
   '@swc/helpers@0.5.15':
     dependencies:
