@@ -18,9 +18,9 @@ describe("plans", () => {
     expect(PLANS.complete).toMatchObject({ setupCents: 50_000, monthlyCents: 7_000 });
     expect(PLANS.deals).toMatchObject({ setupCents: 30_000, monthlyCents: 4_500 });
     expect(PLANS.jobs).toMatchObject({ setupCents: 30_000, monthlyCents: 4_500 });
-    expect(PLANS.complete.name).toBe("Clinch Complete");
-    expect(PLANS.deals.name).toBe("Clinch Deals");
-    expect(PLANS.jobs.name).toBe("Clinch Jobs");
+    expect(PLANS.complete.name).toBe("Gantry Complete");
+    expect(PLANS.deals.name).toBe("Gantry Deals");
+    expect(PLANS.jobs.name).toBe("Gantry Jobs");
     expect(USERS_INCLUDED).toBe(10);
   });
 

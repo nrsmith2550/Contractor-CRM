@@ -52,7 +52,7 @@ export const SALES: Article[] = [
         "Choose **Turn into a customer**.",
         `You are taken to the new ${N.deal}, ready to work.`,
       ),
-      p("In one step Clinch CRM creates:"),
+      p("In one step Gantry CRM creates:"),
       list(
         `a **${N.customer}** from the company (or the person's name if there is no company),`,
         `a **${N.person}** from the name, email and phone,`,

@@ -37,7 +37,7 @@ const menu = (page: Page) => page.getByRole("navigation", { name: "Site map" });
 test.describe("plans", () => {
   test.skip(!process.env.DATABASE_URL, "DATABASE_URL not set");
 
-  test("Clinch Deals shows only the Deals side, and the Jobs pages explain why they are closed", async ({
+  test("Gantry Deals shows only the Deals side, and the Jobs pages explain why they are closed", async ({
     page,
   }) => {
     await signedIn(page, "deals");
@@ -64,7 +64,7 @@ test.describe("plans", () => {
     await expect(page).toHaveURL(/\/app\/plan\?needs=jobs$/);
     await expect(page.getByRole("heading", { name: "Your plan", exact: true })).toBeVisible();
     await expect(page.getByRole("status")).toContainText("Jobs isn't part of your plan");
-    await expect(page.getByText("You're on Clinch Deals")).toBeVisible();
+    await expect(page.getByText("You're on Gantry Deals")).toBeVisible();
     await page.goto("/app/support-requests/new");
     await expect(page).toHaveURL(/\/app\/plan\?needs=jobs$/);
     await page.goto("/app/schedule");
@@ -79,7 +79,7 @@ test.describe("plans", () => {
     await expect(page.getByRole("heading", { name: "Quotes" })).toBeVisible();
   });
 
-  test("Clinch Jobs shows only the Jobs side, and the Deals pages explain why they are closed", async ({
+  test("Gantry Jobs shows only the Jobs side, and the Deals pages explain why they are closed", async ({
     page,
   }) => {
     await signedIn(page, "jobs");
@@ -97,18 +97,18 @@ test.describe("plans", () => {
       await expect(page).toHaveURL(/\/app\/plan\?needs=deals$/);
     }
     await expect(page.getByRole("status")).toContainText("Deals isn't part of your plan");
-    await expect(page.getByText("You're on Clinch Jobs")).toBeVisible();
+    await expect(page.getByText("You're on Gantry Jobs")).toBeVisible();
 
     await page.goto("/app/jobs");
     await expect(page.getByRole("heading", { name: "Jobs", exact: true })).toBeVisible();
   });
 
-  test("Clinch Complete shows everything, and Your plan says so", async ({ page }) => {
+  test("Gantry Complete shows everything, and Your plan says so", async ({ page }) => {
     await signedIn(page, "complete");
     for (const shown of ["Prospects", "Quotes", "Support requests", "Jobs", "Schedule"])
       await expect(menu(page).getByRole("link", { name: shown, exact: true })).toBeVisible();
     await menu(page).getByRole("link", { name: "Your plan" }).click();
-    await expect(page.getByText("You're on Clinch Complete")).toBeVisible();
+    await expect(page.getByText("You're on Gantry Complete")).toBeVisible();
     await expect(page.getByText("Not in your plan")).toHaveCount(0);
   });
 });

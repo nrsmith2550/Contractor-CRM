@@ -63,7 +63,7 @@ describe.skipIf(!enabled)("plans: a licence only unlocks the part it was bought 
     expect(lic).toMatchObject({ edition: "complete", seatLimit: 10 });
   });
 
-  it("Clinch Deals: prospects, deals and quotes work; support requests, jobs and visits do not", async () => {
+  it("Gantry Deals: prospects, deals and quotes work; support requests, jobs and visits do not", async () => {
     const b = await business("deals");
     const c = await b.ctx();
     expect(c.subject.edition).toBe("deals");
@@ -93,7 +93,7 @@ describe.skipIf(!enabled)("plans: a licence only unlocks the part it was bought 
     });
   });
 
-  it("Clinch Jobs: support requests, jobs and the schedule work; prospects, deals, quotes and orders do not", async () => {
+  it("Gantry Jobs: support requests, jobs and the schedule work; prospects, deals, quotes and orders do not", async () => {
     const b = await business("jobs");
     const c = await b.ctx();
     expect(c.subject.edition).toBe("jobs");
@@ -111,7 +111,7 @@ describe.skipIf(!enabled)("plans: a licence only unlocks the part it was bought 
     expect(sales).toMatchObject({ pipeline: null, wonCents: null });
   });
 
-  it("Clinch Complete: everything works", async () => {
+  it("Gantry Complete: everything works", async () => {
     const c = await (await business("complete")).ctx();
     must(await createLead(c, { lastName: "Ng", companyName: "Ng Co" }));
     must(await createQuote(c, { name: "Q" }));

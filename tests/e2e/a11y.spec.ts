@@ -142,7 +142,7 @@ test.describe("accessibility", () => {
     for (const theme of ["light", "dark"] as const) {
       await page
         .context()
-        .addCookies([{ name: "clinch-theme", value: theme, url: "http://localhost:3000" }]);
+        .addCookies([{ name: "gantry-theme", value: theme, url: "http://localhost:3000" }]);
       for (const p of ["/login", "/forgot-password", "/activate", "/", "/pricing"]) {
         await page.goto(p);
         await page.waitForLoadState("networkidle");
@@ -154,7 +154,7 @@ test.describe("accessibility", () => {
     for (const theme of ["light", "dark"] as const) {
       await page
         .context()
-        .addCookies([{ name: "clinch-theme", value: theme, url: "http://localhost:3000" }]);
+        .addCookies([{ name: "gantry-theme", value: theme, url: "http://localhost:3000" }]);
       for (const p of pages) {
         await page.goto(p);
         await expect(page.locator("main")).toBeVisible();

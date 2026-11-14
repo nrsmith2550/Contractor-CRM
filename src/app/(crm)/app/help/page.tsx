@@ -112,7 +112,7 @@ export default async function HelpHome({
             </>
           ) : (
             <>
-              Ask the person who set up Clinch CRM for your business (your administrator), and tell
+              Ask the person who set up Gantry CRM for your business (your administrator), and tell
               them what you were trying to do and what you saw.
             </>
           )}{" "}

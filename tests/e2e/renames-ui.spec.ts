@@ -89,8 +89,8 @@ test.describe("plain names", () => {
     // The two halves of the product are named after the plans, not Sales and Service.
     await page.goto("/app");
     const nav = page.getByRole("navigation", { name: "Site map" });
-    await expect(nav.getByRole("heading", { name: "Clinch Deals", exact: true })).toBeVisible();
-    await expect(nav.getByRole("heading", { name: "Clinch Jobs", exact: true })).toBeVisible();
+    await expect(nav.getByRole("heading", { name: "Gantry Deals", exact: true })).toBeVisible();
+    await expect(nav.getByRole("heading", { name: "Gantry Jobs", exact: true })).toBeVisible();
     await expect(nav.getByRole("heading", { name: "Sales", exact: true })).toHaveCount(0);
     await expect(nav.getByRole("heading", { name: "Service", exact: true })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Deals dashboard" })).toBeVisible();

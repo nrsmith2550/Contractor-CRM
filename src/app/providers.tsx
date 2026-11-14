@@ -10,9 +10,9 @@ import {
 } from "@fluentui/react-components";
 import { THEME_COOKIE, type ThemeMode } from "@/lib/theme";
 
-// Fluent only draws the forms on the sign-in pages; give them the Clinch orange (80 is the button
+// Fluent only draws the forms on the sign-in pages; give them the Gantry orange (80 is the button
 // colour, white text on it is 5.2:1) instead of Fluent's default blue.
-const clinch: BrandVariants = {
+const gantry: BrandVariants = {
   10: "#1f0b03",
   20: "#2e1006",
   30: "#431809",
@@ -30,8 +30,8 @@ const clinch: BrandVariants = {
   150: "#fed1b8",
   160: "#ffe8dc",
 };
-const lightTheme = createLightTheme(clinch);
-const darkTheme = createDarkTheme(clinch);
+const lightTheme = createLightTheme(gantry);
+const darkTheme = createDarkTheme(gantry);
 
 const Ctx = createContext<{ mode: ThemeMode; setMode: (m: ThemeMode) => void }>({
   mode: "system",

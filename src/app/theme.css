@@ -1,5 +1,5 @@
 /*
- * Clinch colour tokens. Everything in the app takes its colours from these names, so a theme is
+ * Gantry colour tokens. Everything in the app takes its colours from these names, so a theme is
  * just a different set of values. Text/background pairs are kept above WCAG AA (4.5:1) by
  * tests/unit/theme-contrast.test.ts, which reads this file.
  */

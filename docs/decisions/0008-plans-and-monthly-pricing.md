@@ -7,9 +7,9 @@ the product is **sold**; the Stripe code from 0003 is kept but dormant.
 
 | Plan            | Unlocks      | Setup (once) | Monthly |
 | --------------- | ------------ | ------------ | ------- |
-| Clinch Complete | Deals + Jobs | $500         | $70     |
-| Clinch Deals    | Deals only   | $300         | $45     |
-| Clinch Jobs     | Jobs only    | $300         | $45     |
+| Gantry Complete | Deals + Jobs | $500         | $70     |
+| Gantry Deals    | Deals only   | $300         | $45     |
+| Gantry Jobs     | Jobs only    | $300         | $45     |
 
 - The $300 + $45 price is for **each** single area on its own, so Complete is cheaper than buying
   both. Prices and contents live in `src/lib/plans.ts` and nowhere else.

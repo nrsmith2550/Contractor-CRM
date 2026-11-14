@@ -63,7 +63,7 @@ export const FIX: Article[] = [
     category: "fix",
     body: [
       p(
-        `When you choose **Turn into a customer**, Clinch CRM checks whether a ${N.customer} or ${N.person} already exists with the same **company name**, **email** or **phone number**. If it finds one it shows you the possible matches instead of creating a double.`,
+        `When you choose **Turn into a customer**, Gantry CRM checks whether a ${N.customer} or ${N.person} already exists with the same **company name**, **email** or **phone number**. If it finds one it shows you the possible matches instead of creating a double.`,
       ),
       list(
         `**Same one?** Use the existing ${N.customer} or ${N.person}. Everything stays in one place.`,

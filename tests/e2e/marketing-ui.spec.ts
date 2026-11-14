@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("marketing page", () => {
-  test("says what Clinch is, shows the plans and prices, and has no checkout", async ({ page }) => {
+  test("says what Gantry is, shows the plans and prices, and has no checkout", async ({ page }) => {
     await page.goto("/");
     await expect(
       page.getByRole("heading", { level: 1, name: "Win the work. Run the work." }),
@@ -21,25 +21,25 @@ test.describe("marketing page", () => {
     // The three plans, with the agreed prices.
     const pricing = page.getByRole("region", { name: "Simple pricing" });
     const plan = (name: string) => pricing.getByRole("article", { name });
-    await expect(plan("Clinch Complete")).toContainText("$70");
-    await expect(plan("Clinch Complete")).toContainText("$500 setup fee");
-    await expect(plan("Clinch Complete")).toContainText("Best value");
-    await expect(plan("Clinch Deals")).toContainText("$45");
-    await expect(plan("Clinch Deals")).toContainText("$300 setup fee");
-    await expect(plan("Clinch Jobs")).toContainText("$45");
-    await expect(plan("Clinch Jobs")).toContainText("$300 setup fee");
-    await expect(plan("Clinch Complete")).toContainText("Saves $100 on setup and $20 a month");
+    await expect(plan("Gantry Complete")).toContainText("$70");
+    await expect(plan("Gantry Complete")).toContainText("$500 setup fee");
+    await expect(plan("Gantry Complete")).toContainText("Best value");
+    await expect(plan("Gantry Deals")).toContainText("$45");
+    await expect(plan("Gantry Deals")).toContainText("$300 setup fee");
+    await expect(plan("Gantry Jobs")).toContainText("$45");
+    await expect(plan("Gantry Jobs")).toContainText("$300 setup fee");
+    await expect(plan("Gantry Complete")).toContainText("Saves $100 on setup and $20 a month");
 
     // What the first year costs, worked out for each option.
     const firstYear = pricing.getByRole("table", { name: "First-year cost of each option" });
-    await expect(firstYear.getByRole("row", { name: /Clinch Complete/ })).toContainText("$1,340");
-    await expect(firstYear.getByRole("row", { name: /Clinch Deals/ })).toContainText("$840");
-    await expect(firstYear.getByRole("row", { name: /Clinch Jobs/ })).toContainText("$840");
+    await expect(firstYear.getByRole("row", { name: /Gantry Complete/ })).toContainText("$1,340");
+    await expect(firstYear.getByRole("row", { name: /Gantry Deals/ })).toContainText("$840");
+    await expect(firstYear.getByRole("row", { name: /Gantry Jobs/ })).toContainText("$840");
     await expect(firstYear.getByRole("row", { name: /bought separately/ })).toContainText("$1,680");
 
     // No payment is taken here: the buttons get in touch, nothing buys.
     await expect(page.getByRole("button", { name: /buy|checkout|pay/i })).toHaveCount(0);
-    for (const name of ["Clinch Complete", "Clinch Deals", "Clinch Jobs"]) {
+    for (const name of ["Gantry Complete", "Gantry Deals", "Gantry Jobs"]) {
       await expect(plan(name).getByRole("link", { name: `Get ${name}` })).toHaveAttribute(
         "href",
         /^(#contact|mailto:)/,
@@ -72,7 +72,7 @@ test.describe("marketing page", () => {
     await page.setViewportSize({ width: 390, height: 800 });
     await page
       .context()
-      .addCookies([{ name: "clinch-theme", value: "dark", url: "http://localhost:3000" }]);
+      .addCookies([{ name: "gantry-theme", value: "dark", url: "http://localhost:3000" }]);
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(

@@ -117,7 +117,7 @@ test.describe("demo business", () => {
     for (const theme of ["light", "dark"]) {
       await page
         .context()
-        .addCookies([{ name: "clinch-theme", value: theme, url: "http://localhost:3000" }]);
+        .addCookies([{ name: "gantry-theme", value: theme, url: "http://localhost:3000" }]);
       for (const p of pages) {
         await page.goto(p);
         await expect(page.locator("main")).toBeVisible();

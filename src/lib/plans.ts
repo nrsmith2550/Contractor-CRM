@@ -1,4 +1,4 @@
-// Plans: what a business has bought, and so which parts of Clinch it may use. Pure data and
+// Plans: what a business has bought, and so which parts of Gantry it may use. Pure data and
 // arithmetic only, so it is safe to import from client components and from the public pages.
 //
 // Billing is a one-off setup fee plus a monthly fee. Nothing here takes a payment: it is the single
@@ -28,7 +28,7 @@ export type Plan = {
 export const PLANS: Record<Edition, Plan> = {
   complete: {
     id: "complete",
-    name: "Clinch Complete",
+    name: "Gantry Complete",
     tagline: "Win the work and run the work, in one place.",
     setupCents: 50_000,
     monthlyCents: 7_000,
@@ -36,7 +36,7 @@ export const PLANS: Record<Edition, Plan> = {
   },
   deals: {
     id: "deals",
-    name: "Clinch Deals",
+    name: "Gantry Deals",
     tagline: "From first enquiry to a signed-off quote and order.",
     setupCents: 30_000,
     monthlyCents: 4_500,
@@ -44,7 +44,7 @@ export const PLANS: Record<Edition, Plan> = {
   },
   jobs: {
     id: "jobs",
-    name: "Clinch Jobs",
+    name: "Gantry Jobs",
     tagline: "Support requests, jobs, visits and the schedule.",
     setupCents: 30_000,
     monthlyCents: 4_500,

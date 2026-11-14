@@ -1,11 +1,11 @@
-# After Phase 6: making Clinch CRM its own product
+# After Phase 6: making Gantry CRM its own product
 
 Written from the product owner's direction once the Dynamics-style functionality was complete.
 Items marked **(proposal)** are my suggestions and need a yes/no before they are built.
 
 ## Direction
 
-The functionality now matches a customer engagement suite. Clinch CRM is for **small businesses,
+The functionality now matches a customer engagement suite. Gantry CRM is for **small businesses,
 contractors, sole proprietors and small brands (clothing, etc.)**. So the next work is making it
 simpler, friendlier and easier to adopt, not adding enterprise features.
 
@@ -62,12 +62,12 @@ customer buys only what they run their business on, with the shared customer lis
 
 | Product                | Contains                                                                            | Typical buyer            |
 | ---------------------- | ----------------------------------------------------------------------------------- | ------------------------ |
-| Clinch Contacts (core) | customers, people, notes, tasks, import/export                                      | everyone                 |
-| Clinch Sales           | prospects, deals, pipeline, quotes, orders, sales dashboard                         | any seller               |
-| Clinch Jobs            | jobs, crew, schedule, visits, technician phone view, invoices from parts and labour | contractors, trades      |
-| Clinch Support         | support requests, due times, support dashboard                                      | service businesses       |
-| Clinch Shop            | products, price lists, orders, wholesale accounts                                   | clothing / retail brands |
-| Clinch Suite           | everything                                                                          | growing teams            |
+| Gantry Contacts (core) | customers, people, notes, tasks, import/export                                      | everyone                 |
+| Gantry Sales           | prospects, deals, pipeline, quotes, orders, sales dashboard                         | any seller               |
+| Gantry Jobs            | jobs, crew, schedule, visits, technician phone view, invoices from parts and labour | contractors, trades      |
+| Gantry Support         | support requests, due times, support dashboard                                      | service businesses       |
+| Gantry Shop            | products, price lists, orders, wholesale accounts                                   | clothing / retail brands |
+| Gantry Suite           | everything                                                                          | growing teams            |
 
 Technically this is feature flags per license, the site map and permissions hiding what a license
 does not include, and upgrade prompts. Pricing and billing stay deferred (no payment setup yet).
@@ -77,7 +77,7 @@ does not include, and upgrade prompts. Pricing and billing stay deferred (no pay
 Today there is a CSV lead import with column mapping. **(proposal)** Expand it into an Import
 Center with downloadable templates and "coming from..." presets:
 
-- **Templates:** a blank Clinch spreadsheet for each of customers, people, prospects, deals,
+- **Templates:** a blank Gantry spreadsheet for each of customers, people, prospects, deals,
   products, with an example row and a notes sheet.
 - **Presets that recognise another system's export** and pre-map the columns: Excel/Google Sheets
   (generic), HubSpot, Salesforce, Zoho, Pipedrive, Mailchimp, QuickBooks customers, Shopify
@@ -90,7 +90,7 @@ Center with downloadable templates and "coming from..." presets:
 
 ## 4. Look and feel
 
-- Name: **Clinch CRM**. Palette: deep navy sidebar, warm orange accent, soft light page (from the
+- Name: **Gantry CRM**. Palette: deep navy sidebar, warm orange accent, soft light page (from the
   supplied mockup). Light, dark and follow-the-device themes are done (Phase 6).
 - Principles: the next action is always the most obvious thing on screen; one primary button per
   page; big readable text and click targets (phone-first for field work); plain words; consistent

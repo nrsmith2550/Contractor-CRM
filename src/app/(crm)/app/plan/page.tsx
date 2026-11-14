@@ -77,7 +77,7 @@ export default async function PlanPage({
         <p>
           To add the other half, move up to <strong>{PLANS.complete.name}</strong>.{" "}
           {support ? (
-            <a href={`mailto:${support}?subject=Upgrade my Clinch plan`}>Email us to upgrade</a>
+            <a href={`mailto:${support}?subject=Upgrade my Gantry plan`}>Email us to upgrade</a>
           ) : (
             "Contact us to upgrade."
           )}

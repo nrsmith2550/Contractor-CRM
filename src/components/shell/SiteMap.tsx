@@ -23,7 +23,7 @@ const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
     ],
   },
   {
-    title: "Clinch Deals",
+    title: "Gantry Deals",
     links: [
       ["Prospects", "/app/prospects", "target", "deals"],
       ["Deals", "/app/deals", "deal", "deals"],
@@ -33,7 +33,7 @@ const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
     ],
   },
   {
-    title: "Clinch Jobs",
+    title: "Gantry Jobs",
     links: [
       ["Support requests", "/app/support-requests", "support", "jobs"],
       ["Jobs", "/app/jobs", "job", "jobs"],
@@ -76,7 +76,7 @@ export function SiteMap({ edition }: { edition: Edition }) {
   const path = usePathname();
   return (
     <nav className="crm-sitemap" aria-label="Site map">
-      <Link href="/app" className="crm-brand" aria-label="Clinch CRM home">
+      <Link href="/app" className="crm-brand" aria-label="Gantry CRM home">
         <Brand alt="" />
       </Link>
       {GROUPS.map((g) => ({

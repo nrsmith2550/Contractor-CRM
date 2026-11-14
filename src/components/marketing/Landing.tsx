@@ -105,7 +105,7 @@ const FAQ = [
   ],
   [
     "Do I need to install anything?",
-    "No. Clinch runs in your browser, so there is nothing to install or keep up to date.",
+    "No. Gantry runs in your browser, so there is nothing to install or keep up to date.",
   ],
 ];
 
@@ -130,7 +130,7 @@ const SHOTS = [
   },
 ];
 
-/** The public marketing page: what Clinch is for, what it does, and what it costs. */
+/** The public marketing page: what Gantry is for, what it does, and what it costs. */
 export function Landing({ support }: { support: string | undefined }) {
   return (
     <div className="mk">
@@ -139,7 +139,7 @@ export function Landing({ support }: { support: string | undefined }) {
       </a>
       <header className="mk-header">
         <div className="mk-wrap mk-header-row">
-          <Link href="/" className="mk-logo" aria-label="Clinch CRM home">
+          <Link href="/" className="mk-logo" aria-label="Gantry CRM home">
             <Brand alt="" />
           </Link>
           <nav aria-label="Main" className="mk-nav">
@@ -157,7 +157,7 @@ export function Landing({ support }: { support: string | undefined }) {
         <section className="mk-hero" aria-labelledby="hero-title">
           <div className="mk-wrap mk-hero-grid">
             <div>
-              <p className="mk-eyebrow">Clinch CRM</p>
+              <p className="mk-eyebrow">Gantry CRM</p>
               <h1 id="hero-title">Win the work. Run the work.</h1>
               <p className="mk-lede">
                 A plain-language CRM for small businesses, contractors, sole proprietors and small
@@ -176,7 +176,7 @@ export function Landing({ support }: { support: string | undefined }) {
             <Image
               className="mk-shot mk-hero-shot"
               src="/marketing/home.jpg"
-              alt="The Clinch home screen: counts of open prospects, deals, pipeline value, support requests and jobs, with your open tasks and anything past due."
+              alt="The Gantry home screen: counts of open prospects, deals, pipeline value, support requests and jobs, with your open tasks and anything past due."
               width={1280}
               height={800}
               priority
@@ -189,7 +189,7 @@ export function Landing({ support }: { support: string | undefined }) {
           <div className="mk-wrap">
             <h2 id="goals-title">Built for the person running the business</h2>
             <p className="mk-sub">
-              You are busy doing the work. Clinch is built around four things that matter.
+              You are busy doing the work. Gantry is built around four things that matter.
             </p>
             <ul className="mk-cards">
               {GOALS.map((g) => (
@@ -333,7 +333,7 @@ export function Landing({ support }: { support: string | undefined }) {
               {support ? (
                 <a
                   className="mk-btn mk-btn-primary"
-                  href={`mailto:${support}?subject=${encodeURIComponent("Clinch CRM enquiry")}`}
+                  href={`mailto:${support}?subject=${encodeURIComponent("Gantry CRM enquiry")}`}
                 >
                   Get in touch
                 </a>
@@ -351,7 +351,7 @@ export function Landing({ support }: { support: string | undefined }) {
 
       <footer className="mk-footer">
         <div className="mk-wrap mk-footer-row">
-          <p>© Clinch CRM</p>
+          <p>© Gantry CRM</p>
           <nav aria-label="Footer">
             <a href="#pricing">Pricing</a>
             <Link href="/login">Sign in</Link>
