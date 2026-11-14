@@ -1,4 +1,4 @@
-import { USERS_INCLUDED } from "@/lib/plans";
+import { MAX_SELF_SERVE_USERS, PLANS, USERS_INCLUDED, formatPlanUsd } from "@/lib/plans";
 import { INVITE_TTL_MS } from "@/server/auth/invitations";
 import { LOGIN_LIMIT } from "@/server/auth/rate-limit";
 import { MIN_PASSWORD_LENGTH } from "@/server/auth/password";
@@ -83,7 +83,7 @@ export const FIX: Article[] = [
     who: "The owner.",
     body: [
       p(
-        `Your license allows a number of people to be active at once (a **seat** each). Every plan includes ${USERS_INCLUDED}; ask us if you need more. See [Your plan](/app/plan).`,
+        `Your license allows a number of people to be active at once (a **seat** each). Every plan includes ${USERS_INCLUDED}. Each extra person is ${formatPlanUsd(PLANS.complete.extraUserCents)} a month on Gantry Complete or ${formatPlanUsd(PLANS.deals.extraUserCents)} on Gantry Deals or Gantry Jobs, up to ${MAX_SELF_SERVE_USERS} people. See [Your plan](/app/plan).`,
       ),
       list(
         "See the count on [Settings, Users](/app/settings/users): *X of Y seats in use*.",

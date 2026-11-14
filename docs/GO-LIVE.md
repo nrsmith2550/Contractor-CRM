@@ -58,8 +58,9 @@ need someone to look at the real site.
         next request), and when to move to automatic subscription billing.
 16. [ ] **What the setup fee covers**, and your cancellation and refund terms. The marketing page
         deliberately says nothing about these.
-17. [ ] **The price for more than 10 users.** Every plan includes 10; the limit is stored per
-        licence and can be raised for any customer in the admin console.
+17. [x] **The price for more than 10 users:** decided. Each extra person is $5 a month on Gantry
+        Complete or $3 on Gantry Deals or Gantry Jobs, up to 50 people; more is a custom quote. See
+        `docs/decisions/0008-plans-and-monthly-pricing.md`.
 18. [ ] **Whether to keep the demo business** on production.
 19. [ ] **Who answers `SUPPORT_EMAIL`**, and how quickly.
 
