@@ -1,5 +1,5 @@
 import { N } from "../names";
-import { h, list, note, p, steps, tip, warning, type Article } from "../types";
+import { h, list, note, p, steps, table, tip, warning, type Article } from "../types";
 
 export const CUSTOMERS: Article[] = [
   {
@@ -99,5 +99,48 @@ export const CUSTOMERS: Article[] = [
       ),
     ],
     related: ["calendar"],
+  },
+  {
+    slug: "linked-records",
+    title: "Jumping between linked records",
+    summary: `Click through from a ${N.customer} to their ${N.jobs}, orders and more, and back again.`,
+    category: "customers",
+    body: [
+      p(
+        "Records that belong together are linked, and every link is clickable. Open any record and look for **Related records** under its title.",
+      ),
+      table(
+        "What you will find on each kind of record",
+        ["Open a...", "...and you can click through to"],
+        [
+          [
+            N.Customer,
+            `${N.people}, ${N.deals}, quotes, orders, ${N.requests}, ${N.jobs}, and the ${N.prospect} they came from`,
+          ],
+          [N.Person, `Their ${N.customer}, ${N.deals}, quotes, orders and ${N.requests}`],
+          [N.Prospect, `The ${N.customer}, ${N.person} and ${N.deal} it was turned into`],
+          [
+            N.Deal,
+            `The ${N.customer} and ${N.person}, the ${N.prospect} it came from, its quotes and orders`,
+          ],
+          [
+            "Quote",
+            `The ${N.customer}, ${N.person} and ${N.deal}, its orders, and other versions of the quote`,
+          ],
+          ["Order", `The quote it came from, the ${N.customer}, ${N.person} and ${N.deal}`],
+          [N.Request, `The ${N.customer} and ${N.person}, and its ${N.jobs}`],
+          [N.Job, `Its ${N.request} and its ${N.customer}`],
+        ],
+      ),
+      steps(
+        `Open a ${N.customer} from [${N.Customers}](/app/customers).`,
+        "Under **Related records**, find the group you want, for example **Jobs**.",
+        "Click a name to open it. Its own **Related records** let you keep going, or go straight back.",
+      ),
+      note(
+        "You only see links to records your role allows you to open. A group with nothing in it is left out, and the number beside each heading counts what is in it.",
+      ),
+    ],
+    related: ["customers", "who-can-do-what", "finding-things"],
   },
 ];

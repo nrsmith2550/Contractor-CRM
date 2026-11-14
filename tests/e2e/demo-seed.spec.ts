@@ -82,6 +82,20 @@ test.describe("demo business", () => {
       "/app/dashboards/sales",
       "/app/dashboards/service",
     ];
+    // A record page of each kind, so the "Related records" section is scanned with real links in it.
+    for (const list of [
+      "/app/customers?view=all",
+      "/app/people",
+      "/app/deals?view=open",
+      "/app/quotes",
+      "/app/orders",
+      "/app/support-requests?view=all_active",
+      "/app/jobs",
+    ]) {
+      await page.goto(list);
+      const href = await page.locator("table a").first().getAttribute("href");
+      if (href) pages.push(href);
+    }
     const found: Record<string, unknown> = {};
     for (const theme of ["light", "dark"]) {
       await page
