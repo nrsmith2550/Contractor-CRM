@@ -3,15 +3,18 @@ import { z } from "zod";
 import { withTenant, type Tx } from "@/db/client";
 import {
   account,
+  bookableResource,
   contact,
   incident,
   lead,
   opportunity,
   quote,
+  resourceBooking,
   salesOrder,
   workOrder,
 } from "@/db/schema";
 import { formatMoney } from "@/lib/format";
+import { tenantTimeZone } from "@/server/entities/tenant";
 import { WORDS, say } from "@/lib/vocabulary";
 import type { Entity } from "@/server/security/roles";
 import { NOT_FOUND, checkRecord, readScope, type Ctx, type Result } from "./context";
@@ -24,7 +27,15 @@ import { NOT_FOUND, checkRecord, readScope, type Ctx, type Result } from "./cont
  */
 
 export type RelatedType =
-  "lead" | "account" | "contact" | "opportunity" | "quote" | "order" | "case" | "work_order";
+  | "lead"
+  | "account"
+  | "contact"
+  | "opportunity"
+  | "quote"
+  | "order"
+  | "case"
+  | "work_order"
+  | "booking";
 export type RelatedItem = { href: string; label: string; detail?: string };
 export type RelatedGroup = { title: string; items: RelatedItem[] };
 
@@ -37,6 +48,7 @@ export const RELATED_TYPES: readonly RelatedType[] = [
   "order",
   "case",
   "work_order",
+  "booking",
 ];
 
 const LIMIT = 50;
@@ -160,6 +172,36 @@ const fetchers = {
   },
 };
 
+/** Visits (bookings), described by when and who. Separate because the label needs the time zone. */
+async function fetchVisits(tx: Tx, ctx: Ctx, where: SQL, tz: string): Promise<RelatedItem[]> {
+  const w = scoped(ctx, "booking", resourceBooking.ownerId, where);
+  if (!w) return [];
+  const day = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: tz,
+  });
+  const clock = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: tz,
+  });
+  const rows = await tx
+    .select({ b: resourceBooking, who: bookableResource.name })
+    .from(resourceBooking)
+    .innerJoin(bookableResource, eq(bookableResource.id, resourceBooking.resourceId))
+    .where(w)
+    .orderBy(asc(resourceBooking.startAt))
+    .limit(LIMIT);
+  return rows.map(({ b, who }) => ({
+    href: `/app/visits/${b.id}`,
+    label: `${day.format(b.startAt)} – ${clock.format(b.endAt)}`,
+    detail: `${who} · ${say(b.status)}`,
+  }));
+}
+
 /** A condition that matches one specific id, or null when there is no link to follow. */
 const byId = (col: Parameters<typeof eq>[0], id: string | null | undefined): SQL | null =>
   id ? eq(col, id) : null;
@@ -172,9 +214,12 @@ export async function relatedRecords(
   id: string,
 ): Promise<Result<{ groups: RelatedGroup[] }>> {
   if (!RELATED_TYPES.includes(type) || !z.string().uuid().safeParse(id).success) return NOT_FOUND;
+  const tz = await tenantTimeZone(ctx.tenantId);
   return withTenant(ctx.tenantId, async (tx) => {
     const run = <K extends keyof typeof fetchers>(k: K, where: SQL | null | undefined) =>
       where ? fetchers[k](tx, ctx, where) : null;
+    const runVisits = (where: SQL | null | undefined) =>
+      where ? fetchVisits(tx, ctx, where, tz) : null;
 
     // Load the record itself (the viewer must be able to read it) and describe its links.
     let specs: Spec[] = [];
@@ -198,6 +243,15 @@ export async function relatedRecords(
           ["Orders", run("orders", eq(salesOrder.customerAccountId, id))],
           [cap(WORDS.case.many), run("requests", eq(incident.customerAccountId, id))],
           [cap(WORDS.workOrder.many), run("jobs", theirJobs)],
+          [
+            cap(WORDS.booking.many),
+            runVisits(
+              inArray(
+                resourceBooking.workOrderId,
+                tx.select({ id: workOrder.id }).from(workOrder).where(theirJobs),
+              ),
+            ),
+          ],
           [`${WORDS.lead.one} it came from`, run("prospects", eq(lead.qualifiedAccountId, id))],
           ["Part of", run("customers", byId(account.id, row!.parentAccountId))],
           ["Branches", run("customers", eq(account.parentAccountId, id))],
@@ -278,6 +332,29 @@ export async function relatedRecords(
         ];
         break;
       }
+      case "booking": {
+        const [row] = await tx.select().from(resourceBooking).where(eq(resourceBooking.id, id));
+        const denied = checkRecord(ctx, "booking", "read", row);
+        if (denied) return denied;
+        const [job] = row!.workOrderId
+          ? await tx.select().from(workOrder).where(eq(workOrder.id, row!.workOrderId))
+          : [];
+        const [req] = job?.incidentId
+          ? await tx.select().from(incident).where(eq(incident.id, job.incidentId))
+          : [];
+        const customerId = job?.serviceAccountId ?? req?.customerAccountId ?? null;
+        specs = [
+          [WORDS.workOrder.one, run("jobs", byId(workOrder.id, row!.workOrderId))],
+          [WORDS.case.one, run("requests", byId(incident.id, job?.incidentId))],
+          [WORDS.account.one, run("customers", byId(account.id, customerId))],
+          [WORDS.contact.one, run("people", byId(contact.id, req?.customerContactId))],
+          [
+            "Other visits for this job",
+            runVisits(byId(resourceBooking.workOrderId, row!.workOrderId)),
+          ],
+        ];
+        break;
+      }
       case "work_order": {
         const [row] = await tx.select().from(workOrder).where(eq(workOrder.id, id));
         const denied = checkRecord(ctx, "work_order", "read", row);
@@ -289,6 +366,7 @@ export async function relatedRecords(
         const customerId = row!.serviceAccountId ?? req?.customerAccountId ?? null;
         specs = [
           [WORDS.case.one, run("requests", byId(incident.id, row!.incidentId))],
+          [cap(WORDS.booking.many), runVisits(eq(resourceBooking.workOrderId, id))],
           [WORDS.account.one, run("customers", byId(account.id, customerId))],
           [WORDS.contact.one, run("people", byId(contact.id, req?.customerContactId))],
         ];

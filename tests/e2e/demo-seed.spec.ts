@@ -96,6 +96,23 @@ test.describe("demo business", () => {
       const href = await page.locator("table a").first().getAttribute("href");
       if (href) pages.push(href);
     }
+    // ...and a visit page, found by following the first job that has a visit.
+    await page.goto("/app/jobs");
+    const jobLinks = await page
+      .locator("table a")
+      .evaluateAll((as) => as.map((a) => a.getAttribute("href")!).filter(Boolean));
+    for (const jobHref of jobLinks) {
+      await page.goto(jobHref);
+      const visitHref = await page
+        .locator('a[href^="/app/visits/"]')
+        .first()
+        .getAttribute("href", { timeout: 1500 })
+        .catch(() => null);
+      if (visitHref) {
+        pages.push(visitHref);
+        break;
+      }
+    }
     const found: Record<string, unknown> = {};
     for (const theme of ["light", "dark"]) {
       await page
