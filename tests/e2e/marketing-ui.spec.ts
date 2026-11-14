@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("marketing page", () => {
-  test("says what Gantry is, shows the plans and prices, and has no checkout", async ({ page }) => {
+  test("says what Gantry is, shows the plans and prices, and each plan leads to the buy page", async ({
+    page,
+  }) => {
     await page.goto("/");
     await expect(
       page.getByRole("heading", { level: 1, name: "Win the work. Run the work." }),
@@ -48,12 +50,16 @@ test.describe("marketing page", () => {
     await expect(bySize.getByRole("row", { name: /^50/ })).toContainText("$270");
     await expect(bySize.getByRole("row", { name: /^50/ })).toContainText("$165");
 
-    // No payment is taken here: the buttons get in touch, nothing buys.
+    // Each plan's button opens the buy page for that plan. Nothing is charged from this page.
     await expect(page.getByRole("button", { name: /buy|checkout|pay/i })).toHaveCount(0);
-    for (const name of ["Gantry Complete", "Gantry Deals", "Gantry Jobs"]) {
+    for (const [name, id] of [
+      ["Gantry Complete", "complete"],
+      ["Gantry Deals", "deals"],
+      ["Gantry Jobs", "jobs"],
+    ] as const) {
       await expect(plan(name).getByRole("link", { name: `Get ${name}` })).toHaveAttribute(
         "href",
-        /^(#contact|mailto:)/,
+        `/buy?plan=${id}`,
       );
     }
 

@@ -404,7 +404,7 @@ people, one-time setup fee) paid in an embedded checkout. The webhook mints the 
 subscription and invoice event re-reads the subscription and brings the licence in line (plan, people,
 renewal date, past-due flag, cancellation suspends). Live keys are refused unless `STRIPE_ALLOW_LIVE=true`.
 - [x] Subscription checkout creation, licence minting and lifecycle webhook (tested with fabricated events)
-- [ ] Buy page with the on-site payment form (no redirect to Stripe)
+- [x] Buy page (`/buy`) with the on-site payment form: plan and people picker, live price summary, Stripe's form drawn in the page, in-page thank-you (the key is only emailed)
 - [ ] Billing page inside the app (change plan or people, update card, invoices, cancel)
 - [ ] Run once against a real test-mode Stripe account
 

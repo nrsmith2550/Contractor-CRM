@@ -7,6 +7,7 @@ import {
   MAX_EXTRA_USERS,
   MAX_SELF_SERVE_USERS,
   USERS_INCLUDED,
+  dueTodayCents,
   extraUsersFor,
   isValidExtraUsers,
   monthlyCentsFor,
@@ -118,6 +119,14 @@ describe("plans", () => {
         for (let extra = 1; extra <= MAX_EXTRA_USERS; extra++) {
           expect(monthlyCentsFor(e, extra)).toBeGreaterThan(monthlyCentsFor(e, extra - 1));
         }
+      }
+    });
+
+    it("the first invoice is the setup fee plus the first month, with extra people included", () => {
+      expect(dueTodayCents("complete")).toBe(50_000 + 7_000);
+      expect(dueTodayCents("deals", 15)).toBe(30_000 + 4_500 + 15 * 300);
+      for (const e of EDITIONS) {
+        expect(dueTodayCents(e, 7)).toBe(PLANS[e].setupCents + monthlyCentsFor(e, 7));
       }
     });
   });

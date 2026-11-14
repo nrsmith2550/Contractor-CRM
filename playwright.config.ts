@@ -19,7 +19,14 @@ export default defineConfig({
     url: "http://localhost:3000/",
     reuseExistingServer: !process.env.CI,
     // Dev mail is written to files (never logged) so tests can follow the emailed links.
-    env: { EMAIL_DEV_DIR: ".dev-mail-e2e", APP_URL: "http://localhost:3000" },
+    env: {
+      EMAIL_DEV_DIR: ".dev-mail-e2e",
+      APP_URL: "http://localhost:3000",
+      // Fake test-mode keys so the buy page shows its form. They are not real: starting a payment
+      // fails at Stripe, which is what the buy-page test checks happens gracefully.
+      STRIPE_SECRET_KEY: "sk_test_playwright_not_a_real_key",
+      STRIPE_PUBLISHABLE_KEY: "pk_test_playwright_not_a_real_key",
+    },
     timeout: 120_000,
   },
 });

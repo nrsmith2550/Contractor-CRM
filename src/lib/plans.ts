@@ -167,3 +167,8 @@ export function monthlyCentsFor(edition: Edition, extraUsers = 0): number {
 export function extraUsersFor(totalUsers: number): number {
   return Math.max(0, totalUsers - USERS_INCLUDED);
 }
+
+/** What is charged on the first invoice: the one-time setup fee plus the first month. */
+export function dueTodayCents(edition: Edition, extraUsers = 0): number {
+  return PLANS[edition].setupCents + monthlyCentsFor(edition, extraUsers);
+}
