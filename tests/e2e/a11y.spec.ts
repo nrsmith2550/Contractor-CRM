@@ -126,6 +126,8 @@ test.describe("accessibility", () => {
       "/app/settings/tax-rates",
       "/app/settings/branding",
       "/app/settings/service",
+      "/app/plan",
+      "/app/plan?needs=jobs",
       "/app/help",
       "/app/help?q=quote",
       "/app/help/quotes",
@@ -141,7 +143,7 @@ test.describe("accessibility", () => {
       await page
         .context()
         .addCookies([{ name: "clinch-theme", value: theme, url: "http://localhost:3000" }]);
-      for (const p of ["/login", "/forgot-password", "/activate", "/"]) {
+      for (const p of ["/login", "/forgot-password", "/activate", "/", "/pricing"]) {
         await page.goto(p);
         await page.waitForLoadState("networkidle");
         const v = await violations(page);

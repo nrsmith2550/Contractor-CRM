@@ -2,8 +2,10 @@ import { Board } from "@/components/pipeline/Board";
 import { requireUser } from "@/server/auth/http";
 import { buildCtx } from "@/server/domain/context";
 import { pipeline } from "@/server/domain/opportunities";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function PipelinePage() {
+  await guardArea("deals");
   const user = await requireUser();
   const res = await pipeline(await buildCtx(user.tenantId, user.userId));
   if (!res.ok)

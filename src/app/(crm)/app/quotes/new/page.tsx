@@ -1,12 +1,14 @@
 import { InlineForm } from "@/components/form/InlineForm";
 import { createQuoteAction } from "@/server/actions/quotes";
 import { requireUser } from "@/server/auth/http";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function NewQuotePage({
   searchParams,
 }: {
   searchParams: Promise<{ opportunityId?: string }>;
 }) {
+  await guardArea("deals");
   await requireUser();
   const { opportunityId } = await searchParams;
   return (

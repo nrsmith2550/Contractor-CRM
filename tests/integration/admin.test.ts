@@ -31,7 +31,7 @@ import {
   reactivateLicense,
   sendOwnerResetLink,
   setLicenseStatus,
-  updateLicenseTier,
+  updateLicensePlan,
 } from "@/server/admin/operations";
 import { currentStep, totpCode } from "@/server/admin/totp";
 import { activateLicense } from "@/server/auth/activation";
@@ -394,27 +394,64 @@ describe.skipIf(!enabled)("Admin: licenses", () => {
     });
   });
 
-  it("changes tier/seats, but never below the users already active", async () => {
+  it("changes plan/seats, but never below the users already active", async () => {
     const c = await ctx();
     const t = await newTenant(5);
     await addColleague(t, `two-${rand()}@example.test`); // two active users now
     const lic = await licenseOf(t.tenantId);
 
     expect(
-      await updateLicenseTier(c, {
+      await updateLicensePlan(c, {
         licenseId: lic.id,
         tier: "starter",
         seatLimit: "1",
         reason: REASON,
       }),
     ).toMatchObject({ ok: false });
+    // Moving to a bigger size class (the legacy tier) still sets the seats...
     expect(
-      await updateLicenseTier(c, { licenseId: lic.id, tier: "business", reason: "Comped upgrade" }),
-    ).toEqual({ ok: true, tier: "business", seatLimit: 40 });
+      await updateLicensePlan(c, { licenseId: lic.id, tier: "business", reason: "Comped upgrade" }),
+    ).toEqual({ ok: true, tier: "business", edition: "complete", seatLimit: 40 });
     expect(await licenseOf(t.tenantId)).toMatchObject({ tier: "business", seatLimit: 40 });
-    const audit = (await auditFor(lic.id)).find((r) => r.action === "license.update_tier");
+    const audit = (await auditFor(lic.id)).find((r) => r.action === "license.update_plan");
     expect(audit!.reason).toContain("Comped upgrade");
-    expect(audit!.reason).toContain("business/40");
+    expect(audit!.reason).toContain("complete/5 -> complete/40");
+  });
+
+  it("mints a licence for a chosen plan, defaulting to the full suite with the standard users", async () => {
+    const c = await ctx();
+    const deals = await mintLicenseAsAdmin(c, { edition: "deals", reason: REASON });
+    expect(deals.ok).toBe(true);
+    const plain = await mintLicenseAsAdmin(c, { reason: REASON });
+    expect(plain.ok).toBe(true);
+    const rows = await withPlatform((tx) => tx.select().from(license));
+    const byLast5 = (r: { last5: string }) => rows.find((l) => l.keyLast5 === r.last5)!;
+    expect(byLast5(deals as { last5: string })).toMatchObject({ edition: "deals", seatLimit: 10 });
+    expect(byLast5(plain as { last5: string })).toMatchObject({
+      edition: "complete",
+      seatLimit: 10,
+    });
+    expect(await mintLicenseAsAdmin(c, { edition: "platinum", reason: REASON })).toMatchObject({
+      ok: false,
+    });
+  });
+
+  it("changes a licence's plan without touching its seats, and says so in the audit log", async () => {
+    const c = await ctx();
+    const t = await newTenant(7);
+    const lic = await licenseOf(t.tenantId);
+    expect(
+      await updateLicensePlan(c, { licenseId: lic.id, edition: "jobs", reason: "Downgrade" }),
+    ).toMatchObject({ ok: true, edition: "jobs", seatLimit: 7 });
+    expect(await licenseOf(t.tenantId)).toMatchObject({ edition: "jobs", seatLimit: 7 });
+    expect(
+      await updateLicensePlan(c, { licenseId: lic.id, edition: "nonsense", reason: REASON }),
+    ).toMatchObject({ ok: false });
+    expect(await updateLicensePlan(c, { licenseId: lic.id, reason: REASON })).toMatchObject({
+      ok: false,
+    });
+    const audit = (await auditFor(lic.id)).find((r) => r.action === "license.update_plan");
+    expect(audit!.reason).toContain("complete/7 -> jobs/7");
   });
 });
 

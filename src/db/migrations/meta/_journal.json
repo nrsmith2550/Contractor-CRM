@@ -71,6 +71,13 @@
       "when": 1794543016625,
       "tag": "0009_plain_record_numbers",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794685792518,
+      "tag": "0010_plan_editions",
+      "breakpoints": true
     }
   ]
 }

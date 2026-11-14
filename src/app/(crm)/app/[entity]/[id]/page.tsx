@@ -27,6 +27,7 @@ import { listProducts } from "@/server/domain/catalog";
 import { listOpportunityLines } from "@/server/domain/opportunity-lines";
 import { OPS, withDynamicOptions } from "@/server/entities/registry";
 import { tenantTimeZone } from "@/server/entities/tenant";
+import { guardEntity } from "@/server/auth/plan";
 
 export default async function RecordPage({
   params,
@@ -36,6 +37,7 @@ export default async function RecordPage({
   const { entity, id } = await params;
   const meta = entityBySlug(entity);
   if (!meta) notFound();
+  await guardEntity(meta.key);
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const res = await OPS[meta.key].get(ctx, id);

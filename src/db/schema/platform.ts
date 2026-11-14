@@ -5,6 +5,8 @@ import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "d
 // which points at the tenant a key is bound to.
 
 export const licenseTier = pgEnum("license_tier", ["starter", "team", "business", "enterprise"]);
+/** Which parts of the product a licence unlocks. See src/lib/plans.ts. */
+export const licenseEdition = pgEnum("license_edition", ["complete", "deals", "jobs"]);
 export const licenseStatus = pgEnum("license_status", ["issued", "active", "suspended", "revoked"]);
 
 export const tenant = pgTable("tenant", {
@@ -28,6 +30,8 @@ export const license = pgTable(
     keyHash: text("key_hash").notNull().unique(),
     keyLast5: text("key_last5").notNull(),
     tier: licenseTier("tier").notNull(),
+    /** What was bought: the full suite, or just Deals or just Jobs. Existing licences are the full suite. */
+    edition: licenseEdition("edition").notNull().default("complete"),
     seatLimit: integer("seat_limit").notNull(),
     status: licenseStatus("status").notNull().default("issued"),
     amountPaidCents: integer("amount_paid_cents").notNull().default(0),

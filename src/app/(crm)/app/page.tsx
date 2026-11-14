@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/shell/Icon";
 import { formatDateTime, formatMoney, humanize } from "@/lib/format";
+import { hasArea } from "@/lib/plans";
 import { WORDS } from "@/lib/vocabulary";
 import { tenantName, tenantTimeZone } from "@/server/entities/tenant";
 import { requireUser } from "@/server/auth/http";
@@ -19,6 +20,10 @@ export default async function HomePage() {
   const ctx = await buildCtx(user.tenantId, user.userId);
   const tz = await tenantTimeZone(user.tenantId);
   const now = new Date();
+  // Only what the plan includes is shown (the data behind it is withheld too, see loadSubject).
+  const edition = ctx.subject.edition ?? "complete";
+  const showDeals = hasArea(edition, "deals");
+  const showJobs = hasArea(edition, "jobs");
   const [leads, opps, value, requests, jobs, customers, products, anyLeads, sales, service] =
     await Promise.all([
       // Lists only ever include what this person is allowed to see, so "open" means their share.
@@ -59,11 +64,21 @@ export default async function HomePage() {
       label: "Add a product or service you sell",
       href: "/app/products/new",
     },
-    {
-      done: has(anyLeads),
-      label: `Add a ${WORDS.lead.one.toLowerCase()} you are talking to`,
-      href: "/app/prospects/new",
-    },
+    ...(showDeals
+      ? [
+          {
+            done: has(anyLeads),
+            label: `Add a ${WORDS.lead.one.toLowerCase()} you are talking to`,
+            href: "/app/prospects/new",
+          },
+        ]
+      : [
+          {
+            done: has(requests),
+            label: "Log your first support request",
+            href: "/app/support-requests/new",
+          },
+        ]),
   ];
   const remaining = steps.filter((s) => !s.done).length;
   const first = user.fullName.split(/\s+/)[0] || user.fullName;
@@ -79,34 +94,44 @@ export default async function HomePage() {
           </p>
         </div>
         <div className="home-actions" role="group" aria-label="Quick actions">
-          <Link href="/app/prospects/new" className="crm-btn crm-btn-primary">
-            <Icon name="plus" size={16} /> New {WORDS.lead.one.toLowerCase()}
-          </Link>
-          <Link href="/app/support-requests/new" className="crm-btn">
-            <Icon name="plus" size={16} /> New request
-          </Link>
-          <Link href="/app/jobs/new" className="crm-btn">
-            <Icon name="plus" size={16} /> New {WORDS.workOrder.one.toLowerCase()}
-          </Link>
+          {[
+            showDeals && ["/app/prospects/new", `New ${WORDS.lead.one.toLowerCase()}`],
+            showJobs && ["/app/support-requests/new", "New request"],
+            showJobs && ["/app/jobs/new", `New ${WORDS.workOrder.one.toLowerCase()}`],
+          ]
+            .filter((a): a is [string, string] => Array.isArray(a))
+            .map(([href, label], i) => (
+              <Link
+                key={href}
+                href={href}
+                className={`crm-btn${i === 0 ? " crm-btn-primary" : ""}`}
+              >
+                <Icon name="plus" size={16} /> {label}
+              </Link>
+            ))}
         </div>
       </div>
 
       <div className="home-tiles">
-        {tile(
-          "target",
-          `Open ${WORDS.lead.many.toLowerCase()}`,
-          count(leads),
-          "/app/prospects?view=all_open",
-        )}
-        {tile(
-          "deal",
-          `Open ${WORDS.opportunity.many.toLowerCase()}`,
-          count(opps),
-          "/app/deals?view=open",
-        )}
-        {tile("funnel", "Open pipeline value", formatMoney(value), "/app/pipeline")}
-        {tile("support", "Active support requests", count(requests), "/app/support-requests")}
-        {tile("job", `Open ${WORDS.workOrder.many.toLowerCase()}`, count(jobs), "/app/jobs")}
+        {showDeals &&
+          tile(
+            "target",
+            `Open ${WORDS.lead.many.toLowerCase()}`,
+            count(leads),
+            "/app/prospects?view=all_open",
+          )}
+        {showDeals &&
+          tile(
+            "deal",
+            `Open ${WORDS.opportunity.many.toLowerCase()}`,
+            count(opps),
+            "/app/deals?view=open",
+          )}
+        {showDeals && tile("funnel", "Open pipeline value", formatMoney(value), "/app/pipeline")}
+        {showJobs &&
+          tile("support", "Active support requests", count(requests), "/app/support-requests")}
+        {showJobs &&
+          tile("job", `Open ${WORDS.workOrder.many.toLowerCase()}`, count(jobs), "/app/jobs")}
       </div>
 
       {(tasks || late) && (

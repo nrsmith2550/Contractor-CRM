@@ -3,6 +3,7 @@ import { formatMoney, humanize } from "@/lib/format";
 import { requireUser } from "@/server/auth/http";
 import { buildCtx } from "@/server/domain/context";
 import { listQuotes } from "@/server/domain/quotes";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function QuotesPage({
   searchParams,
@@ -10,6 +11,7 @@ export default async function QuotesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const search = ((await searchParams).q ?? "").slice(0, 100);
+  await guardArea("deals");
   const user = await requireUser();
   const res = await listQuotes(await buildCtx(user.tenantId, user.userId), { search, limit: 50 });
   return (

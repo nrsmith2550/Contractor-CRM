@@ -1,6 +1,6 @@
 import { MAX_LOGO_BYTES } from "@/server/domain/branding";
 import { INVITE_TTL_MS } from "@/server/auth/invitations";
-import { TIERS } from "@/lib/tiers";
+import { USERS_INCLUDED } from "@/lib/plans";
 import { DEFAULT_ROLES } from "@/server/security/roles";
 import { N } from "../names";
 import { h, list, note, steps, table, tip, warning, type Article } from "../types";
@@ -34,9 +34,7 @@ export const TEAM: Article[] = [
       list(
         `The invitation link lasts **${days(INVITE_TTL_MS)} days**. If it lapses, invite them again.`,
         "Each active person uses one **seat**. A pending invitation holds a seat too, until it is accepted or expires.",
-        `Seats come with your license: ${Object.values(TIERS)
-          .map((t) => `${t.label} ${t.seatLimit}`)
-          .join(", ")}.`,
+        `Every plan includes ${USERS_INCLUDED} seats, and your license can carry a different number. See [Your plan](/app/plan).`,
       ),
       h("The standard roles"),
       table(

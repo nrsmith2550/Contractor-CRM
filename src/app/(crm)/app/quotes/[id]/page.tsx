@@ -11,9 +11,11 @@ import { getQuote } from "@/server/domain/quotes";
 import { formatDateTime } from "@/lib/format";
 import { tenantTimeZone } from "@/server/entities/tenant";
 import { formatMoney } from "@/lib/format";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function QuotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await guardArea("deals");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const res = await getQuote(ctx, id);

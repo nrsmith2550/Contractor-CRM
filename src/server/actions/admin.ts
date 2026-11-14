@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { PLANS } from "@/lib/plans";
 import { redirect } from "next/navigation";
 import { adminLogout, adminPasswordLogin, adminVerifyTotp } from "@/server/admin/auth";
 import {
@@ -17,7 +18,7 @@ import {
   reactivateLicense,
   sendOwnerResetLink,
   setLicenseStatus,
-  updateLicenseTier,
+  updateLicensePlan,
 } from "@/server/admin/operations";
 
 /** `secret` is something the admin must copy now: it is never stored and can't be shown again. */
@@ -86,11 +87,14 @@ export async function licenseStatusAction(values: unknown): Promise<AdminActionR
   return { ok: true, message: `License is now ${res.status}.` };
 }
 
-export async function licenseTierAction(values: unknown): Promise<AdminActionResult> {
-  const res = await updateLicenseTier(await ctx(), vals(values));
+export async function licensePlanAction(values: unknown): Promise<AdminActionResult> {
+  const res = await updateLicensePlan(await ctx(), vals(values));
   if (!res.ok) return res;
   revalidatePath("/admin", "layout");
-  return { ok: true, message: `Tier is now ${res.tier} with ${res.seatLimit} seats.` };
+  return {
+    ok: true,
+    message: `Plan is now ${PLANS[res.edition].name} with ${res.seatLimit} seats.`,
+  };
 }
 
 export async function ownerResetLinkAction(values: unknown): Promise<AdminActionResult> {

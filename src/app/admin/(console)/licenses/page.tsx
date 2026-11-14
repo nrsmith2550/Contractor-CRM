@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
-import { TIER_IDS, TIERS, formatUsd } from "@/lib/tiers";
+import { EDITIONS, PLANS, USERS_INCLUDED } from "@/lib/plans";
+import { formatUsd } from "@/lib/tiers";
 import { licenseStatusAction, mintLicenseAction } from "@/server/actions/admin";
 import { listLicenses } from "@/server/admin/operations";
 import { AdminActionForm, REASON_FIELD } from "../../admin-forms";
 
 export const metadata: Metadata = { title: "Licenses" };
 
-const tierOptions = TIER_IDS.map((t) => ({
-  value: t,
-  label: `${TIERS[t].label} — ${TIERS[t].seats}`,
-}));
+const planOptions = EDITIONS.map((e) => ({ value: e, label: PLANS[e].name }));
 const statusOptions = [
   { value: "suspend", label: "Suspend" },
   { value: "revoke", label: "Revoke" },
@@ -28,19 +26,19 @@ export default async function LicensesPage({
       <h1>Licenses</h1>
 
       <h2>Mint a license</h2>
-      <p>For demos, resellers, comps and custom quotes over 100 users. The key is shown once.</p>
+      <p>For demos, resellers, comps and custom quotes. The key is shown once.</p>
       <AdminActionForm
         action={mintLicenseAction}
         submitLabel="Mint license"
         clearOnSuccess
         fields={[
-          { name: "tier", label: "Tier", type: "select", options: tierOptions, required: true },
+          { name: "edition", label: "Plan", type: "select", options: planOptions, required: true },
           { name: "buyerEmail", label: "Buyer email (optional)", type: "email" },
           {
             name: "seatLimit",
             label: "Seat limit override (optional)",
             type: "number",
-            hint: "Leave blank to use the tier's limit",
+            hint: `Leave blank for the standard ${USERS_INCLUDED} users`,
           },
           REASON_FIELD,
         ]}
@@ -62,7 +60,7 @@ export default async function LicensesPage({
       <table>
         <thead>
           <tr>
-            {["Key", "Tier", "Seats", "Status", "Buyer", "Business", "Paid", "Created", ""].map(
+            {["Key", "Plan", "Seats", "Status", "Buyer", "Business", "Paid", "Created", ""].map(
               (h) => (
                 <th key={h} align="left" style={{ paddingRight: 16 }}>
                   {h}
@@ -75,7 +73,7 @@ export default async function LicensesPage({
           {licenses.map((l) => (
             <tr key={l.id} style={{ verticalAlign: "top" }}>
               <td>…{l.keyLast5}</td>
-              <td>{l.tier}</td>
+              <td>{PLANS[l.edition].name}</td>
               <td>{l.seatLimit}</td>
               <td>{l.status}</td>
               <td>{l.buyerEmail ?? "—"}</td>

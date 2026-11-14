@@ -5,6 +5,7 @@ import { Icon } from "@/components/shell/Icon";
 import { SiteMap } from "@/components/shell/SiteMap";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { requireUser } from "@/server/auth/http";
+import { tenantEdition } from "@/server/entities/tenant";
 import { SignOutButton } from "../../(auth)/auth-forms";
 import "../../crm.css";
 
@@ -22,6 +23,7 @@ const initials = (name: string) =>
 export default async function CrmLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   if (user.mustChangePassword) redirect("/change-password");
+  const edition = await tenantEdition(user.tenantId);
 
   return (
     <div className="crm-shell">
@@ -34,7 +36,11 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
           <input
             type="search"
             name="q"
-            placeholder="Search prospects, customers, deals…"
+            placeholder={
+              edition === "jobs"
+                ? "Search customers, people, jobs…"
+                : "Search prospects, customers, deals…"
+            }
             aria-label="Search all records"
           />
         </form>
@@ -48,7 +54,7 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
         <span className="crm-user">{user.fullName}</span>
         <SignOutButton />
       </header>
-      <SiteMap />
+      <SiteMap edition={edition} />
       <main id="main" tabIndex={-1} className="crm-main">
         {children}
       </main>

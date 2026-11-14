@@ -1,3 +1,5 @@
+import type { Edition } from "@/lib/plans";
+
 /**
  * Dynamics-style security roles, simplified. Privileges are per entity and action, each at a
  * depth: "user" (only records the user owns) or "organization" (all records in the tenant).
@@ -46,7 +48,12 @@ export function mergePrivileges(roles: Privileges[]): Privileges {
   return out;
 }
 
-export type Subject = { userId: string; privileges: Privileges };
+export type Subject = {
+  userId: string;
+  privileges: Privileges;
+  /** The plan the business is on. Its privileges are already limited to it; this is for the screens. */
+  edition?: Edition;
+};
 
 /**
  * The single permission check. Without `record` it answers "may this user ever do this?"

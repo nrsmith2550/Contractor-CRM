@@ -5,6 +5,7 @@ import { tenantTimeZone } from "@/server/entities/tenant";
 import { requireUser } from "@/server/auth/http";
 import { buildCtx } from "@/server/domain/context";
 import { OPS } from "@/server/entities/registry";
+import { guardEntity } from "@/server/auth/plan";
 
 export default async function ListPage({
   params,
@@ -16,6 +17,7 @@ export default async function ListPage({
   const [{ entity }, sp] = await Promise.all([params, searchParams]);
   const meta = entityBySlug(entity);
   if (!meta) notFound();
+  await guardEntity(meta.key);
   const user = await requireUser();
   const chosen = meta.views.some((v) => v.id === sp.view);
   let view = chosen ? sp.view! : meta.defaultView;

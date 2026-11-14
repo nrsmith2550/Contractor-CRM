@@ -6,9 +6,11 @@ import { listUsers } from "@/server/auth/invitations";
 import { buildCtx } from "@/server/domain/context";
 import { getResource, listCharacteristics } from "@/server/domain/resources";
 import { can } from "@/server/security/roles";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function ResourcePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await guardArea("jobs");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const [res, skills, users] = await Promise.all([
