@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The PDF library loads its built-in fonts by a computed file name, which Next's file tracing
+  // cannot see, so on Vercel they were left out of the deployed bundle and every quote PDF (and the
+  // quote email, which attaches one) failed with "Cannot find module .../standard-fonts/Helvetica.cjs".
+  // List them here so they ship with the quote pages. tests/e2e/pdf-bundle.spec.ts checks it.
+  outputFileTracingIncludes: {
+    "/app/quotes/**": ["./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/standard-fonts/**/*"],
+  },
   poweredByHeader: false,
   // The screens were renamed (leads -> prospects, work orders -> jobs ...). Old links and
   // bookmarks keep working.
