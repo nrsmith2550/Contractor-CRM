@@ -23,6 +23,8 @@ const nextConfig: NextConfig = {
         destination: `/app/${to}/:path*`,
         permanent: true,
       })),
+      // Pricing now lives on the home page.
+      { source: "/pricing", destination: "/#pricing", permanent: true },
       // The two halves of the product were called Sales and Service before they became Deals and Jobs.
       { source: "/app/dashboards/sales", destination: "/app/dashboards/deals", permanent: true },
       { source: "/app/dashboards/service", destination: "/app/dashboards/jobs", permanent: true },

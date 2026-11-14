@@ -1,0 +1,469 @@
+/* The public marketing page. Colours come from the theme tokens, so light and dark both work. */
+.mk {
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+}
+.mk a {
+  color: var(--accent-text);
+}
+.mk-wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.mk-narrow {
+  max-width: 760px;
+}
+.mk-muted {
+  color: var(--muted);
+}
+.mk-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.mk-skip {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 50;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+.mk-skip:focus {
+  left: 8px;
+}
+
+/* Header */
+.mk-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-soft);
+}
+.mk-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.mk-logo {
+  display: block;
+  width: 150px;
+  text-decoration: none;
+}
+.mk-logo .brand-plate {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+.mk-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+.mk-nav a:not(.mk-btn) {
+  display: inline-block;
+  padding: 8px 4px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.mk-nav a:not(.mk-btn):hover {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+
+/* Buttons */
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text) !important;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.mk-btn:hover {
+  background: var(--hover);
+}
+.mk-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent) !important;
+}
+.mk-btn-primary:hover {
+  background: var(--accent-hover);
+}
+.mk-btn-small {
+  min-height: 36px;
+  padding: 0 14px;
+}
+.mk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 0;
+}
+
+/* Sections */
+.mk-section {
+  padding: 72px 0;
+}
+.mk-alt {
+  background: var(--surface-2);
+}
+.mk [id] {
+  scroll-margin-top: 84px;
+}
+.mk h1 {
+  margin: 0 0 16px;
+  font-size: clamp(34px, 5.5vw, 56px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+.mk h2 {
+  margin: 0 0 12px;
+  font-size: clamp(26px, 3.6vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.mk h3 {
+  margin: 0 0 6px;
+  font-size: 19px;
+}
+.mk-h3 {
+  margin: 40px 0 12px;
+}
+.mk-sub {
+  max-width: 680px;
+  margin: 0 0 32px;
+  color: var(--muted);
+  font-size: 18px;
+}
+.mk-eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent-text);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+/* Hero */
+.mk-hero {
+  padding: 56px 0 72px;
+}
+.mk-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: 40px;
+}
+.mk-lede {
+  max-width: 560px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 20px;
+}
+.mk-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(16, 24, 40, 0.18);
+}
+
+/* Cards */
+.mk-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.mk-cards-3 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+.mk-card {
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.mk-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Features */
+.mk-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.mk-col {
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+}
+.mk-col > .mk-muted {
+  margin: 0 0 12px;
+}
+.mk-checks {
+  list-style: none;
+  margin: 12px 0 20px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.mk-checks li {
+  position: relative;
+  padding-left: 26px;
+}
+.mk-checks li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--ok);
+  font-weight: 700;
+}
+
+/* Screenshots */
+.mk-shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+.mk-figure {
+  margin: 0;
+}
+.mk-figure figcaption {
+  margin-top: 12px;
+  color: var(--muted);
+}
+.mk-figure figcaption strong {
+  color: var(--text);
+}
+
+/* Journey */
+.mk-journey {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  counter-reset: step;
+}
+.mk-journey li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 44px 18px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  counter-increment: step;
+}
+.mk-journey li::before {
+  content: counter(step);
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+.mk-journey li span {
+  color: var(--muted);
+}
+
+/* Pricing */
+.mk-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+.mk-plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.mk-plan-best {
+  border: 2px solid var(--accent);
+}
+.mk-ribbon {
+  position: absolute;
+  top: -13px;
+  left: 24px;
+  margin: 0;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+.mk-plan h3 {
+  font-size: 22px;
+}
+.mk-price {
+  margin: 12px 0 0;
+}
+.mk-price-num {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.mk-price-unit {
+  color: var(--muted);
+}
+.mk-setup {
+  margin: 0 0 12px;
+}
+.mk-plan .mk-checks {
+  flex: 1;
+  align-content: start;
+}
+.mk-save {
+  margin: 14px 0 0;
+  font-size: 14px;
+}
+.mk-table-wrap {
+  overflow-x: auto;
+}
+.mk-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+}
+.mk-table th,
+.mk-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+}
+.mk-table thead th {
+  background: var(--surface-2);
+}
+.mk-table td {
+  text-align: center;
+}
+.mk-table thead th:not(:first-child) {
+  text-align: center;
+}
+
+/* FAQ */
+.mk-faq details {
+  border-bottom: 1px solid var(--border);
+}
+.mk-faq summary {
+  padding: 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mk-faq details p {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+/* Closing call to action and footer */
+.mk-cta {
+  text-align: center;
+  background: var(--surface-2);
+}
+.mk-cta .mk-sub {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mk-cta .mk-actions {
+  justify-content: center;
+}
+.mk-footer {
+  padding: 28px 0;
+  border-top: 1px solid var(--border-soft);
+  background: var(--surface);
+}
+.mk-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mk-footer p {
+  margin: 0;
+  color: var(--muted);
+}
+.mk-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+.mk-footer nav a {
+  display: inline-block;
+  padding: 6px 0;
+}
+
+@media (max-width: 860px) {
+  .mk-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk-section {
+    padding: 52px 0;
+  }
+  .mk-nav a:not(.mk-btn):not(:first-child) {
+    padding: 8px 2px;
+  }
+}
+@media (max-width: 520px) {
+  .mk-nav a[href="#faq"] {
+    display: none;
+  }
+  .mk-logo {
+    width: 120px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}

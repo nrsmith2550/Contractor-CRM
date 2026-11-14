@@ -1,20 +1,17 @@
-import Link from "next/link";
-import { Brand } from "@/components/shell/Brand";
+import type { Metadata } from "next";
+import { Landing } from "@/components/marketing/Landing";
 import "./crm.css";
+import "./marketing.css";
+
+export const metadata: Metadata = {
+  title: { absolute: "Clinch CRM: win the work, run the work" },
+  description:
+    "A plain-language CRM for small businesses, contractors, sole proprietors and small brands: prospects, deals, quotes, support requests, jobs and a schedule in one place.",
+};
+
+// The support address comes from the environment, so it is read when the page is requested.
+export const dynamic = "force-dynamic";
 
 export default function Home() {
-  return (
-    <main style={{ padding: 32, maxWidth: 560 }}>
-      <div className="public-brand" style={{ justifyContent: "flex-start" }}>
-        <Brand />
-      </div>
-      <h1 className="crm-sr">Clinch CRM</h1>
-      <p>Customer relationship management for your business.</p>
-      <p style={{ display: "flex", gap: 16 }}>
-        <Link href="/login">Sign in</Link>
-        <Link href="/activate">Activate a license</Link>
-        <Link href="/pricing">Pricing</Link>
-      </p>
-    </main>
-  );
+  return <Landing support={process.env.SUPPORT_EMAIL} />;
 }
