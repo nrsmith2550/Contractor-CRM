@@ -93,7 +93,7 @@ test.describe("keyboard", () => {
     for (const theme of ["light", "dark"]) {
       await page
         .context()
-        .addCookies([{ name: "clinch-theme", value: theme, url: "http://localhost:3000" }]);
+        .addCookies([{ name: "gantry-theme", value: theme, url: "http://localhost:3000" }]);
       await page.goto("/app/prospects");
       await expect(page.getByRole("heading", { name: "Prospects" })).toBeVisible();
       const seen: string[] = [];

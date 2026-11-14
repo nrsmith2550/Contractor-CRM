@@ -2,7 +2,7 @@
 // right colours on the first paint (no flash), and it works before anyone signs in.
 
 export type ThemeMode = "light" | "dark" | "system";
-export const THEME_COOKIE = "clinch-theme";
+export const THEME_COOKIE = "gantry-theme";
 export const THEME_MODES: ThemeMode[] = ["system", "light", "dark"];
 
 export const parseTheme = (v: unknown): ThemeMode =>

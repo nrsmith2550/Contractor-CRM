@@ -12,15 +12,15 @@ const days = (ms: number) => Math.round(ms / 86_400_000);
 export const START: Article[] = [
   {
     slug: "welcome",
-    title: "Welcome to Clinch CRM",
-    summary: "What Clinch CRM is for, the main areas, and where to find help.",
+    title: "Welcome to Gantry CRM",
+    summary: "What Gantry CRM is for, the main areas, and where to find help.",
     category: "start",
     body: [
       p(
-        `Clinch CRM keeps everything about your customers in one place: who they are, what you've offered them, what they've bought, what they've asked for, and the work you've done for them. It is built for small businesses, contractors and small brands, so the words are plain and each step is short.`,
+        `Gantry CRM keeps everything about your customers in one place: who they are, what you've offered them, what they've bought, what they've asked for, and the work you've done for them. It is built for small businesses, contractors and small brands, so the words are plain and each step is short.`,
       ),
       flow(
-        "How a customer moves through Clinch CRM",
+        "How a customer moves through Gantry CRM",
         { title: N.Prospect, text: "Someone who might buy. You add them, follow up, and decide." },
         {
           title: `${N.Customer} and ${N.deal}`,
@@ -38,14 +38,14 @@ export const START: Article[] = [
         ["Area", "What it is for", "Where"],
         [
           [
-            "Clinch Deals",
+            "Gantry Deals",
             `${N.Prospects}, ${N.deals}, quotes, orders and the pipeline.`,
-            "Menu, Clinch Deals",
+            "Menu, Gantry Deals",
           ],
           [
-            "Clinch Jobs",
+            "Gantry Jobs",
             `${N.Requests}, ${N.jobs}, the ${N.Schedule}, ${N.members} and ${N.visits}.`,
-            "Menu, Clinch Jobs",
+            "Menu, Gantry Jobs",
           ],
           [
             `${N.Customers} and ${N.people}`,
@@ -169,11 +169,11 @@ export const START: Article[] = [
   {
     slug: "your-plan",
     title: "Your plan: what is included",
-    summary: "Clinch Complete, Clinch Deals and Clinch Jobs, and what each one unlocks.",
+    summary: "Gantry Complete, Gantry Deals and Gantry Jobs, and what each one unlocks.",
     category: "start",
     body: [
       p(
-        `Clinch comes in three plans. **${PLANS.complete.name}** has everything. **${PLANS.deals.name}** is the selling side and **${PLANS.jobs.name}** is the doing-the-work side. Open [Your plan](/app/plan) to see yours.`,
+        `Gantry comes in three plans. **${PLANS.complete.name}** has everything. **${PLANS.deals.name}** is the selling side and **${PLANS.jobs.name}** is the doing-the-work side. Open [Your plan](/app/plan) to see yours.`,
       ),
       table(
         "What each plan includes",
@@ -206,7 +206,7 @@ export const START: Article[] = [
     category: "start",
     body: [
       p(
-        "Clinch CRM uses plain words. If you have used other CRM or field-service software, this table matches their names to ours.",
+        "Gantry CRM uses plain words. If you have used other CRM or field-service software, this table matches their names to ours.",
       ),
       table(
         "Our words and the names other software uses",

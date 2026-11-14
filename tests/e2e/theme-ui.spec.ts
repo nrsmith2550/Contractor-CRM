@@ -64,8 +64,8 @@ test.describe("themes", () => {
     await darkDevice.close();
 
     await signIn(page, email);
-    expect(await page.getByRole("link", { name: "Clinch CRM home" }).count()).toBe(1);
-    await expect(page).toHaveTitle(/Clinch CRM/);
+    expect(await page.getByRole("link", { name: "Gantry CRM home" }).count()).toBe(1);
+    await expect(page).toHaveTitle(/Gantry CRM/);
 
     // Choose dark: applies immediately...
     await page.getByLabel("Theme").selectOption("dark");

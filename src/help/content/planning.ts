@@ -107,7 +107,7 @@ export const PLANNING: Article[] = [
       steps(
         `Save your spreadsheet as a **CSV** file. The first row must be the column names.`,
         `Open [${N.Prospects}](/app/prospects) and choose **Import ${N.prospects}**, then choose the file.`,
-        "**Match your columns** to the fields: Clinch CRM guesses from the names and you can correct each one.",
+        "**Match your columns** to the fields: Gantry CRM guesses from the names and you can correct each one.",
         "Check the preview, then import.",
       ),
       list(

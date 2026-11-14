@@ -6,7 +6,7 @@ import { Providers } from "./providers";
 import "./theme.css";
 
 export const metadata: Metadata = {
-  title: { default: "Clinch CRM", template: "%s · Clinch CRM" },
+  title: { default: "Gantry CRM", template: "%s · Gantry CRM" },
   description: "Customer management for small businesses.",
 };
 

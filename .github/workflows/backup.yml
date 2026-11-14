@@ -96,21 +96,21 @@ jobs:
         run: |
           stamp=$(date -u +%Y-%m-%d)
           openssl enc -aes-256-cbc -salt -pbkdf2 -iter 600000 -pass env:BACKUP_PASSPHRASE \
-            -in backup.dump -out "clinch-backup-$stamp.dump.enc"
+            -in backup.dump -out "gantry-backup-$stamp.dump.enc"
           # Round trip: the encrypted file must decrypt to exactly the dump that was verified.
           want=$(sha256sum < backup.dump)
           got=$(openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:BACKUP_PASSPHRASE \
-                  -in "clinch-backup-$stamp.dump.enc" | sha256sum)
+                  -in "gantry-backup-$stamp.dump.enc" | sha256sum)
           [ "$want" = "$got" ] || { echo "Encrypted file does not decrypt to the verified dump" >&2; exit 1; }
           echo "stamp=$stamp" >> "$GITHUB_ENV"
           shred -u backup.dump
-          ls -l clinch-backup-*.dump.enc
+          ls -l gantry-backup-*.dump.enc
 
       - uses: actions/upload-artifact@v4
         if: steps.cfg.outputs.ready == 'true'
         with:
-          name: clinch-backup-${{ env.stamp }}
-          path: clinch-backup-*.dump.enc
+          name: gantry-backup-${{ env.stamp }}
+          path: gantry-backup-*.dump.enc
           retention-days: 30
           if-no-files-found: error
 

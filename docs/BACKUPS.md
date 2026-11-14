@@ -1,6 +1,6 @@
 # Backups and recovery
 
-Clinch CRM keeps every customer's data in one Postgres database (Neon), so protecting that database
+Gantry CRM keeps every customer's data in one Postgres database (Neon), so protecting that database
 protects everyone. There are four layers, all free to run today. Each covers a different kind of
 bad day.
 
@@ -29,7 +29,7 @@ The nightly job reuses the two Neon secrets the test pipeline already has (`NEON
    - `BACKUP_DB_ROLE` (default `neondb_owner`) and `BACKUP_DB_NAME` (default `neondb`).
 4. Open the **Actions** tab, choose **Nightly backup**, and click **Run workflow**. A good run is green
    and its summary says "Backup verified" with the table and row counts. The backup appears under
-   **Artifacts** as `clinch-backup-YYYY-MM-DD`.
+   **Artifacts** as `gantry-backup-YYYY-MM-DD`.
 
 Until step 2 is done the job runs, shows a yellow "Backups are not set up yet" notice, and does
 nothing. It does not fail red.
@@ -64,10 +64,10 @@ live**: restore to a side copy first, check it, then decide.
 ### B. Something was lost more than 6 hours ago (restore from a nightly backup)
 
 1. GitHub > **Actions** > **Nightly backup** > pick the run from the right day > download the
-   `clinch-backup-YYYY-MM-DD` artifact and unzip it.
+   `gantry-backup-YYYY-MM-DD` artifact and unzip it.
 2. Decrypt (it asks for the passphrase):
    ```bash
-   openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in clinch-backup-2026-11-13.dump.enc -out backup.dump
+   openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in gantry-backup-2026-11-13.dump.enc -out backup.dump
    ```
 3. Create an empty Neon branch (or database) for the recovery and restore into it, using PostgreSQL
    tools version 18 or newer (the database is Postgres 18):
