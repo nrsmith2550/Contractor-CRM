@@ -51,7 +51,7 @@ test.describe("service UI", () => {
     await expect(page.getByRole("heading", { name: "Support requests" })).toBeVisible();
 
     // Administrators set up a subject and a queue.
-    await page.goto("/app/settings/service");
+    await page.goto("/app/settings/jobs");
     await page.getByLabel("Subject name").fill("Heating");
     await page.getByRole("button", { name: "Add subject" }).click();
     await expect(page.getByRole("list", { name: "Subjects" })).toContainText("Heating");

@@ -8,7 +8,7 @@ import { serviceDashboard } from "@/server/domain/dashboards";
 import { tenantTimeZone } from "@/server/entities/tenant";
 import { guardArea } from "@/server/auth/plan";
 
-export const metadata: Metadata = { title: "Service dashboard" };
+export const metadata: Metadata = { title: "Jobs dashboard" };
 
 export default async function ServiceDashboardPage() {
   await guardArea("jobs");
@@ -21,7 +21,7 @@ export default async function ServiceDashboardPage() {
 
   return (
     <>
-      <h1>Service dashboard</h1>
+      <h1>Jobs dashboard</h1>
       <div className="dash-grid">
         {r.casesByPriority ? (
           <BarCard

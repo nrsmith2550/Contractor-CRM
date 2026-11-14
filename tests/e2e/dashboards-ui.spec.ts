@@ -102,8 +102,8 @@ test.describe("dashboards", () => {
 
     await signIn(page, email);
 
-    await page.getByRole("link", { name: "Sales dashboard" }).click();
-    await expect(page.getByRole("heading", { name: "Sales dashboard" })).toBeVisible();
+    await page.getByRole("link", { name: "Deals dashboard" }).click();
+    await expect(page.getByRole("heading", { name: "Deals dashboard" })).toBeVisible();
     const pipeline = page.getByRole("region", { name: "Open pipeline by stage" });
     await expect(pipeline.getByRole("row", { name: /Qualify\s*2\s*\$1,500\.00/ })).toBeVisible();
     await expect(page.getByRole("region", { name: /^Won revenue/ })).toContainText("$4,000.00");
@@ -114,8 +114,8 @@ test.describe("dashboards", () => {
       "Call the supplier",
     );
 
-    await page.getByRole("link", { name: "Service dashboard" }).click();
-    await expect(page.getByRole("heading", { name: "Service dashboard" })).toBeVisible();
+    await page.getByRole("link", { name: "Jobs dashboard" }).click();
+    await expect(page.getByRole("heading", { name: "Jobs dashboard" })).toBeVisible();
     await expect(
       page
         .getByRole("region", { name: "Active support requests by priority" })

@@ -8,7 +8,7 @@ import { salesDashboard } from "@/server/domain/dashboards";
 import { tenantTimeZone } from "@/server/entities/tenant";
 import { guardArea } from "@/server/auth/plan";
 
-export const metadata: Metadata = { title: "Sales dashboard" };
+export const metadata: Metadata = { title: "Deals dashboard" };
 
 export default async function SalesDashboardPage() {
   await guardArea("deals");
@@ -21,7 +21,7 @@ export default async function SalesDashboardPage() {
 
   return (
     <>
-      <h1>Sales dashboard</h1>
+      <h1>Deals dashboard</h1>
       <div className="dash-grid">
         {r.pipeline ? (
           <BarCard title="Open pipeline by stage" data={r.pipeline} money empty="No open deals." />

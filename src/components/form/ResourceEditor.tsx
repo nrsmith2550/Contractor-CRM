@@ -133,9 +133,7 @@ export function ResourceEditor(props: {
       </fieldset>
       <fieldset className="crm-section">
         <legend>Skills</legend>
-        {props.skills.length === 0 && (
-          <p>No skills yet. Add some under Settings → Service settings.</p>
-        )}
+        {props.skills.length === 0 && <p>No skills yet. Add some under Settings → Job settings.</p>}
         <div className="crm-row" style={{ flexWrap: "wrap" }}>
           {props.skills.map((s) => (
             <label key={s.id}>

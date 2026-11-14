@@ -31,9 +31,9 @@ export const PLANNING: Article[] = [
     summary: "What each tile and chart means, and why you might see less than a colleague.",
     category: "planning",
     body: [
-      h("Sales dashboard"),
+      h("Deals dashboard"),
       table(
-        "The Sales dashboard",
+        "The Deals dashboard",
         ["Shows", "What it means"],
         [
           [
@@ -51,9 +51,9 @@ export const PLANNING: Article[] = [
           ["My activities", "Your next open items, soonest first."],
         ],
       ),
-      h("Service dashboard"),
+      h("Jobs dashboard"),
       table(
-        "The Service dashboard",
+        "The Jobs dashboard",
         ["Shows", "What it means"],
         [
           [`Active ${N.requests} by priority`, "How much open work there is and how urgent."],

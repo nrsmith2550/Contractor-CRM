@@ -95,7 +95,7 @@ const lead = (c: Ctx, source: string | null, status?: string) =>
     ...(status ? { status } : {}),
   }).then(must);
 
-describe.skipIf(!enabled)("Sales dashboard", () => {
+describe.skipIf(!enabled)("Deals dashboard", () => {
   it("totals the open pipeline by stage, with every stage listed", async () => {
     const { admin: c } = await newBusiness();
     await opp(c, "A", 100_00);
@@ -213,7 +213,7 @@ describe.skipIf(!enabled)("Sales dashboard", () => {
   });
 });
 
-describe.skipIf(!enabled)("Service dashboard", () => {
+describe.skipIf(!enabled)("Jobs dashboard", () => {
   it("counts active cases by priority and lists the ones past their SLA, most overdue first", async () => {
     const { admin: c } = await newBusiness();
     const mk = async (title: string, priority: string, set: Record<string, unknown> = {}) => {

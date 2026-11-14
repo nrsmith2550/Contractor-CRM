@@ -75,8 +75,8 @@ test.describe("themes", () => {
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     expect(await bg(page)).toBe(DARK);
-    await page.goto("/app/dashboards/sales");
-    await expect(page.getByRole("heading", { name: "Sales dashboard" })).toBeVisible();
+    await page.goto("/app/dashboards/deals");
+    await expect(page.getByRole("heading", { name: "Deals dashboard" })).toBeVisible();
     expect(await bg(page)).toBe(DARK);
     // Text stays readable: the page text is light on the dark background.
     const color = await page.evaluate(() => getComputedStyle(document.body).color);

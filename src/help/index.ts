@@ -13,7 +13,7 @@ import { TEAM } from "./content/team";
 
 export const CATEGORIES: Category[] = [
   { id: "start", title: "Getting started", blurb: "Set up, sign in and find your way around." },
-  { id: "sales", title: "Sales", blurb: `${N.Prospects}, ${N.deals}, quotes and orders.` },
+  { id: "sales", title: "Deals", blurb: `${N.Prospects}, ${N.deals}, quotes and orders.` },
   {
     id: "customers",
     title: `${N.Customers} and ${N.people}`,

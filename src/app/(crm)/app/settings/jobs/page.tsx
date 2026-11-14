@@ -18,7 +18,7 @@ export default async function ServiceSettingsPage() {
   ]);
   return (
     <>
-      <h1>Service settings</h1>
+      <h1>Job settings</h1>
       <h2>Subjects</h2>
       <p>Categories for support requests, such as Heating or Billing.</p>
       {subjects.ok && subjects.rows.length === 0 && <p>No subjects yet.</p>}

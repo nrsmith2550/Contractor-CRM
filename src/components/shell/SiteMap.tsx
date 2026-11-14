@@ -17,13 +17,13 @@ const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
   {
     title: "My work",
     links: [
-      ["Sales dashboard", "/app/dashboards/sales", "chart", "deals"],
-      ["Service dashboard", "/app/dashboards/service", "chart", "jobs"],
+      ["Deals dashboard", "/app/dashboards/deals", "chart", "deals"],
+      ["Jobs dashboard", "/app/dashboards/jobs", "chart", "jobs"],
       ["Calendar", "/app/calendar", "calendar"],
     ],
   },
   {
-    title: "Sales",
+    title: "Clinch Deals",
     links: [
       ["Prospects", "/app/prospects", "target", "deals"],
       ["Deals", "/app/deals", "deal", "deals"],
@@ -33,7 +33,7 @@ const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
     ],
   },
   {
-    title: "Service",
+    title: "Clinch Jobs",
     links: [
       ["Support requests", "/app/support-requests", "support", "jobs"],
       ["Jobs", "/app/jobs", "job", "jobs"],
@@ -67,7 +67,7 @@ const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
       ["Tax rates", "/app/settings/tax-rates", "settings"],
       ["Branding", "/app/settings/branding", "settings"],
       ["Your plan", "/app/plan", "list"],
-      ["Service settings", "/app/settings/service", "settings", "jobs"],
+      ["Job settings", "/app/settings/jobs", "settings", "jobs"],
     ],
   },
 ] as const;
