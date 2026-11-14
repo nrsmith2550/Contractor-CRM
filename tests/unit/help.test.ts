@@ -49,7 +49,7 @@ describe("the help guide's structure", () => {
 
   it("only links to things that exist", () => {
     const ROUTE =
-      /^\/app(\/(prospects(\/import)?|customers|people|deals|products|support-requests|jobs|team|my-visits|pricing|quotes(\/new)?|orders|pipeline|calendar|schedule|dashboards\/(deals|jobs)|settings\/(users|tax-rates|branding|jobs)|plan|help))?$/;
+      /^\/app(\/(prospects(\/import)?|customers|people|deals|products|support-requests|jobs|team|my-visits|pricing|quotes(\/new)?|orders|pipeline|calendar|schedule|dashboards\/(deals|jobs)|settings\/(users|tax-rates|branding|jobs|billing)|plan|help))?$/;
     for (const a of ARTICLES) {
       for (const href of links(a)) {
         const help = /^\/app\/help\/([a-z0-9-]+)$/.exec(href);

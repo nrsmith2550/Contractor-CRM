@@ -1481,3 +1481,118 @@
   padding: 6px 4px;
   font-weight: 600;
 }
+
+/* Settings → Billing */
+.billing-card {
+  margin: 16px 0;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-width: 760px;
+}
+.billing-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+.billing-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+.billing-facts dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.billing-facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+.billing-plans {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+.billing-plans legend,
+.billing-people label {
+  margin-bottom: 6px;
+  padding: 0;
+  font-weight: 600;
+}
+.billing-plan {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.billing-plan:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.billing-plan:has(input:focus-visible) {
+  outline: 3px solid var(--accent-text);
+  outline-offset: 2px;
+}
+.billing-plan input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+.billing-people {
+  margin: 0 0 16px;
+}
+.billing-people input {
+  display: block;
+  width: 120px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.billing-people p {
+  margin: 6px 0 0;
+}
+.billing-preview {
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.billing-preview h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.billing-preview ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+.billing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.billing-card-form {
+  max-width: 480px;
+}
+.billing-table-wrap {
+  overflow-x: auto;
+}
+.billing-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.billing-table th,
+.billing-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  white-space: nowrap;
+}

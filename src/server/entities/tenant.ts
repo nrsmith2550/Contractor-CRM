@@ -34,3 +34,21 @@ export async function tenantEdition(tenantId: string): Promise<Edition> {
   );
   return l?.edition ?? "complete";
 }
+
+/**
+ * Whether the business pays through a subscription on the site, and whether its last payment
+ * failed. Used by the app shell to show the Billing link and the overdue notice.
+ */
+export async function tenantBilling(
+  tenantId: string,
+): Promise<{ subscribed: boolean; pastDue: boolean }> {
+  const [l] = await withPlatform((tx) =>
+    tx
+      .select({ sub: license.stripeSubscriptionId, status: license.billingStatus })
+      .from(license)
+      .where(eq(license.tenantId, tenantId))
+      .orderBy(desc(license.activatedAt))
+      .limit(1),
+  );
+  return { subscribed: Boolean(l?.sub), pastDue: l?.status === "past_due" };
+}

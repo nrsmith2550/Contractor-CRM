@@ -172,3 +172,12 @@ export function extraUsersFor(totalUsers: number): number {
 export function dueTodayCents(edition: Edition, extraUsers = 0): number {
   return PLANS[edition].setupCents + monthlyCentsFor(edition, extraUsers);
 }
+
+/**
+ * The setup fee to pay again when moving up to a plan with a bigger one (Deals to Complete is
+ * $200). Never negative: moving down does not refund the setup fee, and setup is never charged
+ * twice for the same plan.
+ */
+export function setupDifferenceCents(from: Edition, to: Edition): number {
+  return Math.max(0, PLANS[to].setupCents - PLANS[from].setupCents);
+}

@@ -11,9 +11,9 @@ need someone to look at the real site.
 - [ ] Merge the Gantry CRM rebrand (PR #43) once its checks are green.
 - [ ] Production deploy setup: once Vercel Pro is on, wire up the production environment
       variables, migrations and domain.
-- [ ] Payments: the subscription engine and the buy page (`/buy`, with the payment form drawn on
-      the page) are built. Still to build: the Billing page inside the app. Everything is tried in
-      a **separate test-mode Stripe account**; see the Stripe steps below.
+- [ ] Payments: built (subscription engine, `/buy` with the payment form drawn on the page, and
+      Settings, Billing inside the app). Still to do: run it once against a **separate test-mode
+      Stripe account**; see the Stripe steps below.
 - [ ] Optional before launch: import templates for customers, people and products (today only
       prospects can be imported), a mobile bottom bar, and Terms and Privacy pages once the text exists.
 - [ ] Housekeeping: rename the GitHub repository and the hosting project to match the new name.

@@ -405,7 +405,7 @@ subscription and invoice event re-reads the subscription and brings the licence 
 renewal date, past-due flag, cancellation suspends). Live keys are refused unless `STRIPE_ALLOW_LIVE=true`.
 - [x] Subscription checkout creation, licence minting and lifecycle webhook (tested with fabricated events)
 - [x] Buy page (`/buy`) with the on-site payment form: plan and people picker, live price summary, Stripe's form drawn in the page, in-page thank-you (the key is only emailed)
-- [ ] Billing page inside the app (change plan or people, update card, invoices, cancel)
+- [x] Billing page inside the app (Settings → Billing, owner only): plan and status, change plan or people with a cost preview and proration, update card in the page, invoices, cancel at period end or keep; past-due notice across the app
 - [ ] Run once against a real test-mode Stripe account
 
 **Auth pages status** (branch `claude/phase-1-auth-pages`): `/activate`, `/login`, `/change-password` and a
