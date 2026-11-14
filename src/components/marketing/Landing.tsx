@@ -1,7 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ARTICLES } from "@/help";
-import { PLANS, SHARED_CONTENT, USERS_INCLUDED } from "@/lib/plans";
+import {
+  MAX_SELF_SERVE_USERS,
+  PLANS,
+  SHARED_CONTENT,
+  USERS_INCLUDED,
+  formatPlanUsd,
+} from "@/lib/plans";
 import { SLA_HOURS } from "@/server/domain/sla";
 import { DEFAULT_ROLES } from "@/server/security/roles";
 import { Brand } from "@/components/shell/Brand";
@@ -85,7 +91,7 @@ const FAQ = [
   ],
   [
     "How many people can use it?",
-    `Every plan includes up to ${USERS_INCLUDED} people signing in. If you need more, ask us.`,
+    `Every plan includes up to ${USERS_INCLUDED} people signing in. Add more for ${formatPlanUsd(PLANS.complete.extraUserCents)} a month each on ${PLANS.complete.name}, or ${formatPlanUsd(PLANS.deals.extraUserCents)} a month each on ${PLANS.deals.name} or ${PLANS.jobs.name}, up to ${MAX_SELF_SERVE_USERS} people. Need more than that? Get in touch.`,
   ],
   [
     "Can I change plan later?",
@@ -303,7 +309,8 @@ export function Landing({ support }: { support: string | undefined }) {
             <h2 id="pricing-title">Simple pricing</h2>
             <p className="mk-sub">
               A one-time setup fee, then one flat monthly price for your whole team: up to{" "}
-              {USERS_INCLUDED} people. Choose the whole suite, or just the half you need.
+              {USERS_INCLUDED} people, with more available for a small extra each. Choose the whole
+              suite, or just the half you need.
             </p>
             <PlanCards support={support} />
           </div>

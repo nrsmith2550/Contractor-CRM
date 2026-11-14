@@ -4,7 +4,13 @@ import {
   EDITIONS,
   ENTITY_AREA,
   PLANS,
+  MAX_EXTRA_USERS,
+  MAX_SELF_SERVE_USERS,
   USERS_INCLUDED,
+  extraUsersFor,
+  isValidExtraUsers,
+  monthlyCentsFor,
+  seatsFor,
   editionAllowsEntity,
   firstYearCents,
   hasArea,
@@ -68,5 +74,51 @@ describe("plans", () => {
     // The full suite loses nothing, and the input is never changed.
     expect(limitToEdition(admin, "complete")).toEqual(admin);
     expect(admin).toHaveProperty("case");
+  });
+
+  describe("more than 10 people", () => {
+    it("extra people cost $5 a month on Complete and $3 on Deals or Jobs, up to 50 in total", () => {
+      expect(PLANS.complete.extraUserCents).toBe(500);
+      expect(PLANS.deals.extraUserCents).toBe(300);
+      expect(PLANS.jobs.extraUserCents).toBe(300);
+      expect(MAX_SELF_SERVE_USERS).toBe(50);
+      expect(MAX_EXTRA_USERS).toBe(40);
+    });
+
+    it("works out the monthly price and the seats", () => {
+      expect(monthlyCentsFor("complete")).toBe(7_000);
+      expect(monthlyCentsFor("complete", 15)).toBe(7_000 + 15 * 500); // 25 people: $145
+      expect(monthlyCentsFor("deals", 15)).toBe(4_500 + 15 * 300); // $90
+      expect(monthlyCentsFor("jobs", MAX_EXTRA_USERS)).toBe(4_500 + 40 * 300); // 50 people: $165
+      expect(monthlyCentsFor("complete", MAX_EXTRA_USERS)).toBe(27_000); // 50 people: $270
+      expect(seatsFor(0)).toBe(10);
+      expect(seatsFor(15)).toBe(25);
+      expect(extraUsersFor(10)).toBe(0);
+      expect(extraUsersFor(3)).toBe(0);
+      expect(extraUsersFor(25)).toBe(15);
+    });
+
+    it("only accepts a whole number of extra people from 0 to 40", () => {
+      for (const ok of [0, 1, 15, 40]) expect(isValidExtraUsers(ok)).toBe(true);
+      for (const bad of [-1, 41, 1.5, NaN, "5", null, undefined, Infinity])
+        expect(isValidExtraUsers(bad)).toBe(false);
+    });
+
+    it("the full suite is the better deal at every size, and growing is rewarded", () => {
+      for (let extra = 0; extra <= MAX_EXTRA_USERS; extra++) {
+        const both = monthlyCentsFor("deals", extra) + monthlyCentsFor("jobs", extra);
+        expect(monthlyCentsFor("complete", extra)).toBeLessThan(both);
+      }
+      // An extra person is cheaper than the plan's own rate per included person.
+      for (const e of EDITIONS) {
+        expect(PLANS[e].extraUserCents).toBeLessThan(PLANS[e].monthlyCents / USERS_INCLUDED);
+      }
+      // And the price rises with every person added.
+      for (const e of EDITIONS) {
+        for (let extra = 1; extra <= MAX_EXTRA_USERS; extra++) {
+          expect(monthlyCentsFor(e, extra)).toBeGreaterThan(monthlyCentsFor(e, extra - 1));
+        }
+      }
+    });
   });
 });

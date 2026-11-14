@@ -3,7 +3,16 @@ import Link from "next/link";
 import { and, eq } from "drizzle-orm";
 import { withPlatform } from "@/db/client";
 import { license } from "@/db/schema";
-import { AREAS, AREA_CONTENT, PLANS, SHARED_CONTENT, hasArea, type Area } from "@/lib/plans";
+import {
+  AREAS,
+  AREA_CONTENT,
+  MAX_SELF_SERVE_USERS,
+  PLANS,
+  SHARED_CONTENT,
+  formatPlanUsd,
+  hasArea,
+  type Area,
+} from "@/lib/plans";
 import { requireUser } from "@/server/auth/http";
 import { tenantEdition } from "@/server/entities/tenant";
 
@@ -42,6 +51,17 @@ export default async function PlanPage({
         {lic ? `, with room for ${lic.seatLimit} people to sign in` : ""}.
       </p>
 
+      <p>
+        Need more people? Each extra person is {formatPlanUsd(plan.extraUserCents)} a month on{" "}
+        {plan.name}, up to {MAX_SELF_SERVE_USERS} people in total, with no extra setup fee.{" "}
+        {support ? (
+          <a href={`mailto:${support}?subject=Add people to my Gantry plan`}>
+            Email us to add them
+          </a>
+        ) : (
+          "Contact us to add them."
+        )}
+      </p>
       <div className="crm-related-grid" style={{ margin: "16px 0" }}>
         {AREAS.map((a) => {
           const included = hasArea(edition, a);

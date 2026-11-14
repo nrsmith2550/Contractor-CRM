@@ -14,6 +14,15 @@ export type Area = (typeof AREAS)[number];
 /** Every plan includes this many people signing in. A licence can carry a different number. */
 export const USERS_INCLUDED = 10;
 
+/**
+ * The most people a business can have by buying on the site. More than this is a custom quote
+ * (the admin console can set any limit), so the price is agreed rather than read off a page.
+ */
+export const MAX_SELF_SERVE_USERS = 50;
+
+/** How many extra people (beyond the ones included) can be added when buying on the site. */
+export const MAX_EXTRA_USERS = MAX_SELF_SERVE_USERS - USERS_INCLUDED;
+
 export type Plan = {
   id: Edition;
   /** What it is called everywhere: on licences, the pricing page and the menu. */
@@ -22,6 +31,13 @@ export type Plan = {
   tagline: string;
   setupCents: number;
   monthlyCents: number;
+  /**
+   * What each extra person costs per month once a business has more than the included users. There
+   * is no setup fee for extra people. Always less than the plan's own rate per person, so growing
+   * is rewarded, and for Complete always less than the two single-area prices together, so the
+   * suite stays the better deal at every size.
+   */
+  extraUserCents: number;
   areas: readonly Area[];
 };
 
@@ -32,6 +48,7 @@ export const PLANS: Record<Edition, Plan> = {
     tagline: "Win the work and run the work, in one place.",
     setupCents: 50_000,
     monthlyCents: 7_000,
+    extraUserCents: 500,
     areas: ["deals", "jobs"],
   },
   deals: {
@@ -40,6 +57,7 @@ export const PLANS: Record<Edition, Plan> = {
     tagline: "From first enquiry to a signed-off quote and order.",
     setupCents: 30_000,
     monthlyCents: 4_500,
+    extraUserCents: 300,
     areas: ["deals"],
   },
   jobs: {
@@ -48,6 +66,7 @@ export const PLANS: Record<Edition, Plan> = {
     tagline: "Support requests, jobs, visits and the schedule.",
     setupCents: 30_000,
     monthlyCents: 4_500,
+    extraUserCents: 300,
     areas: ["jobs"],
   },
 };
@@ -127,4 +146,24 @@ export function formatPlanUsd(cents: number): string {
 export function firstYearCents(edition: Edition): number {
   const p = PLANS[edition];
   return p.setupCents + 12 * p.monthlyCents;
+}
+
+/** True for a whole number of extra people that can be bought on the site (0 up to the cap). */
+export function isValidExtraUsers(n: unknown): n is number {
+  return typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= MAX_EXTRA_USERS;
+}
+
+/** The number of people who can sign in, for a plan with this many extra people added. */
+export function seatsFor(extraUsers: number): number {
+  return USERS_INCLUDED + extraUsers;
+}
+
+/** The monthly price of a plan with extra people added. */
+export function monthlyCentsFor(edition: Edition, extraUsers = 0): number {
+  return PLANS[edition].monthlyCents + extraUsers * PLANS[edition].extraUserCents;
+}
+
+/** Extra people needed to cover this many people in total (never negative). */
+export function extraUsersFor(totalUsers: number): number {
+  return Math.max(0, totalUsers - USERS_INCLUDED);
 }
