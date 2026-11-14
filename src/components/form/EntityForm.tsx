@@ -1,11 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import type { EntityMeta, FieldDef } from "@/entities/types";
 import { utcToZonedInput } from "@/lib/tz";
 import { saveRecordAction, lookupAction, type CmdResult } from "@/server/actions/entities";
 
 type Values = Record<string, string | boolean>;
+
+/** Where each kind of looked-up record opens. */
+const LOOKUP_PATH = { account: "/app/customers", contact: "/app/people" } as const;
 
 /** Typeahead lookup: the user can only pick records they're allowed to read. */
 function Lookup(props: {
@@ -38,6 +42,15 @@ function Lookup(props: {
           if (n === seq.current) setOpts(r);
         }}
       />
+      {value && (
+        <Link
+          className="crm-lookup-open"
+          href={`${LOOKUP_PATH[field.lookup!]}/${value}`}
+          aria-label={`Open ${label || field.label}`}
+        >
+          Open
+        </Link>
+      )}
       {opts.length > 0 && (
         <ul id={`l-${field.name}`} role="listbox" className="crm-listbox">
           {opts.map((o) => (

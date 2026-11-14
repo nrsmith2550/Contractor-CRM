@@ -115,7 +115,7 @@ export const CUSTOMERS: Article[] = [
         [
           [
             N.Customer,
-            `${N.people}, ${N.deals}, quotes, orders, ${N.requests}, ${N.jobs}, and the ${N.prospect} they came from`,
+            `${N.people}, ${N.deals}, quotes, orders, ${N.requests}, ${N.jobs}, ${N.visits}, and the ${N.prospect} they came from`,
           ],
           [N.Person, `Their ${N.customer}, ${N.deals}, quotes, orders and ${N.requests}`],
           [N.Prospect, `The ${N.customer}, ${N.person} and ${N.deal} it was turned into`],
@@ -129,13 +129,21 @@ export const CUSTOMERS: Article[] = [
           ],
           ["Order", `The quote it came from, the ${N.customer}, ${N.person} and ${N.deal}`],
           [N.Request, `The ${N.customer} and ${N.person}, and its ${N.jobs}`],
-          [N.Job, `Its ${N.request} and its ${N.customer}`],
+          [N.Job, `Its ${N.request}, its ${N.visits} and its ${N.customer}`],
+          [
+            N.Visit,
+            `Its ${N.job}, ${N.request} and ${N.customer}, and the job's other ${N.visits}`,
+          ],
         ],
       ),
       steps(
         `Open a ${N.customer} from [${N.Customers}](/app/customers).`,
         "Under **Related records**, find the group you want, for example **Jobs**.",
         "Click a name to open it. Its own **Related records** let you keep going, or go straight back.",
+      ),
+      h("From a form"),
+      p(
+        `When a ${N.customer} or ${N.person} is filled in on a form, such as on a ${N.request}, an **Open** link sits beside it. Choose it to go straight to that record.`,
       ),
       note(
         "You only see links to records your role allows you to open. A group with nothing in it is left out, and the number beside each heading counts what is in it.",

@@ -2,8 +2,10 @@ import { randomBytes } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { activateLicense } from "@/server/auth/activation";
 import { createAccount, createContact } from "@/server/domain/accounts";
+import { createBooking } from "@/server/domain/bookings";
 import { convertToWorkOrder, createCase } from "@/server/domain/cases";
 import { buildCtx } from "@/server/domain/context";
+import { createResource } from "@/server/domain/resources";
 import { mintLicense } from "@/server/licensing/mint";
 
 const PASSWORD = "violet-lantern-orbit-42";
@@ -49,6 +51,16 @@ test.describe("related records", () => {
     const job = await convertToWorkOrder(c, req.case.id);
     if (!job.ok) throw new Error("job");
 
+    const tech = await createResource(c, { name: `Tech ${id}`, userId: res.userId });
+    if (!tech.ok) throw new Error("resource");
+    const visit = await createBooking(c, {
+      workOrderId: job.workOrder.id,
+      resourceId: tech.resource.id,
+      startAt: new Date("2030-05-01T13:00:00Z"),
+      endAt: new Date("2030-05-01T15:00:00Z"),
+    });
+    if (!visit.ok) throw new Error("visit");
+
     await page.goto("/login");
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill(PASSWORD);
@@ -82,5 +94,23 @@ test.describe("related records", () => {
     ).toBeVisible();
     await inRelated().locator(`a[href="/app/customers/${acct.account.id}"]`).click();
     await expect(page).toHaveURL(new RegExp(`/app/customers/${acct.account.id}$`));
+
+    // The customer and person fields on a form open their record.
+    await page.goto(`/app/support-requests/${req.case.id}`);
+    await page.getByRole("link", { name: `Open Buyer ${id}` }).click();
+    await expect(page).toHaveURL(new RegExp(`/app/customers/${acct.account.id}$`));
+
+    // A visit is reachable from the customer, shows who and when, and links back to its job.
+    const visitHref = `/app/visits/${visit.booking.id}`;
+    await page
+      .getByRole("region", { name: "Related records" })
+      .getByRole("heading", { name: /^Visits/ })
+      .waitFor();
+    await page.locator(`a[href="${visitHref}"]`).click();
+    await expect(page).toHaveURL(new RegExp(`${visitHref}$`));
+    await expect(page.getByText(`Tech ${id}`).first()).toBeVisible();
+    await page.locator(`a[href="/app/jobs/${job.workOrder.id}"]`).first().click();
+    await expect(page).toHaveURL(new RegExp(`/app/jobs/${job.workOrder.id}$`));
+    await expect(inRelated().locator(`a[href="${visitHref}"]`)).toBeVisible();
   });
 });

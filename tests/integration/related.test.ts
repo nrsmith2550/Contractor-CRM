@@ -6,11 +6,13 @@ import { securityRole } from "@/db/schema";
 import { activateLicense } from "@/server/auth/activation";
 import { acceptInvitation, inviteUser } from "@/server/auth/invitations";
 import { createAccount, createContact } from "@/server/domain/accounts";
+import { createBooking, setBookingStatus } from "@/server/domain/bookings";
 import { convertToWorkOrder, createCase } from "@/server/domain/cases";
 import { buildCtx, type Ctx } from "@/server/domain/context";
 import { createOpportunity } from "@/server/domain/opportunities";
 import { activateQuote, addLine, createQuote, winQuote } from "@/server/domain/quotes";
 import { relatedRecords, type RelatedType } from "@/server/domain/related";
+import { createResource } from "@/server/domain/resources";
 import { createWorkOrder } from "@/server/domain/work-orders";
 import type { Email } from "@/server/email/mailer";
 import { mintLicense } from "@/server/licensing/mint";
@@ -184,6 +186,64 @@ describe.skipIf(!enabled)("related records", () => {
       code: "not_found",
     });
     expect(await relatedRecords(a.admin, "product" as RelatedType, GHOST)).toMatchObject({
+      code: "not_found",
+    });
+  });
+
+  it("links jobs, customers and visits to each other, and shows each person only the visits they may read", async () => {
+    const biz = await newBusiness();
+    const c = biz.admin;
+    const acct = must(await createAccount(c, { name: "Buyer Inc" })).account;
+    const req = must(
+      await createCase(c, { title: "Gate sticks", customerAccountId: acct.id }),
+    ).case;
+    const job = must(await convertToWorkOrder(c, req.id)).workOrder;
+
+    const techA = await addUser(biz, "Field Technician");
+    const techB = await addUser(biz, "Field Technician");
+    const resA = must(await createResource(c, { name: "Tech A", userId: techA.userId })).resource;
+    const resB = must(await createResource(c, { name: "Tech B", userId: techB.userId })).resource;
+    const day = (h: number) => new Date(Date.UTC(2030, 4, 1, h));
+    const visitA = must(
+      await createBooking(c, {
+        workOrderId: job.id,
+        resourceId: resA.id,
+        startAt: day(9),
+        endAt: day(11),
+      }),
+    ).booking;
+    // A job has one live visit at a time: the first is called off, then the second tech takes it.
+    must(await setBookingStatus(c, visitA.id, "cancelled"));
+    const visitB = must(
+      await createBooking(c, {
+        workOrderId: job.id,
+        resourceId: resB.id,
+        startAt: day(13),
+        endAt: day(15),
+      }),
+    ).booking;
+
+    // The office sees both visits from the job and from the customer.
+    const both = new Set([`/app/visits/${visitA.id}`, `/app/visits/${visitB.id}`]);
+    expect(new Set((await links(c, "work_order", job.id))["Visits"])).toEqual(both);
+    expect(new Set((await links(c, "account", acct.id))["Visits"])).toEqual(both);
+
+    // A visit links up to its job, request and customer, and sideways to the job's other visits.
+    const v = await links(c, "booking", visitA.id);
+    expect(v["Job"]).toEqual([`/app/jobs/${job.id}`]);
+    expect(v["Support request"]).toEqual([`/app/support-requests/${req.id}`]);
+    expect(v["Customer"]).toEqual([`/app/customers/${acct.id}`]);
+    expect(v["Other visits for this job"]).toEqual([`/app/visits/${visitB.id}`]);
+
+    // A technician sees only their own visit on the job; the support request stays hidden from them.
+    const asA = await links(techA, "work_order", job.id);
+    expect(asA["Visits"]).toEqual([`/app/visits/${visitA.id}`]);
+    const fromVisit = await links(techA, "booking", visitA.id);
+    expect(fromVisit["Support request"]).toBeUndefined();
+    expect(fromVisit["Other visits for this job"]).toBeUndefined(); // the other visit is not theirs
+    // ...and cannot open someone else's visit's related records at all.
+    expect(await relatedRecords(techA, "booking", visitB.id)).toMatchObject({
+      ok: false,
       code: "not_found",
     });
   });
