@@ -5,11 +5,13 @@ import { listMyBookings } from "@/server/domain/bookings";
 import { buildCtx } from "@/server/domain/context";
 import { listProductChoices, listWorkOrderLines } from "@/server/domain/work-order-lines";
 import { tenantTimeZone } from "@/server/entities/tenant";
+import { guardArea } from "@/server/auth/plan";
 
 export const metadata = { title: "My visits" };
 
 // The technician's phone view: today's visits first, then the rest of the week.
 export default async function MyBookingsPage() {
+  await guardArea("jobs");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const tz = await tenantTimeZone(user.tenantId);

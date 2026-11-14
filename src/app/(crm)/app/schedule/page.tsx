@@ -8,6 +8,7 @@ import { listCharacteristics, listResources } from "@/server/domain/resources";
 import { listWorkOrders } from "@/server/domain/work-orders";
 import { tenantTimeZone } from "@/server/entities/tenant";
 import { can } from "@/server/security/roles";
+import { guardArea } from "@/server/auth/plan";
 
 export const metadata = { title: "Schedule" };
 
@@ -17,6 +18,7 @@ export default async function SchedulePage({
   searchParams: Promise<{ view?: string; date?: string; skill?: string }>;
 }) {
   const sp = await searchParams;
+  await guardArea("jobs");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const tz = await tenantTimeZone(user.tenantId);

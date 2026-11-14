@@ -8,12 +8,14 @@ import { getBooking } from "@/server/domain/bookings";
 import { buildCtx } from "@/server/domain/context";
 import { relatedRecords } from "@/server/domain/related";
 import { tenantTimeZone } from "@/server/entities/tenant";
+import { guardArea } from "@/server/auth/plan";
 
 export const metadata: Metadata = { title: "Visit" };
 
 /** One visit: who is going, when, where, and what happened. Everything it is linked to is a link. */
 export default async function VisitPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await guardArea("jobs");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const res = await getBooking(ctx, id);

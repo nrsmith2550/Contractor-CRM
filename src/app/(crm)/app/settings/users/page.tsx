@@ -1,3 +1,4 @@
+import { PLANS } from "@/lib/plans";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { withPlatform, withTenant } from "@/db/client";
@@ -31,7 +32,7 @@ export default async function UsersPage() {
     ),
     withPlatform((tx) =>
       tx
-        .select({ seatLimit: license.seatLimit, tier: license.tier })
+        .select({ seatLimit: license.seatLimit, edition: license.edition })
         .from(license)
         .where(eq(license.tenantId, user.tenantId)),
     ),
@@ -47,7 +48,7 @@ export default async function UsersPage() {
         <strong>
           {active} of {lic?.seatLimit ?? 0}
         </strong>{" "}
-        seats in use ({lic?.tier} license).
+        seats in use ({lic ? PLANS[lic.edition].name : ""} plan).
         {pending.length > 0 ? ` ${pending.length} pending invitation(s) also hold a seat.` : ""}
       </p>
 

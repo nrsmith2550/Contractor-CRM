@@ -1,4 +1,4 @@
-import { TIERS } from "@/lib/tiers";
+import { USERS_INCLUDED } from "@/lib/plans";
 import { INVITE_TTL_MS } from "@/server/auth/invitations";
 import { LOGIN_LIMIT } from "@/server/auth/rate-limit";
 import { MIN_PASSWORD_LENGTH } from "@/server/auth/password";
@@ -83,16 +83,12 @@ export const FIX: Article[] = [
     who: "The owner.",
     body: [
       p(
-        `Your license allows a number of people to be active at once (a **seat** each): ${Object.values(
-          TIERS,
-        )
-          .map((t) => `${t.label} ${t.seatLimit}`)
-          .join(", ")}.`,
+        `Your license allows a number of people to be active at once (a **seat** each). Every plan includes ${USERS_INCLUDED}; ask us if you need more. See [Your plan](/app/plan).`,
       ),
       list(
         "See the count on [Settings, Users](/app/settings/users): *X of Y seats in use*.",
         "A pending invitation holds a seat until it is accepted or expires.",
-        "If you are at the limit, you cannot invite more people until a seat is free or you move to a larger license.",
+        "If you are at the limit, you cannot invite more people until a seat is free or we raise your limit.",
         "To move to a larger license, contact support.",
       ),
     ],

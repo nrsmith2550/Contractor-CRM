@@ -12,6 +12,7 @@ import {
   tenant,
 } from "@/db/schema";
 import { emailField } from "@/lib/validation/auth";
+import { isEdition, type Edition } from "@/lib/plans";
 import { TIERS, type Tier, isTier } from "@/lib/tiers";
 import { hashPassword } from "@/server/auth/password";
 import { hashToken, newToken } from "@/server/auth/tokens";
@@ -68,6 +69,7 @@ export async function listLicenses(filter: { q?: string; status?: string } = {})
         id: license.id,
         keyLast5: license.keyLast5,
         tier: license.tier,
+        edition: license.edition,
         seatLimit: license.seatLimit,
         status: license.status,
         amountPaidCents: license.amountPaidCents,
@@ -119,6 +121,7 @@ export async function listTenants() {
         slug: tenant.slug,
         createdAt: tenant.createdAt,
         tier: license.tier,
+        edition: license.edition,
         licenseStatus: license.status,
         seatLimit: license.seatLimit,
       })
@@ -149,6 +152,7 @@ export async function getTenantDetail(tenantId: string) {
         licenseId: license.id,
         keyLast5: license.keyLast5,
         tier: license.tier,
+        edition: license.edition,
         licenseStatus: license.status,
         seatLimit: license.seatLimit,
       })
@@ -185,21 +189,36 @@ export async function listAdminAudit(limit = 200) {
 
 export async function mintLicenseAsAdmin(
   ctx: AdminCtx,
-  input: { tier?: unknown; buyerEmail?: unknown; seatLimit?: unknown; reason?: unknown },
+  input: {
+    edition?: unknown;
+    tier?: unknown;
+    buyerEmail?: unknown;
+    seatLimit?: unknown;
+    reason?: unknown;
+  },
 ): Promise<OpResult<{ key: string; last5: string }>> {
   const reason = parseReason(input.reason);
   if (!reason.ok) return reason;
-  if (!isTier(input.tier)) return fail("Choose a tier.");
+  // The plan (what was bought) defaults to the full suite; a legacy size class is optional.
+  const edition = input.edition === undefined || input.edition === "" ? "complete" : input.edition;
+  if (!isEdition(edition)) return fail("Choose a plan.");
+  if (input.tier !== undefined && input.tier !== "" && !isTier(input.tier))
+    return fail("Choose a tier.");
   const email = input.buyerEmail ? emailField.safeParse(input.buyerEmail) : null;
   if (email && !email.success) return fail("Enter a valid buyer email, or leave it blank.");
   const seats = input.seatLimit ? Number(input.seatLimit) : undefined;
   if (seats !== undefined && (!Number.isInteger(seats) || seats < 1 || seats > 100_000)) {
     return fail("Seat limit must be a whole number between 1 and 100000.");
   }
-  // Over 100 users is a custom quote: only an admin can set a seat limit above the tier's.
+  // A plan includes the standard number of users; only an admin can set a different limit.
   const minted = await withPlatform(async (tx) => {
     const m = await mintLicense(
-      { tier: input.tier as Tier, buyerEmail: email?.data, seatLimit: seats },
+      {
+        edition,
+        tier: isTier(input.tier) ? input.tier : undefined,
+        buyerEmail: email?.data,
+        seatLimit: seats,
+      },
       tx,
     );
     await writeAdminAudit(
@@ -265,23 +284,40 @@ export async function setLicenseStatus(
   });
 }
 
-/** Moves a license to another tier or custom seat count (e.g. a comped upgrade). */
-export async function updateLicenseTier(
+/** Moves a license to another plan and/or seat count (e.g. a comped upgrade). */
+export async function updateLicensePlan(
   ctx: AdminCtx,
-  input: { licenseId?: unknown; tier?: unknown; seatLimit?: unknown; reason?: unknown },
-): Promise<OpResult<{ tier: string; seatLimit: number }>> {
+  input: {
+    licenseId?: unknown;
+    edition?: unknown;
+    tier?: unknown;
+    seatLimit?: unknown;
+    reason?: unknown;
+  },
+): Promise<OpResult<{ tier: string; edition: Edition; seatLimit: number }>> {
   const reason = parseReason(input.reason);
   if (!reason.ok) return reason;
   const id = z.string().uuid().safeParse(input.licenseId);
   if (!id.success) return fail("Unknown license.");
-  if (!isTier(input.tier)) return fail("Choose a tier.");
-  const seats = input.seatLimit ? Number(input.seatLimit) : TIERS[input.tier].seatLimit;
-  if (!Number.isInteger(seats) || seats < 1 || seats > 100_000)
-    return fail("Enter a valid seat limit.");
+  const hasEdition = input.edition !== undefined && input.edition !== "";
+  if (hasEdition && !isEdition(input.edition)) return fail("Choose a plan.");
+  const hasTier = input.tier !== undefined && input.tier !== "";
+  if (hasTier && !isTier(input.tier)) return fail("Choose a tier.");
+  if (!hasEdition && !hasTier && !input.seatLimit) return fail("Choose a plan or a seat limit.");
 
   return withPlatform(async (tx) => {
     const [lic] = await tx.select().from(license).where(eq(license.id, id.data)).for("update");
     if (!lic) return fail("Unknown license.");
+    const edition = hasEdition ? (input.edition as Edition) : lic.edition;
+    const tier = hasTier ? (input.tier as Tier) : lic.tier;
+    // A given seat limit wins; else a chosen tier sets it; else the licence keeps what it has.
+    const seats = input.seatLimit
+      ? Number(input.seatLimit)
+      : hasTier
+        ? TIERS[tier].seatLimit
+        : lic.seatLimit;
+    if (!Number.isInteger(seats) || seats < 1 || seats > 100_000)
+      return fail("Enter a valid seat limit.");
     if (lic.tenantId) {
       await setTenant(tx, lic.tenantId);
       const [active] = await tx
@@ -294,22 +330,19 @@ export async function updateLicenseTier(
         );
       }
     }
-    await tx
-      .update(license)
-      .set({ tier: input.tier as Tier, seatLimit: seats })
-      .where(eq(license.id, lic.id));
+    await tx.update(license).set({ tier, edition, seatLimit: seats }).where(eq(license.id, lic.id));
     await writeAdminAudit(
       {
         adminId: ctx.adminId,
-        action: "license.update_tier",
+        action: "license.update_plan",
         targetType: "license",
         targetId: lic.id,
-        reason: `${reason.reason} [${lic.tier}/${lic.seatLimit} -> ${input.tier}/${seats}]`,
+        reason: `${reason.reason} [${lic.edition}/${lic.seatLimit} -> ${edition}/${seats}]`,
         ip: ctx.ip,
       },
       tx,
     );
-    return { ok: true as const, tier: input.tier as string, seatLimit: seats };
+    return { ok: true as const, tier: tier as string, edition, seatLimit: seats };
   });
 }
 

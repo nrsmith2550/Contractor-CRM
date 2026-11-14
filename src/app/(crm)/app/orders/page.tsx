@@ -3,8 +3,10 @@ import { formatMoney, humanize } from "@/lib/format";
 import { requireUser } from "@/server/auth/http";
 import { buildCtx } from "@/server/domain/context";
 import { listOrders } from "@/server/domain/quotes";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function OrdersPage() {
+  await guardArea("deals");
   const user = await requireUser();
   const res = await listOrders(await buildCtx(user.tenantId, user.userId));
   return (

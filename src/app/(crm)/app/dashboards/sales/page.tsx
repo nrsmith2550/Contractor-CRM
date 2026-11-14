@@ -6,10 +6,12 @@ import { requireUser } from "@/server/auth/http";
 import { buildCtx } from "@/server/domain/context";
 import { salesDashboard } from "@/server/domain/dashboards";
 import { tenantTimeZone } from "@/server/entities/tenant";
+import { guardArea } from "@/server/auth/plan";
 
 export const metadata: Metadata = { title: "Sales dashboard" };
 
 export default async function SalesDashboardPage() {
+  await guardArea("deals");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const tz = await tenantTimeZone(user.tenantId);

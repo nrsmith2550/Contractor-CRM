@@ -2,8 +2,10 @@ import { ImportLeads } from "@/components/form/ImportLeads";
 import { requireUser } from "@/server/auth/http";
 import { IMPORT_FIELDS } from "@/server/domain/lead-import";
 import { humanize } from "@/lib/format";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function ImportPage() {
+  await guardArea("deals");
   await requireUser();
   return (
     <>

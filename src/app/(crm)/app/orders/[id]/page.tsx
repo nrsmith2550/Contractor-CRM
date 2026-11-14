@@ -6,8 +6,10 @@ import { requireUser } from "@/server/auth/http";
 import { buildCtx } from "@/server/domain/context";
 import { relatedRecords } from "@/server/domain/related";
 import { getOrder } from "@/server/domain/quotes";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
+  await guardArea("deals");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const id = (await params).id;

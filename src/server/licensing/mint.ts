@@ -7,12 +7,21 @@ import {
   normalizeLicenseKey,
 } from "@/server/auth/license-key";
 
+import { USERS_INCLUDED, type Edition } from "@/lib/plans";
 import { TIERS, type Tier } from "@/lib/tiers";
 
 export { TIERS, upgradePriceCents, type Tier } from "@/lib/tiers";
 
 export type MintArgs = {
-  tier: Tier;
+  /**
+   * What was bought: the full suite (the default), or just Deals or just Jobs.
+   */
+  edition?: Edition;
+  /**
+   * Legacy size class from the one-time-purchase days. Only sets the default seat limit when given;
+   * new licences leave it out and get the plan's included users.
+   */
+  tier?: Tier;
   buyerEmail?: string;
   amountPaidCents?: number;
   stripeCustomerId?: string;
@@ -44,8 +53,9 @@ export async function mintLicense(args: MintArgs, tx?: Tx): Promise<Minted | nul
       .values({
         keyHash: hashLicenseKey(normalized),
         keyLast5: licenseKeyLast5(normalized),
-        tier: args.tier,
-        seatLimit: args.seatLimit ?? TIERS[args.tier].seatLimit,
+        tier: args.tier ?? "starter",
+        edition: args.edition ?? "complete",
+        seatLimit: args.seatLimit ?? (args.tier ? TIERS[args.tier].seatLimit : USERS_INCLUDED),
         amountPaidCents: args.amountPaidCents ?? 0,
         buyerEmail: args.buyerEmail?.toLowerCase(),
         stripeCustomerId: args.stripeCustomerId,

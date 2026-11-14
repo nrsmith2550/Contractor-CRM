@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Brand } from "./Brand";
+import { hasArea, type Area, type Edition } from "@/lib/plans";
 import { Icon, type IconName } from "./Icon";
 
-type NavLink = readonly [label: string, href: string, icon: IconName];
+/** A link, and the part of the product it belongs to (none = in every plan). */
+type NavLink = readonly [label: string, href: string, icon: IconName, area?: Area];
 
 const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
   {
@@ -15,29 +17,29 @@ const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
   {
     title: "My work",
     links: [
-      ["Sales dashboard", "/app/dashboards/sales", "chart"],
-      ["Service dashboard", "/app/dashboards/service", "chart"],
+      ["Sales dashboard", "/app/dashboards/sales", "chart", "deals"],
+      ["Service dashboard", "/app/dashboards/service", "chart", "jobs"],
       ["Calendar", "/app/calendar", "calendar"],
     ],
   },
   {
     title: "Sales",
     links: [
-      ["Prospects", "/app/prospects", "target"],
-      ["Deals", "/app/deals", "deal"],
-      ["Quotes", "/app/quotes", "quote"],
-      ["Orders", "/app/orders", "order"],
-      ["Pipeline", "/app/pipeline", "funnel"],
+      ["Prospects", "/app/prospects", "target", "deals"],
+      ["Deals", "/app/deals", "deal", "deals"],
+      ["Quotes", "/app/quotes", "quote", "deals"],
+      ["Orders", "/app/orders", "order", "deals"],
+      ["Pipeline", "/app/pipeline", "funnel", "deals"],
     ],
   },
   {
     title: "Service",
     links: [
-      ["Support requests", "/app/support-requests", "support"],
-      ["Jobs", "/app/jobs", "job"],
-      ["Schedule", "/app/schedule", "clock"],
-      ["Team members", "/app/team", "team"],
-      ["My visits", "/app/my-visits", "pin"],
+      ["Support requests", "/app/support-requests", "support", "jobs"],
+      ["Jobs", "/app/jobs", "job", "jobs"],
+      ["Schedule", "/app/schedule", "clock", "jobs"],
+      ["Team members", "/app/team", "team", "jobs"],
+      ["My visits", "/app/my-visits", "pin", "jobs"],
     ],
   },
   {
@@ -64,33 +66,39 @@ const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
       ["Users", "/app/settings/users", "team"],
       ["Tax rates", "/app/settings/tax-rates", "settings"],
       ["Branding", "/app/settings/branding", "settings"],
-      ["Service settings", "/app/settings/service", "settings"],
+      ["Your plan", "/app/plan", "list"],
+      ["Service settings", "/app/settings/service", "settings", "jobs"],
     ],
   },
 ] as const;
 
-export function SiteMap() {
+export function SiteMap({ edition }: { edition: Edition }) {
   const path = usePathname();
   return (
     <nav className="crm-sitemap" aria-label="Site map">
       <Link href="/app" className="crm-brand" aria-label="Clinch CRM home">
         <Brand alt="" />
       </Link>
-      {GROUPS.map((g) => (
-        <div key={g.title || "home"}>
-          {g.title && <h2>{g.title}</h2>}
-          {g.links.map(([label, href, icon]) => {
-            const active =
-              href === "/app" ? path === href : path === href || path.startsWith(`${href}/`);
-            return (
-              <Link key={href} href={href} aria-current={active ? "page" : undefined}>
-                <Icon name={icon} />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      ))}
+      {GROUPS.map((g) => ({
+        ...g,
+        links: g.links.filter(([, , , area]) => !area || hasArea(edition, area)),
+      }))
+        .filter((g) => g.links.length > 0)
+        .map((g) => (
+          <div key={g.title || "home"}>
+            {g.title && <h2>{g.title}</h2>}
+            {g.links.map(([label, href, icon]) => {
+              const active =
+                href === "/app" ? path === href : path === href || path.startsWith(`${href}/`);
+              return (
+                <Link key={href} href={href} aria-current={active ? "page" : undefined}>
+                  <Icon name={icon} />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
     </nav>
   );
 }

@@ -5,8 +5,10 @@ import { listCharacteristics } from "@/server/domain/resources";
 import { requireUser } from "@/server/auth/http";
 import { listQueues, listSubjects } from "@/server/domain/cases";
 import { buildCtx } from "@/server/domain/context";
+import { guardArea } from "@/server/auth/plan";
 
 export default async function ServiceSettingsPage() {
+  await guardArea("jobs");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const [subjects, queues, skills] = await Promise.all([

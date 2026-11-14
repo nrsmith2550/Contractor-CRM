@@ -8,10 +8,12 @@ import { listCharacteristics } from "@/server/domain/resources";
 import { listResources } from "@/server/domain/resources";
 import { defaultWorkHours } from "@/server/domain/work-hours";
 import { can } from "@/server/security/roles";
+import { guardArea } from "@/server/auth/plan";
 
 export const metadata = { title: "Team members" };
 
 export default async function ResourcesPage() {
+  await guardArea("jobs");
   const user = await requireUser();
   const ctx = await buildCtx(user.tenantId, user.userId);
   const [resources, skills, users] = await Promise.all([

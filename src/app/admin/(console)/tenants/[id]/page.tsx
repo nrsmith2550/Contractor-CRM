@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { TIER_IDS, TIERS } from "@/lib/tiers";
+import { EDITIONS, PLANS } from "@/lib/plans";
 import {
   licenseStatusAction,
-  licenseTierAction,
+  licensePlanAction,
   ownerChangeEmailAction,
   ownerReactivateAction,
   ownerResetLinkAction,
@@ -32,8 +32,8 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
         {t.slug} · {t.timeZone} · {t.currency} · created {t.createdAt.toISOString().slice(0, 10)}
       </p>
       <p>
-        <strong>License:</strong> {t.tier} (…{t.keyLast5}), {t.activeUsers} of {t.seatLimit} seats
-        in use, status <strong>{t.licenseStatus}</strong>
+        <strong>License:</strong> {t.edition ? PLANS[t.edition].name : "—"} (…{t.keyLast5}),{" "}
+        {t.activeUsers} of {t.seatLimit} seats in use, status <strong>{t.licenseStatus}</strong>
       </p>
       <p>
         <strong>Owner:</strong>{" "}
@@ -113,27 +113,24 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
           REASON_FIELD,
         ]}
       />
-      <h3>Change tier or seats</h3>
+      <h3>Change plan or seats</h3>
       <AdminActionForm
-        action={licenseTierAction}
+        action={licensePlanAction}
         fixed={{ licenseId: t.licenseId ?? "" }}
         submitLabel="Update"
         fields={[
           {
-            name: "tier",
-            label: "Tier",
+            name: "edition",
+            label: "Plan",
             type: "select",
-            defaultValue: t.tier ?? undefined,
-            options: TIER_IDS.map((x) => ({
-              value: x,
-              label: `${TIERS[x].label} — ${TIERS[x].seats}`,
-            })),
+            defaultValue: t.edition ?? undefined,
+            options: EDITIONS.map((x) => ({ value: x, label: PLANS[x].name })),
           },
           {
             name: "seatLimit",
             label: "Seat limit (optional)",
             type: "number",
-            hint: "Blank = the tier's limit",
+            hint: "Blank keeps the current limit",
           },
           REASON_FIELD,
         ]}

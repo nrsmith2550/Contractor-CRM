@@ -1,3 +1,4 @@
+import { PLANS } from "@/lib/plans";
 import type { Metadata } from "next";
 import { listTenants } from "@/server/admin/operations";
 
@@ -11,7 +12,7 @@ export default async function TenantsPage() {
       <table>
         <thead>
           <tr>
-            {["Business", "Owner", "Tier", "Seats in use", "License", "Created"].map((h) => (
+            {["Business", "Owner", "Plan", "Seats in use", "License", "Created"].map((h) => (
               <th key={h} align="left" style={{ paddingRight: 16 }}>
                 {h}
               </th>
@@ -25,7 +26,7 @@ export default async function TenantsPage() {
                 <a href={`/admin/tenants/${t.id}`}>{t.name}</a>
               </td>
               <td>{t.ownerEmail ?? "— none —"}</td>
-              <td>{t.tier ?? "—"}</td>
+              <td>{t.edition ? PLANS[t.edition].name : "—"}</td>
               <td>
                 {t.activeUsers} / {t.seatLimit ?? "—"}
               </td>

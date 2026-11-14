@@ -2,6 +2,7 @@ import { MIN_PASSWORD_LENGTH } from "@/server/auth/password";
 import { RESET_TTL_MS } from "@/server/auth/reset";
 import { SESSION_TTL_MS } from "@/server/auth/session";
 import { LOGIN_LIMIT } from "@/server/auth/rate-limit";
+import { AREAS, AREA_CONTENT, PLANS, SHARED_CONTENT, USERS_INCLUDED } from "@/lib/plans";
 import { N } from "../names";
 import { flow, list, note, p, steps, table, tip, warning, type Article } from "../types";
 
@@ -160,6 +161,39 @@ export const START: Article[] = [
         "Everything stays easy to read in both: colours are checked for contrast.",
       ),
     ],
+  },
+  {
+    slug: "your-plan",
+    title: "Your plan: what is included",
+    summary: "Clinch Complete, Clinch Deals and Clinch Jobs, and what each one unlocks.",
+    category: "start",
+    body: [
+      p(
+        `Clinch comes in three plans. **${PLANS.complete.name}** has everything. **${PLANS.deals.name}** is the selling side and **${PLANS.jobs.name}** is the doing-the-work side. Open [Your plan](/app/plan) to see yours.`,
+      ),
+      table(
+        "What each plan includes",
+        ["", ...AREAS.map((a) => AREA_CONTENT[a].name), "In every plan"],
+        [
+          [PLANS.complete.name, "Yes", "Yes", "Yes"],
+          [PLANS.deals.name, "Yes", "No", "Yes"],
+          [PLANS.jobs.name, "No", "Yes", "Yes"],
+        ],
+      ),
+      h2(AREA_CONTENT.deals.name),
+      list(...AREA_CONTENT.deals.covers),
+      h2(AREA_CONTENT.jobs.name),
+      list(...AREA_CONTENT.jobs.covers),
+      h2("Shared by every plan"),
+      list(...SHARED_CONTENT),
+      note(
+        `Every plan includes ${USERS_INCLUDED} people signing in. The part your plan does not include is hidden from the menu, and its pages explain that it is not part of your plan. Nothing is deleted if you change plan: move up and it is all still there.`,
+      ),
+      tip(
+        "To change plan or to add people, contact us. You do not need to do anything in the program.",
+      ),
+    ],
+    related: ["welcome", "seats-license", "who-can-do-what"],
   },
   {
     slug: "words-we-use",
