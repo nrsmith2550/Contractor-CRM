@@ -12,7 +12,7 @@ import { dayRange, quarterRange } from "@/lib/dashboard";
 import { recordHref } from "@/lib/calendar";
 import { readScope, type Ctx, type Result } from "./context";
 
-// Numbers for the Sales and Service dashboards. Every query is limited by the same read scope as
+// Numbers for the Deals and Jobs dashboards. Every query is limited by the same read scope as
 // the lists, so a user-level role sees dashboards of only their own records. A section the user may
 // not read at all comes back as null.
 

@@ -49,9 +49,9 @@ test.describe("demo business", () => {
     await expect(page.getByText("12 records")).toBeVisible();
     await page.goto("/app/prospects?view=all_open");
     await expect(page.getByText("12 records")).toBeVisible();
-    await page.goto("/app/dashboards/sales");
+    await page.goto("/app/dashboards/deals");
     await expect(page.getByRole("region", { name: /^Won revenue/ })).not.toContainText("$0.00");
-    await page.goto("/app/dashboards/service");
+    await page.goto("/app/dashboards/jobs");
     await expect(page.getByRole("region", { name: "SLA breaches" })).toContainText(
       "SLA breaches (1)",
     );
@@ -63,7 +63,7 @@ test.describe("demo business", () => {
     await tech.goto("/app/my-visits");
     await expect(tech.getByRole("heading", { name: /my visits/i })).toBeVisible();
     await expect(tech.getByText(/JOB-0\d+/).first()).toBeVisible();
-    await tech.goto("/app/dashboards/sales");
+    await tech.goto("/app/dashboards/deals");
     await expect(tech.getByText("You don't have access to this.").first()).toBeVisible();
     await techCtx.close();
 
@@ -79,8 +79,8 @@ test.describe("demo business", () => {
       "/app/jobs",
       "/app/schedule?view=day",
       "/app/calendar",
-      "/app/dashboards/sales",
-      "/app/dashboards/service",
+      "/app/dashboards/deals",
+      "/app/dashboards/jobs",
     ];
     // A record page of each kind, so the "Related records" section is scanned with real links in it.
     for (const list of [

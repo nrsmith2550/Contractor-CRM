@@ -64,7 +64,7 @@ export const SERVICE: Article[] = [
           ["Time left, orange", "Due soon: less than a quarter of the time is left."],
           [
             "Breached, red",
-            "Past its due time and still open. It also appears on the Service dashboard.",
+            "Past its due time and still open. It also appears on the Jobs dashboard.",
           ],
           ["SLA met", "Resolved on or before the due time. This never changes later."],
           ["SLA missed", "Resolved after the due time."],
@@ -72,7 +72,7 @@ export const SERVICE: Article[] = [
         ],
       ),
       tip(
-        "Check [the Service dashboard](/app/dashboards/service) each morning for requests already past their due time.",
+        "Check [the Jobs dashboard](/app/dashboards/jobs) each morning for requests already past their due time.",
       ),
     ],
     related: ["support-requests", "dashboards"],
@@ -187,7 +187,7 @@ export const SERVICE: Article[] = [
         "Pick a colour (it shows on the schedule), set **working hours** for each day, and tick their **skills**.",
       ),
       p(
-        "Skills are created under [Service settings](/app/settings/service) (for example *HVAC certified* or *Gas fitter*). Add each once, then tick it on the people who have it.",
+        "Skills are created under [Job settings](/app/settings/jobs) (for example *HVAC certified* or *Gas fitter*). Add each once, then tick it on the people who have it.",
       ),
       tip("Working hours matter: scheduling outside them still works but shows a warning."),
     ],

@@ -17,11 +17,17 @@ const nextConfig: NextConfig = {
       ["price-lists", "pricing"],
       ["resources", "team"],
     ];
-    return moved.map(([from, to]) => ({
-      source: `/app/${from}/:path*`,
-      destination: `/app/${to}/:path*`,
-      permanent: true,
-    }));
+    return [
+      ...moved.map(([from, to]) => ({
+        source: `/app/${from}/:path*`,
+        destination: `/app/${to}/:path*`,
+        permanent: true,
+      })),
+      // The two halves of the product were called Sales and Service before they became Deals and Jobs.
+      { source: "/app/dashboards/sales", destination: "/app/dashboards/deals", permanent: true },
+      { source: "/app/dashboards/service", destination: "/app/dashboards/jobs", permanent: true },
+      { source: "/app/settings/service", destination: "/app/settings/jobs", permanent: true },
+    ];
   },
   async headers() {
     return [

@@ -69,7 +69,7 @@ test.describe("plans", () => {
     await expect(page).toHaveURL(/\/app\/plan\?needs=jobs$/);
     await page.goto("/app/schedule");
     await expect(page).toHaveURL(/\/app\/plan\?needs=jobs$/);
-    await page.goto("/app/dashboards/service");
+    await page.goto("/app/dashboards/jobs");
     await expect(page).toHaveURL(/\/app\/plan\?needs=jobs$/);
 
     // The Deals side is open.

@@ -82,7 +82,21 @@ test.describe("plain names", () => {
       ["/app/resources", /\/app\/team$/, "Team members"],
       ["/app/my-bookings", /\/app\/my-visits$/, "My visits"],
       ["/app/price-lists", /\/app\/pricing$/, "Pricing"],
+      ["/app/dashboards/sales", /\/app\/dashboards\/deals$/, "Deals dashboard"],
+      ["/app/dashboards/service", /\/app\/dashboards\/jobs$/, "Jobs dashboard"],
+      ["/app/settings/service", /\/app\/settings\/jobs$/, "Job settings"],
     ];
+    // The two halves of the product are named after the plans, not Sales and Service.
+    await page.goto("/app");
+    const nav = page.getByRole("navigation", { name: "Site map" });
+    await expect(nav.getByRole("heading", { name: "Clinch Deals", exact: true })).toBeVisible();
+    await expect(nav.getByRole("heading", { name: "Clinch Jobs", exact: true })).toBeVisible();
+    await expect(nav.getByRole("heading", { name: "Sales", exact: true })).toHaveCount(0);
+    await expect(nav.getByRole("heading", { name: "Service", exact: true })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Deals dashboard" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Jobs dashboard" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Job settings" })).toBeVisible();
+
     for (const [old, now, heading] of moved) {
       await page.goto(old);
       await expect(page, `${old} redirects`).toHaveURL(now);

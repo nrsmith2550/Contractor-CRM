@@ -60,7 +60,7 @@ test.describe("bookings UI", () => {
     await signIn(page, biz.email);
 
     // A skill, and a resource without it.
-    await page.goto("/app/settings/service");
+    await page.goto("/app/settings/jobs");
     await page.getByLabel("Skill name").fill("HVAC certified");
     await page.getByRole("button", { name: "Add skill" }).click();
     await expect(page.getByRole("list", { name: "Skills" })).toContainText("HVAC certified");

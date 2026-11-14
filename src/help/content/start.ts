@@ -37,11 +37,15 @@ export const START: Article[] = [
         "The main areas and what they are for",
         ["Area", "What it is for", "Where"],
         [
-          ["Sales", `${N.Prospects}, ${N.deals}, quotes, orders and the pipeline.`, "Menu, Sales"],
           [
-            "Service",
+            "Clinch Deals",
+            `${N.Prospects}, ${N.deals}, quotes, orders and the pipeline.`,
+            "Menu, Clinch Deals",
+          ],
+          [
+            "Clinch Jobs",
             `${N.Requests}, ${N.jobs}, the ${N.Schedule}, ${N.members} and ${N.visits}.`,
-            "Menu, Service",
+            "Menu, Clinch Jobs",
           ],
           [
             `${N.Customers} and ${N.people}`,
@@ -78,7 +82,7 @@ export const START: Article[] = [
         `**Add what you sell.** Under [${N.Products}](/app/products), add each product or service with its price. See [Products and services](/app/help/products-services).`,
         "**Invite your team** under [Settings, Users](/app/settings/users). Choose a role for each person. See [Adding people and choosing their role](/app/help/users-roles).",
         `**Bring in the people you already know.** [Import ${N.prospects} from a spreadsheet](/app/help/import), or add ${N.customers} one at a time.`,
-        `**If you send people out to work,** add your ${N.members} under [${N.Members}](/app/team) and the skills they have under [Service settings](/app/settings/service).`,
+        `**If you send people out to work,** add your ${N.members} under [${N.Members}](/app/team) and the skills they have under [Job settings](/app/settings/jobs).`,
         `**Send your first quote.** Start from a ${N.deal} or from [New quote](/app/quotes/new). See [Making and sending a quote](/app/help/quotes).`,
       ),
       note(
