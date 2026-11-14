@@ -11,8 +11,10 @@ need someone to look at the real site.
 - [ ] Merge the Gantry CRM rebrand (PR #43) once its checks are green.
 - [ ] Production deploy setup: once Vercel Pro is on, wire up the production environment
       variables, migrations and domain.
-- [ ] Payments, when you are ready: a Stripe subscription flow (setup fee plus monthly), built and
-      tried in a **separate test-mode Stripe account**. Nothing is set up for payments yet, on purpose.
+- [ ] Payments: the subscription engine is built (setup fee plus monthly, extra people, webhook
+      lifecycle). Still to build: the buy page with the on-site payment form, then the Billing page
+      inside the app. Everything is tried in a **separate test-mode Stripe account**; see the
+      Stripe steps below.
 - [ ] Optional before launch: import templates for customers, people and products (today only
       prospects can be imported), a mobile bottom bar, and Terms and Privacy pages once the text exists.
 - [ ] Housekeeping: rename the GitHub repository and the hosting project to match the new name.
@@ -36,40 +38,53 @@ need someone to look at the real site.
        (TOTP), and set `ADMIN_IP_ALLOWLIST`.
 7. [ ] **Add the `BACKUP_PASSPHRASE` secret in GitHub** and run the "Nightly backup" workflow
        once. See `docs/BACKUPS.md`.
+8. [ ] **Set up Stripe for payments, in a separate test-mode account first.** Create a new Stripe
+       account (or sandbox) for Gantry; do not use any existing account. In test mode: create a
+       _restricted_ secret key (Checkout Sessions, Subscriptions, Customers, SetupIntents and
+       Payment Methods: write; Invoices and Charges: read), copy the publishable key, add a webhook
+       endpoint `<your site>/api/stripe/webhook` for `checkout.session.completed`,
+       `checkout.session.async_payment_succeeded`, `customer.subscription.created|updated|deleted`,
+       `invoice.paid`, `invoice.payment_failed`, `charge.dispute.created` and
+       `charge.dispute.closed`, and copy its signing secret. Set `STRIPE_SECRET_KEY`,
+       `STRIPE_PUBLISHABLE_KEY` and `STRIPE_WEBHOOK_SECRET` in the host. In Stripe's settings, turn
+       on the automatic emails for failed payments and receipts (Stripe's dunning does the retries).
+       Go live later with a live key **and** `STRIPE_ALLOW_LIVE=true`. Tax is not set up: decide
+       whether you need Stripe Tax before taking real money. See
+       `docs/decisions/0009-subscription-billing.md`.
 
 ## Check on the live site (live)
 
-8. [ ] Two database changes have already run on the shared staging database: the record
+9. [ ] Two database changes have already run on the shared staging database: the record
        renumbering (PROS-, CUST-, PERS-, DEAL-, REQ-, JOB-) and the new plan column on licences.
        Check the site works after them.
-9. [ ] The demo login works (if the demo business is kept).
-10. [ ] Download one real quote PDF.
-11. [ ] Send one quote email to yourself.
-12. [ ] Try restoring from a backup at least once (`docs/BACKUPS.md`).
-13. [ ] Open the site on a real phone, including the technician's **My visits** screen.
-14. [ ] Check each plan on a test business: Gantry Deals, Gantry Jobs and Gantry Complete should
+10. [ ] The demo login works (if the demo business is kept).
+11. [ ] Download one real quote PDF.
+12. [ ] Send one quote email to yourself.
+13. [ ] Try restoring from a backup at least once (`docs/BACKUPS.md`).
+14. [ ] Open the site on a real phone, including the technician's **My visits** screen.
+15. [ ] Check each plan on a test business: Gantry Deals, Gantry Jobs and Gantry Complete should
         each show only their own half of the menu and refuse the other half's addresses.
 
 ## Decide
 
-15. [ ] **How you will bill.** There is no checkout. A customer gets in touch, you create a licence
-        key in the admin console and send it. Decide how you invoice and collect, how you handle a
+16. [ ] **How you will bill.** Customers can now buy on the site (once Stripe is set up above).
+        You can still create a licence key by hand in the admin console for anyone who pays another way. Decide how you invoice and collect, how you handle a
         customer who stops paying (suspend their licence, which signs the whole business out on its
         next request), and when to move to automatic subscription billing.
-16. [ ] **What the setup fee covers**, and your cancellation and refund terms. The marketing page
+17. [ ] **What the setup fee covers**, and your cancellation and refund terms. The marketing page
         deliberately says nothing about these.
-17. [x] **The price for more than 10 users:** decided. Each extra person is $5 a month on Gantry
+18. [x] **The price for more than 10 users:** decided. Each extra person is $5 a month on Gantry
         Complete or $3 on Gantry Deals or Gantry Jobs, up to 50 people; more is a custom quote. See
         `docs/decisions/0008-plans-and-monthly-pricing.md`.
-18. [ ] **Whether to keep the demo business** on production.
-19. [ ] **Who answers `SUPPORT_EMAIL`**, and how quickly.
+19. [ ] **Whether to keep the demo business** on production.
+20. [ ] **Who answers `SUPPORT_EMAIL`**, and how quickly.
 
 ## Legal and brand
 
-20. [ ] Write the Terms of Service and Privacy Policy.
-21. [ ] Search for the name **Gantry CRM** and the domain before committing to them. "Gantry" is a
+21. [ ] Write the Terms of Service and Privacy Policy.
+22. [ ] Search for the name **Gantry CRM** and the domain before committing to them. "Gantry" is a
         common word, so check it is free to use for software.
-22. [ ] Confirm you own the rights to the logo artwork.
+23. [ ] Confirm you own the rights to the logo artwork.
 
 ## Good to know
 

@@ -1,19 +1,28 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
-import { z } from "zod";
 import { withPlatform, type Tx } from "@/db/client";
 import { adminAuditLog, license, stripeEvent } from "@/db/schema";
-import { isTier, TIERS } from "@/lib/tiers";
+import { isEdition, isValidExtraUsers, seatsFor, type Edition } from "@/lib/plans";
 import { sendEmail } from "@/server/email/mailer";
 import { licenseKeyEmail } from "@/server/email/templates";
 import { mintLicense } from "@/server/licensing/mint";
+import { getStripe } from "./stripe";
 
 export type WebhookOutcome = "processed" | "duplicate" | "ignored";
 
-type Deps = { send?: typeof sendEmail; appUrl?: string };
+/** The few Stripe calls the webhook makes, so tests can supply fakes. Real ones are used otherwise. */
+type Deps = {
+  send?: typeof sendEmail;
+  appUrl?: string;
+  subscriptions?: { retrieve(id: string): Promise<Stripe.Subscription> };
+  charges?: { retrieve(id: string): Promise<Stripe.Charge> };
+};
 
 const idOf = (v: string | { id: string } | null | undefined): string | null =>
   typeof v === "string" ? v : (v?.id ?? null);
+
+const subscriptionsOf = (deps: Deps) => deps.subscriptions ?? getStripe().subscriptions;
+const chargesOf = (deps: Deps) => deps.charges ?? getStripe().charges;
 
 async function audit(tx: Tx, action: string, licenseId: string, event: Stripe.Event) {
   // Not an admin action: adminId stays null and the reason names the Stripe event.
@@ -26,93 +35,173 @@ async function audit(tx: Tx, action: string, licenseId: string, event: Stripe.Ev
   });
 }
 
+/** What a subscription was bought as, read back from the metadata we put on it. */
+function choiceFrom(
+  metadata: Stripe.Metadata | null | undefined,
+): { edition: Edition; extraUsers: number } | null {
+  const edition = metadata?.edition;
+  const extra = Number(metadata?.extraUsers);
+  if (!isEdition(edition) || !isValidExtraUsers(extra)) return null;
+  return { edition, extraUsers: extra };
+}
+
+/** Our word for how a Stripe subscription is doing, or null while it is not yet decided. */
+function billingStatusOf(
+  status: Stripe.Subscription.Status,
+): "active" | "past_due" | "canceled" | null {
+  switch (status) {
+    case "active":
+    case "trialing":
+      return "active";
+    case "past_due":
+    case "unpaid":
+    case "paused":
+      return "past_due";
+    case "canceled":
+    case "incomplete_expired":
+      return "canceled";
+    default:
+      return null; // "incomplete": the first payment has not gone through yet
+  }
+}
+
+const periodEndOf = (sub: Stripe.Subscription): Date | null => {
+  const t = sub.items.data[0]?.current_period_end;
+  return typeof t === "number" ? new Date(t * 1000) : null;
+};
+
+/**
+ * Brings a licence in line with its subscription. Always called with a freshly read subscription,
+ * so the order events arrive in never matters. A subscription with no licence of ours is ignored.
+ *
+ * - The plan and number of people come from the subscription, so the licence follows what is paid for.
+ * - A cancelled subscription suspends the licence (the business is signed out on its next request);
+ *   a failed payment only flags it, because Stripe keeps retrying and the owner can still fix it.
+ * - A subscription that comes back to active restores a licence that billing had suspended, and
+ *   never one an administrator suspended or revoked.
+ */
+async function reconcile(
+  tx: Tx,
+  event: Stripe.Event,
+  sub: Stripe.Subscription,
+): Promise<WebhookOutcome> {
+  const [lic] = await tx
+    .select()
+    .from(license)
+    .where(eq(license.stripeSubscriptionId, sub.id))
+    .for("update");
+  if (!lic) return "ignored";
+
+  const billing = billingStatusOf(sub.status);
+  if (!billing) return "ignored";
+  const choice = choiceFrom(sub.metadata);
+  const patch: Partial<typeof license.$inferInsert> = {
+    billingStatus: billing,
+    cancelAtPeriodEnd: sub.cancel_at_period_end,
+  };
+  const end = periodEndOf(sub);
+  if (end) patch.currentPeriodEnd = end;
+  if (choice) {
+    patch.edition = choice.edition;
+    patch.extraUsers = choice.extraUsers;
+    patch.seatLimit = seatsFor(choice.extraUsers);
+  }
+  const wasBillingProblem = lic.billingStatus === "past_due" || lic.billingStatus === "canceled";
+  if (billing === "canceled" && (lic.status === "issued" || lic.status === "active")) {
+    patch.status = "suspended";
+  } else if (billing === "active" && wasBillingProblem && lic.status === "suspended") {
+    patch.status = lic.tenantId ? "active" : "issued";
+  }
+  await tx.update(license).set(patch).where(eq(license.id, lic.id));
+
+  if (patch.status) await audit(tx, `stripe.license_${patch.status}`, lic.id, event);
+  if (choice && (choice.edition !== lic.edition || patch.seatLimit !== lic.seatLimit)) {
+    await audit(tx, "stripe.license_changed", lic.id, event);
+  }
+  return "processed";
+}
+
 async function onCheckoutPaid(
   tx: Tx,
   event: Stripe.Event,
   session: Stripe.Checkout.Session,
   deps: Deps,
 ): Promise<WebhookOutcome> {
+  if (session.mode !== "subscription") return "ignored";
   if (session.payment_status !== "paid") return "ignored"; // async methods report later
-  const kind = session.metadata?.kind;
+  if (session.metadata?.kind !== "subscription") return "ignored";
 
-  if (kind === "purchase") {
-    const tier = session.metadata?.tier;
-    const email = session.customer_details?.email;
-    const paymentIntent = idOf(session.payment_intent);
-    if (!isTier(tier)) throw new Error(`Unknown tier on session ${session.id}`);
-    if (!email) throw new Error(`No customer email on session ${session.id}`);
-    if (!paymentIntent) throw new Error(`No payment intent on session ${session.id}`);
+  const choice = choiceFrom(session.metadata);
+  const email = session.customer_details?.email;
+  const subscriptionId = idOf(session.subscription);
+  if (!choice) throw new Error(`Bad purchase metadata on session ${session.id}`);
+  if (!email) throw new Error(`No customer email on session ${session.id}`);
+  if (!subscriptionId) throw new Error(`No subscription on session ${session.id}`);
 
-    const minted = await mintLicense(
-      {
-        tier,
-        buyerEmail: email,
-        amountPaidCents: session.amount_total ?? TIERS[tier].priceCents,
-        stripeCustomerId: idOf(session.customer) ?? undefined,
-        stripePaymentIntentId: paymentIntent,
-      },
-      tx,
-    );
-    if (!minted) return "duplicate"; // this payment already has a license
-    // The key exists only in memory here. Send it before the transaction commits: if sending
-    // fails we throw, the license rolls back, and Stripe retries with a fresh key. A committed
-    // license whose key was never delivered cannot happen.
-    const appUrl = deps.appUrl ?? process.env.APP_URL ?? "";
-    await (deps.send ?? sendEmail)(licenseKeyEmail({ to: email, key: minted.key, tier, appUrl }));
-    await audit(tx, "stripe.license_minted", minted.licenseId, event);
-    return "processed";
-  }
+  const minted = await mintLicense(
+    {
+      edition: choice.edition,
+      extraUsers: choice.extraUsers,
+      seatLimit: seatsFor(choice.extraUsers),
+      buyerEmail: email,
+      amountPaidCents: session.amount_total ?? 0,
+      stripeCustomerId: idOf(session.customer) ?? undefined,
+      stripeSubscriptionId: subscriptionId,
+      billingStatus: "active",
+    },
+    tx,
+  );
+  if (!minted) return "duplicate"; // this subscription already has a licence
 
-  if (kind === "upgrade") {
-    const parsed = z
-      .object({ licenseId: z.string().uuid(), toTier: z.string().refine(isTier) })
-      .safeParse(session.metadata);
-    if (!parsed.success) throw new Error(`Bad upgrade metadata on session ${session.id}`);
-    const toTier = parsed.data.toTier as keyof typeof TIERS;
-
-    const [lic] = await tx
-      .select()
-      .from(license)
-      .where(eq(license.id, parsed.data.licenseId))
-      .for("update");
-    if (!lic) throw new Error(`Upgrade for unknown license ${parsed.data.licenseId}`);
-    if (lic.status === "revoked") return "ignored";
-    if (TIERS[toTier].seatLimit <= lic.seatLimit) return "ignored"; // already at or above
-
-    await tx
-      .update(license)
-      .set({
-        tier: toTier,
-        seatLimit: TIERS[toTier].seatLimit,
-        amountPaidCents: lic.amountPaidCents + (session.amount_total ?? 0),
-        stripeCustomerId: lic.stripeCustomerId ?? idOf(session.customer),
-      })
-      .where(eq(license.id, lic.id));
-    await audit(tx, "stripe.license_upgraded", lic.id, event);
-    return "processed";
-  }
-
-  return "ignored";
+  // The key exists only in memory here. Send it before the transaction commits: if sending fails
+  // we throw, the licence rolls back, and Stripe retries with a fresh key. A committed licence whose
+  // key was never delivered cannot happen.
+  const appUrl = deps.appUrl ?? process.env.APP_URL ?? "";
+  await (deps.send ?? sendEmail)(
+    licenseKeyEmail({
+      to: email,
+      key: minted.key,
+      edition: choice.edition,
+      extraUsers: choice.extraUsers,
+      appUrl,
+    }),
+  );
+  await audit(tx, "stripe.license_minted", minted.licenseId, event);
+  // Fill in the renewal date and anything else only the subscription itself knows.
+  await reconcile(tx, event, await subscriptionsOf(deps).retrieve(subscriptionId));
+  return "processed";
 }
 
-/** Sets a license's status from a payment problem, found via its original payment intent. */
-async function setStatusByPaymentIntent(
+/** Suspends, revokes or restores the licences paid for by a Stripe customer (disputes). */
+async function setStatusByCustomer(
   tx: Tx,
   event: Stripe.Event,
-  paymentIntent: string | null,
-  status: "suspended" | "revoked",
-  from: ("issued" | "active" | "suspended")[],
+  customer: string | null,
+  to: "suspended" | "revoked" | "restore",
   action: string,
 ): Promise<WebhookOutcome> {
-  if (!paymentIntent) return "ignored";
-  const rows = await tx
-    .update(license)
-    .set({ status })
-    .where(and(eq(license.stripePaymentIntentId, paymentIntent), inArray(license.status, from)))
-    .returning({ id: license.id });
-  for (const r of rows) await audit(tx, action, r.id, event);
-  return rows.length ? "processed" : "ignored";
+  if (!customer) return "ignored";
+  const rows = await tx.select().from(license).where(eq(license.stripeCustomerId, customer));
+  let changed = 0;
+  for (const lic of rows) {
+    let next: "suspended" | "revoked" | "active" | "issued" | null = null;
+    if (to === "suspended" && (lic.status === "issued" || lic.status === "active")) {
+      next = "suspended";
+    }
+    if (to === "revoked" && lic.status !== "revoked") next = "revoked";
+    if (to === "restore" && lic.status === "suspended") next = lic.tenantId ? "active" : "issued";
+    if (!next) continue;
+    await tx.update(license).set({ status: next }).where(eq(license.id, lic.id));
+    await audit(tx, action, lic.id, event);
+    changed++;
+  }
+  return changed ? "processed" : "ignored";
 }
+
+const customerOfDispute = async (dispute: Stripe.Dispute, deps: Deps): Promise<string | null> => {
+  const charge = idOf(dispute.charge);
+  return charge ? idOf((await chargesOf(deps).retrieve(charge)).customer) : null;
+};
 
 /**
  * Applies one verified Stripe event. Runs in a single transaction that also records the event
@@ -135,55 +224,62 @@ export async function handleStripeEvent(
       case "checkout.session.async_payment_succeeded":
         return onCheckoutPaid(tx, event, event.data.object, deps);
 
-      case "charge.refunded": {
-        const charge = event.data.object;
-        if (charge.amount_refunded < charge.amount) return "ignored"; // partial refund
-        return setStatusByPaymentIntent(
-          tx,
-          event,
-          idOf(charge.payment_intent),
-          "revoked",
-          ["issued", "active", "suspended"],
-          "stripe.refund_revoke",
-        );
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted":
+        return reconcile(tx, event, await subscriptionsOf(deps).retrieve(event.data.object.id));
+
+      case "invoice.paid":
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        const subId = idOf(invoice.parent?.subscription_details?.subscription);
+        if (!subId) return "ignored"; // not a subscription invoice
+        const outcome = await reconcile(tx, event, await subscriptionsOf(deps).retrieve(subId));
+        if (event.type === "invoice.paid" && invoice.billing_reason !== "subscription_create") {
+          // Renewals and changes add to what the business has paid in total. The first invoice is
+          // already counted from the checkout, so it is not added twice.
+          const [lic] = await tx
+            .select()
+            .from(license)
+            .where(eq(license.stripeSubscriptionId, subId));
+          if (lic) {
+            await tx
+              .update(license)
+              .set({ amountPaidCents: lic.amountPaidCents + invoice.amount_paid })
+              .where(eq(license.id, lic.id));
+          }
+        }
+        return outcome;
       }
 
       case "charge.dispute.created":
-        return setStatusByPaymentIntent(
+        return setStatusByCustomer(
           tx,
           event,
-          idOf(event.data.object.payment_intent),
+          await customerOfDispute(event.data.object, deps),
           "suspended",
-          ["issued", "active"],
           "stripe.dispute_suspend",
         );
 
       case "charge.dispute.closed": {
         const dispute = event.data.object;
-        const pi = idOf(dispute.payment_intent);
         if (dispute.status === "lost") {
-          return setStatusByPaymentIntent(
+          return setStatusByCustomer(
             tx,
             event,
-            pi,
+            await customerOfDispute(dispute, deps),
             "revoked",
-            ["issued", "active", "suspended"],
             "stripe.dispute_lost_revoke",
           );
         }
-        if (dispute.status === "won" && pi) {
-          // Restore: back to active if it was ever bound to a tenant, otherwise issued.
-          const [lic] = await tx
-            .select()
-            .from(license)
-            .where(and(eq(license.stripePaymentIntentId, pi), eq(license.status, "suspended")));
-          if (!lic) return "ignored";
-          await tx
-            .update(license)
-            .set({ status: lic.tenantId ? "active" : "issued" })
-            .where(eq(license.id, lic.id));
-          await audit(tx, "stripe.dispute_won_restore", lic.id, event);
-          return "processed";
+        if (dispute.status === "won") {
+          return setStatusByCustomer(
+            tx,
+            event,
+            await customerOfDispute(dispute, deps),
+            "restore",
+            "stripe.dispute_won_restore",
+          );
         }
         return "ignored";
       }
