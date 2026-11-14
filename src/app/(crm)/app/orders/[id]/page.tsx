@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { RelatedRecords } from "@/components/records/RelatedRecords";
 import { formatMoney, humanize } from "@/lib/format";
 import { requireUser } from "@/server/auth/http";
 import { buildCtx } from "@/server/domain/context";
+import { relatedRecords } from "@/server/domain/related";
 import { getOrder } from "@/server/domain/quotes";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
-  const res = await getOrder(await buildCtx(user.tenantId, user.userId), (await params).id);
+  const ctx = await buildCtx(user.tenantId, user.userId);
+  const id = (await params).id;
+  const res = await getOrder(ctx, id);
   if (!res.ok) notFound();
+  const related = await relatedRecords(ctx, "order", id);
   const o = res.order;
   return (
     <>
@@ -22,6 +27,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
           </>
         )}
       </p>
+      {related.ok && <RelatedRecords groups={related.groups} />}
       <table className="crm-grid">
         <caption className="crm-sr">Order lines</caption>
         <thead>

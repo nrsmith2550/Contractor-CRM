@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { QuoteBuilder } from "@/components/form/QuoteBuilder";
+import { RelatedRecords } from "@/components/records/RelatedRecords";
 import { requireUser } from "@/server/auth/http";
 import { listProducts } from "@/server/domain/catalog";
 import { buildCtx } from "@/server/domain/context";
 import { getContact } from "@/server/domain/accounts";
 import { timeline } from "@/server/domain/activities";
+import { relatedRecords } from "@/server/domain/related";
 import { getQuote } from "@/server/domain/quotes";
 import { formatDateTime } from "@/lib/format";
 import { tenantTimeZone } from "@/server/entities/tenant";
@@ -20,6 +22,7 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
   const q = res.quote;
   const contact = q.customerContactId ? await getContact(ctx, q.customerContactId) : null;
   const tl = await timeline(ctx, "quote", id);
+  const related = await relatedRecords(ctx, "quote", id);
   const tz = await tenantTimeZone(user.tenantId);
   const emails = tl.ok
     ? tl.items.flatMap((i) =>
@@ -32,6 +35,7 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
       <p>
         Quote {q.quoteNumber} · {formatMoney(q.totalCents)}
       </p>
+      {related.ok && <RelatedRecords groups={related.groups} />}
       <QuoteBuilder
         quote={{
           id: q.id,

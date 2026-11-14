@@ -95,7 +95,12 @@ test.describe("service UI", () => {
     await expect(page.getByText("Unscheduled").first()).toBeVisible();
     const woUrl = page.url();
     const woId = woUrl.split("/").pop()!;
-    await expect(page.getByRole("link", { name: "open the support request" })).toBeVisible();
+    // The job links back to its support request, under Related records.
+    await expect(
+      page
+        .getByRole("region", { name: "Related records" })
+        .locator('a[href^="/app/support-requests/"]'),
+    ).toBeVisible();
 
     // The time window is entered in the business's zone (New York) and stored in UTC.
     await page.getByLabel("Time window start").fill("2030-07-15T09:00");

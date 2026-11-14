@@ -1413,3 +1413,55 @@
 .crm-tile-value {
   font-size: clamp(22px, 2.1vw, 30px);
 }
+
+/* Related records */
+.crm-related {
+  margin: 14px 0 18px;
+}
+.crm-related h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.crm-related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.crm-related-group {
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.crm-related-group h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.crm-count {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--badge-bg);
+  color: var(--text);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.crm-related-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.crm-related-group li {
+  padding: 3px 0;
+}
+.crm-related-group li a {
+  display: inline-block;
+  padding: 2px 0;
+}

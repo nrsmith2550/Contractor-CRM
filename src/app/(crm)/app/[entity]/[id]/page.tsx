@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BusinessProcessFlow } from "@/components/form/BusinessProcessFlow";
 import { EntityForm } from "@/components/form/EntityForm";
 import { Composer } from "@/components/form/Composer";
+import { RelatedRecords } from "@/components/records/RelatedRecords";
 import { RecordCommands } from "@/components/form/RecordCommands";
 import { Timeline } from "@/components/form/Timeline";
 import { ENTITIES, entityBySlug, recordTitle } from "@/entities";
@@ -10,9 +11,9 @@ import { formatDate, formatMoney, humanize } from "@/lib/format";
 import { requireUser } from "@/server/auth/http";
 import { timeline } from "@/server/domain/activities";
 import { buildCtx } from "@/server/domain/context";
+import { relatedRecords, type RelatedType } from "@/server/domain/related";
 import { SlaBadge } from "@/components/grid/SlaBadge";
 import { CaseCommands, WorkOrderCommands } from "@/components/form/ServiceCommands";
-import { listWorkOrders } from "@/server/domain/work-orders";
 import { PartsAndLabour } from "@/components/form/PartsAndLabour";
 import { listWorkOrderLines } from "@/server/domain/work-order-lines";
 import { can } from "@/server/security/roles";
@@ -63,15 +64,17 @@ export default async function RecordPage({
           tenantTimeZone(user.tenantId),
         ])
       : null;
-  const woRes =
-    meta.key === "case" ? await listWorkOrders(ctx, { view: "all", incidentId: id }) : null;
-  const caseWorkOrders = woRes?.ok ? woRes.rows : null;
   const oppLinesRes = meta.key === "opportunity" ? await listOpportunityLines(ctx, id) : null;
   const oppLines = oppLinesRes?.ok ? oppLinesRes.lines : null;
   const productsRes = meta.key === "opportunity" ? await listProducts(ctx, { limit: 200 }) : null;
   const catalog = productsRes?.ok
     ? productsRes.rows.map((p) => ({ id: p.id, label: `${p.name} (${p.sku})` }))
     : [];
+  const related = await relatedRecords(
+    ctx,
+    meta.key === "work_order" ? "work_order" : (meta.key as RelatedType),
+    id,
+  );
   const [tl, tz] = await Promise.all([
     hasTimeline ? timeline(ctx, meta.key as "lead", id) : Promise.resolve(null),
     tenantTimeZone(user.tenantId),
@@ -102,6 +105,7 @@ export default async function RecordPage({
           </div>
         ))}
       </dl>
+      {related.ok && <RelatedRecords groups={related.groups} />}
       {meta.key === "opportunity" && (
         <BusinessProcessFlow stage={String(row.stage)} status={status} />
       )}
@@ -125,12 +129,6 @@ export default async function RecordPage({
       )}
       {meta.key === "case" && <CaseCommands id={id} status={status} />}
       {meta.key === "work_order" && <WorkOrderCommands id={id} status={status as WoStatus} />}
-      {meta.key === "work_order" && typeof row.incidentId === "string" && (
-        <p>
-          Support request:{" "}
-          <Link href={`/app/support-requests/${row.incidentId}`}>open the support request</Link>
-        </p>
-      )}
       {meta.key === "work_order" && sched && sched[0].ok && sched[3].ok && (
         <ScheduleWorkOrder
           workOrderId={id}
@@ -200,23 +198,6 @@ export default async function RecordPage({
         lookupLabels={lookupLabels}
         tz={tz}
       />
-      {meta.key === "case" && caseWorkOrders && (
-        <section aria-label="Jobs">
-          <h2>Jobs</h2>
-          {caseWorkOrders.length === 0 ? (
-            <p>No jobs yet. Use Turn into a job to send someone out.</p>
-          ) : (
-            <ul>
-              {caseWorkOrders.map((w) => (
-                <li key={w.id}>
-                  <Link href={`/app/jobs/${w.id}`}>{w.woNumber}</Link> · {w.title} ·{" "}
-                  <span className="crm-badge">{humanize(w.status)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
       {hasTimeline && (
         <>
           <h2>Timeline</h2>
