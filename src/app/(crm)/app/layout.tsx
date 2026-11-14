@@ -5,7 +5,9 @@ import { Icon } from "@/components/shell/Icon";
 import { SiteMap } from "@/components/shell/SiteMap";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { requireUser } from "@/server/auth/http";
-import { tenantEdition } from "@/server/entities/tenant";
+import { tenantBilling, tenantEdition } from "@/server/entities/tenant";
+import { can } from "@/server/security/roles";
+import { loadSubject } from "@/server/security/subject";
 import { SignOutButton } from "../../(auth)/auth-forms";
 import "../../crm.css";
 
@@ -23,7 +25,13 @@ const initials = (name: string) =>
 export default async function CrmLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   if (user.mustChangePassword) redirect("/change-password");
-  const edition = await tenantEdition(user.tenantId);
+  const [edition, billing] = await Promise.all([
+    tenantEdition(user.tenantId),
+    tenantBilling(user.tenantId),
+  ]);
+  // Only people who can manage the licence see the Billing link, and only when billing is on the site.
+  const showBilling =
+    billing.subscribed && can(await loadSubject(user.tenantId, user.userId), "license", "write");
 
   return (
     <div className="crm-shell">
@@ -54,8 +62,21 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
         <span className="crm-user">{user.fullName}</span>
         <SignOutButton />
       </header>
-      <SiteMap edition={edition} />
+      <SiteMap edition={edition} showBilling={showBilling} />
       <main id="main" tabIndex={-1} className="crm-main">
+        {billing.pastDue && (
+          <p role="alert" className="crm-warn">
+            <strong>Your last payment did not go through.</strong>{" "}
+            {showBilling ? (
+              <>
+                <Link href="/app/settings/billing">Update your card</Link> so your account is not
+                paused.
+              </>
+            ) : (
+              "Please ask the person who owns your account to update the payment details."
+            )}
+          </p>
+        )}
         {children}
       </main>
     </div>

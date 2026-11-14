@@ -67,12 +67,13 @@ const GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
       ["Tax rates", "/app/settings/tax-rates", "settings"],
       ["Branding", "/app/settings/branding", "settings"],
       ["Your plan", "/app/plan", "list"],
+      ["Billing", "/app/settings/billing", "settings"],
       ["Job settings", "/app/settings/jobs", "settings", "jobs"],
     ],
   },
 ] as const;
 
-export function SiteMap({ edition }: { edition: Edition }) {
+export function SiteMap({ edition, showBilling }: { edition: Edition; showBilling: boolean }) {
   const path = usePathname();
   return (
     <nav className="crm-sitemap" aria-label="Site map">
@@ -81,7 +82,10 @@ export function SiteMap({ edition }: { edition: Edition }) {
       </Link>
       {GROUPS.map((g) => ({
         ...g,
-        links: g.links.filter(([, , , area]) => !area || hasArea(edition, area)),
+        links: g.links.filter(
+          ([, href, , area]) =>
+            (!area || hasArea(edition, area)) && (showBilling || href !== "/app/settings/billing"),
+        ),
       }))
         .filter((g) => g.links.length > 0)
         .map((g) => (

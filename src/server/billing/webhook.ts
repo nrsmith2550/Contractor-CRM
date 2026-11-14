@@ -2,10 +2,11 @@ import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 import { withPlatform, type Tx } from "@/db/client";
 import { adminAuditLog, license, stripeEvent } from "@/db/schema";
-import { isEdition, isValidExtraUsers, seatsFor, type Edition } from "@/lib/plans";
+import { seatsFor } from "@/lib/plans";
 import { sendEmail } from "@/server/email/mailer";
 import { licenseKeyEmail } from "@/server/email/templates";
 import { mintLicense } from "@/server/licensing/mint";
+import { choiceFromMetadata } from "./checkout";
 import { getStripe } from "./stripe";
 
 export type WebhookOutcome = "processed" | "duplicate" | "ignored";
@@ -24,7 +25,10 @@ const idOf = (v: string | { id: string } | null | undefined): string | null =>
 const subscriptionsOf = (deps: Deps) => deps.subscriptions ?? getStripe().subscriptions;
 const chargesOf = (deps: Deps) => deps.charges ?? getStripe().charges;
 
-async function audit(tx: Tx, action: string, licenseId: string, event: Stripe.Event) {
+/** Where a change came from: a Stripe event, or the Billing page. Named in the audit trail. */
+type Source = { type: string; id: string };
+
+async function audit(tx: Tx, action: string, licenseId: string, event: Source) {
   // Not an admin action: adminId stays null and the reason names the Stripe event.
   await tx.insert(adminAuditLog).values({
     adminId: null,
@@ -33,16 +37,6 @@ async function audit(tx: Tx, action: string, licenseId: string, event: Stripe.Ev
     targetId: licenseId,
     reason: `stripe:${event.type}:${event.id}`,
   });
-}
-
-/** What a subscription was bought as, read back from the metadata we put on it. */
-function choiceFrom(
-  metadata: Stripe.Metadata | null | undefined,
-): { edition: Edition; extraUsers: number } | null {
-  const edition = metadata?.edition;
-  const extra = Number(metadata?.extraUsers);
-  if (!isEdition(edition) || !isValidExtraUsers(extra)) return null;
-  return { edition, extraUsers: extra };
 }
 
 /** Our word for how a Stripe subscription is doing, or null while it is not yet decided. */
@@ -80,11 +74,7 @@ const periodEndOf = (sub: Stripe.Subscription): Date | null => {
  * - A subscription that comes back to active restores a licence that billing had suspended, and
  *   never one an administrator suspended or revoked.
  */
-async function reconcile(
-  tx: Tx,
-  event: Stripe.Event,
-  sub: Stripe.Subscription,
-): Promise<WebhookOutcome> {
+async function reconcile(tx: Tx, event: Source, sub: Stripe.Subscription): Promise<WebhookOutcome> {
   const [lic] = await tx
     .select()
     .from(license)
@@ -94,7 +84,7 @@ async function reconcile(
 
   const billing = billingStatusOf(sub.status);
   if (!billing) return "ignored";
-  const choice = choiceFrom(sub.metadata);
+  const choice = choiceFromMetadata(sub.metadata);
   const patch: Partial<typeof license.$inferInsert> = {
     billingStatus: billing,
     cancelAtPeriodEnd: sub.cancel_at_period_end,
@@ -121,6 +111,15 @@ async function reconcile(
   return "processed";
 }
 
+/**
+ * Brings the licence in line with a subscription right now, for changes made on the Billing page,
+ * so the screen is correct without waiting for the event. The event that follows finds nothing
+ * left to do. Safe to run any number of times.
+ */
+export async function syncLicenseFromSubscription(sub: Stripe.Subscription): Promise<void> {
+  await withPlatform((tx) => reconcile(tx, { type: "billing_page", id: `sync_${sub.id}` }, sub));
+}
+
 async function onCheckoutPaid(
   tx: Tx,
   event: Stripe.Event,
@@ -131,7 +130,7 @@ async function onCheckoutPaid(
   if (session.payment_status !== "paid") return "ignored"; // async methods report later
   if (session.metadata?.kind !== "subscription") return "ignored";
 
-  const choice = choiceFrom(session.metadata);
+  const choice = choiceFromMetadata(session.metadata);
   const email = session.customer_details?.email;
   const subscriptionId = idOf(session.subscription);
   if (!choice) throw new Error(`Bad purchase metadata on session ${session.id}`);

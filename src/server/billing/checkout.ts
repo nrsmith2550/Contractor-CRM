@@ -21,6 +21,16 @@ export const metadataFor = (c: PurchaseChoice) => ({
   extraUsers: String(c.extraUsers),
 });
 
+/** What a subscription was bought as, read back from the metadata we put on it. */
+export function choiceFromMetadata(
+  metadata: Stripe.Metadata | null | undefined,
+): PurchaseChoice | null {
+  const edition = metadata?.edition;
+  const extra = Number(metadata?.extraUsers);
+  if (!isEdition(edition) || !isValidExtraUsers(extra)) return null;
+  return { edition, extraUsers: extra };
+}
+
 /** The lines for a new subscription. Exported so tests can check the money exactly. */
 export function purchaseLineItems(
   c: PurchaseChoice,
