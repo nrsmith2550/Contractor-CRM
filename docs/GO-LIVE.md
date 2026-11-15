@@ -80,7 +80,7 @@ need someone to look at the real site.
 
 ## Legal and brand
 
-21. [ ] Write the Terms of Service and Privacy Policy.
+21. [x] **Terms of Service and Privacy Policy:** drafted and live at `/terms` and `/privacy` (seller: you as a sole proprietor, 14-day money-back guarantee, Pennsylvania law; values in `src/lib/legal.ts`). **Still to do: have a lawyer review them**, and update them if you add analytics, a company entity or marketing emails.
 22. [ ] Search for the name **Gantry CRM** and the domain before committing to them. "Gantry" is a
         common word, so check it is free to use for software.
 23. [ ] Confirm you own the rights to the logo artwork.

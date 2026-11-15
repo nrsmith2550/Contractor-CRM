@@ -613,3 +613,49 @@
     order: -1;
   }
 }
+
+/* Terms and Privacy */
+.mk-legal {
+  padding-top: 40px;
+  padding-bottom: 72px;
+}
+.mk-legal h2 {
+  margin: 32px 0 8px;
+  font-size: 1.25rem;
+}
+.mk-legal-toc {
+  margin: 24px 0 8px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.mk-legal-toc h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+.mk-legal-toc ol {
+  margin: 0;
+  padding-left: 20px;
+  columns: 2;
+  column-gap: 32px;
+}
+.mk-legal-toc li {
+  padding: 2px 0;
+}
+.mk-legal ul {
+  padding-left: 22px;
+}
+.mk-legal li {
+  margin: 6px 0;
+}
+@media (max-width: 600px) {
+  .mk-legal-toc ol {
+    columns: 1;
+  }
+}
+
+.mk-buy-legal {
+  margin: 16px 0 0;
+  font-size: 0.9rem;
+}
