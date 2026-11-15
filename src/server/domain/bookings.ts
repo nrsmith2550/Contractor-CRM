@@ -12,6 +12,7 @@ import {
 import { tenantTimeZone } from "@/server/entities/tenant";
 import { can } from "@/server/security/roles";
 import { recordAudit } from "./audit";
+import { countOpenPhases } from "./job-phases";
 import { validateImageDataUrl } from "./branding";
 import {
   canBookingTransition,
@@ -413,6 +414,8 @@ export async function setBookingStatus(
           );
         if (stillBooked.length === 0) target = "unscheduled";
       }
+      // A visit finishing doesn't finish the job while some of its phases are still open.
+      if (wo && target === "completed" && (await countOpenPhases(tx, wo.id)) > 0) target = null;
       if (wo && target && wo.status !== target && canTransition(wo.status as WoStatus, target)) {
         await tx
           .update(workOrder)

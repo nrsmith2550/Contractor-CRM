@@ -184,6 +184,40 @@ export const resourceBooking = pgTable(
   ],
 );
 
+// ---- Phases of a job (each is its own small job, linked to the main job) -----------------------
+
+/**
+ * A job can be split into phases, for example "Demo", "Rough-in" and "Final inspection", or one
+ * phase for each technician. A phase has its own title, instructions, status and time estimate, and
+ * (later) its own bookings, parts and labour. The main job stays the one record the customer sees.
+ */
+export const jobPhase = pgTable(
+  "job_phase",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    workOrderId: uuid("work_order_id")
+      .notNull()
+      .references(() => workOrder.id, { onDelete: "cascade" }),
+    phaseNumber: integer("phase_number").notNull(), // 1, 2, 3 within the job
+    title: text("title").notNull(),
+    instructions: text("instructions"),
+    status: text("status").notNull().default("unscheduled"), // unscheduled | scheduled | in_progress | completed | cancelled
+    estDurationMin: integer("est_duration_min"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => systemUser.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    modifiedBy: uuid("modified_by").references(() => systemUser.id),
+    modifiedAt: timestamp("modified_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("job_phase_number_uq").on(t.workOrderId, t.phaseNumber),
+    index("job_phase_status_idx").on(t.tenantId, t.status),
+  ],
+);
+
 // ---- Parts and labour used on a work order (these feed an invoice later) ------------------------
 
 export const workOrderProduct = pgTable(
