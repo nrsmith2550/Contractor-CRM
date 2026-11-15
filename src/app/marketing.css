@@ -659,3 +659,77 @@
   margin: 16px 0 0;
   font-size: 0.9rem;
 }
+
+/* Consultation request form */
+.mk-consult {
+  padding-top: 40px;
+  padding-bottom: 72px;
+}
+.mk-consult h1 {
+  margin: 0 0 8px;
+}
+.mk-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+.mk-field {
+  display: grid;
+  gap: 6px;
+}
+.mk-field label {
+  font-weight: 600;
+}
+.mk-field input,
+.mk-field select,
+.mk-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.mk-field [aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.mk-field input:focus-visible,
+.mk-field select:focus-visible,
+.mk-field textarea:focus-visible {
+  outline: 3px solid var(--accent-text);
+  outline-offset: 2px;
+}
+.mk-hint {
+  color: var(--muted, inherit);
+  font-size: 0.9rem;
+}
+.mk-field-error,
+.mk-form-error {
+  color: var(--danger);
+  font-weight: 600;
+}
+.mk-form-error {
+  padding: 10px 14px;
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+}
+.mk-trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.mk-consult-done {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.mk-consult-done h2 {
+  margin-top: 0;
+}

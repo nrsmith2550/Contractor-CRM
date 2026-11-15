@@ -11,6 +11,7 @@ import {
   requireAdmin,
   setAdminCookie,
 } from "@/server/admin/http";
+import { updateConsultationRequest } from "@/server/domain/consultations";
 import {
   changeOwnerEmail,
   issueOwnerTemporaryPassword,
@@ -132,4 +133,11 @@ export async function ownerReactivateAction(values: unknown): Promise<AdminActio
     message:
       "License returned to a claimable state. The business can set a new owner on the activation page with its key; its data is kept.",
   };
+}
+
+export async function consultationUpdateAction(values: unknown): Promise<AdminActionResult> {
+  const res = await updateConsultationRequest(await ctx(), vals(values));
+  if (!res.ok) return res;
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: `Marked ${res.status}.` };
 }

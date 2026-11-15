@@ -174,6 +174,9 @@ export function Landing({ support }: { support: string | undefined }) {
                 <a className="mk-btn mk-btn-primary" href="#pricing">
                   See pricing
                 </a>
+                <Link className="mk-btn" href="/consultation">
+                  Book a free consultation
+                </Link>
                 <a className="mk-btn" href="#features">
                   See what it does
                 </a>
@@ -334,12 +337,16 @@ export function Landing({ support }: { support: string | undefined }) {
           <div className="mk-wrap mk-narrow">
             <h2 id="cta-title">Ready to get started?</h2>
             <p className="mk-sub">
-              Get in touch and we will set up your business and send you your licence key.
+              Book a free 30-minute consultation and we will phone you, or get in touch and we will
+              set up your business and send you your licence key.
             </p>
             <p className="mk-actions">
+              <Link className="mk-btn mk-btn-primary" href="/consultation">
+                Book a consultation
+              </Link>
               {support ? (
                 <a
-                  className="mk-btn mk-btn-primary"
+                  className="mk-btn"
                   href={`mailto:${support}?subject=${encodeURIComponent("Gantry CRM enquiry")}`}
                 >
                   Get in touch
@@ -361,6 +368,7 @@ export function Landing({ support }: { support: string | undefined }) {
           <p>© Gantry CRM</p>
           <nav aria-label="Footer">
             <a href="#pricing">Pricing</a>
+            <Link href="/consultation">Book a consultation</Link>
             <Link href="/login">Sign in</Link>
             <Link href="/activate">Activate a licence</Link>
             <Link href="/terms">Terms</Link>

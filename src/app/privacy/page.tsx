@@ -63,6 +63,11 @@ const SECTIONS: LegalSection[] = [
           customers.
         </li>
         <li>
+          <strong>Consultation requests:</strong> if you ask for a consultation, the name, business,
+          trade, team size, phone number, email address, best time to call and message you give us.
+          We use them only to phone and email you about your enquiry.
+        </li>
+        <li>
           <strong>Security and usage:</strong> your IP address, browser, sign-in times, a record of
           changes made in your account, and counters that limit repeated attempts.
         </li>

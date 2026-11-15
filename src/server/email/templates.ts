@@ -103,3 +103,80 @@ ${note ? `<p style="white-space:pre-wrap">${esc(note)}</p>` : ""}
     replyTo: args.replyTo,
   };
 }
+
+const oneLine = (s: string) => s.replace(/[\r\n]+/g, " ").trim();
+
+type ConsultationFacts = {
+  name: string;
+  email: string;
+  phone: string;
+  business: string;
+  trade: string;
+  teamSize: string;
+  bestTime: string;
+  timeZone: string;
+  message?: string | null;
+};
+
+/** To the owner: a new consultation request. Replies go straight to the visitor. */
+export function consultationNotifyEmail(args: {
+  to: string;
+  appUrl: string;
+  request: ConsultationFacts;
+}): Email {
+  const r = args.request;
+  const url = `${args.appUrl.replace(/\/$/, "")}/admin/consultations`;
+  const rows: [string, string][] = [
+    ["Name", r.name],
+    ["Business", r.business],
+    ["Trade", r.trade],
+    ["Team size", r.teamSize],
+    ["Phone", r.phone],
+    ["Email", r.email],
+    ["Best time to call", `${r.bestTime} (${r.timeZone})`],
+  ];
+  const text = [
+    "New consultation request:",
+    "",
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    ...(r.message ? ["", "Message:", r.message] : []),
+    "",
+    `Review and track it: ${url}`,
+  ].join("\n");
+  const html = `<p>New consultation request:</p>
+<table>${rows.map(([k, v]) => `<tr><td><strong>${esc(k)}</strong></td><td>${esc(v)}</td></tr>`).join("")}</table>
+${r.message ? `<p><strong>Message</strong><br>${esc(r.message).replace(/\n/g, "<br>")}</p>` : ""}
+<p><a href="${esc(url)}">Review and track it</a></p>`;
+  return {
+    to: args.to,
+    subject: `Consultation request: ${oneLine(r.name)} (${oneLine(r.business)})`,
+    text,
+    html,
+    replyTo: r.email,
+  };
+}
+
+/** To the visitor: proof their request arrived, and what happens next. */
+export function consultationConfirmEmail(args: {
+  to: string;
+  name: string;
+  phone: string;
+  bestTime: string;
+  timeZone: string;
+  supportEmail: string;
+}): Email {
+  const when = `${args.bestTime.toLowerCase()} (${args.timeZone})`;
+  const text = [
+    `Hi ${oneLine(args.name)},`,
+    "",
+    "Thanks for asking about Gantry CRM. We got your request.",
+    `We will call you on ${args.phone}, ${when}, usually within two business days, to talk it through and agree a time for a 30-minute consultation.`,
+    "",
+    `Need to change something? Just reply to this email or write to ${args.supportEmail}.`,
+  ].join("\n");
+  const html = `<p>Hi ${esc(args.name)},</p>
+<p>Thanks for asking about Gantry CRM. We got your request.</p>
+<p>We will call you on <strong>${esc(args.phone)}</strong>, ${esc(when)}, usually within two business days, to talk it through and agree a time for a 30-minute consultation.</p>
+<p>Need to change something? Just reply to this email or write to <a href="mailto:${esc(args.supportEmail)}">${esc(args.supportEmail)}</a>.</p>`;
+  return { to: args.to, subject: "We got your consultation request", text, html, replyTo: args.supportEmail };
+}
