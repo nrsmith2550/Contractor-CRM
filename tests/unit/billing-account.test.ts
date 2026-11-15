@@ -68,6 +68,7 @@ function fakeStripe(
   opts: {
     lines?: Line[];
     existingPrices?: Record<string, { id: string; unit_amount: number }>;
+    customerCard?: { brand: string; last4: string; exp_month: number; exp_year: number };
     updateError?: unknown;
   } = {},
 ) {
@@ -92,6 +93,14 @@ function fakeStripe(
     })),
     pay: vi.fn(async (_id: string, _p: unknown) => ({})),
     customerUpdate: vi.fn(async (_id: string, _p: unknown) => ({})),
+    customerRetrieve: vi.fn(async (_id: string, _p?: unknown) => ({
+      id: "cus_1",
+      invoice_settings: {
+        default_payment_method: opts.customerCard
+          ? { id: "pm_cust", card: opts.customerCard }
+          : null,
+      },
+    })),
     setupCreate: vi.fn(async (_p: Record<string, unknown>) => ({ client_secret: "seti_secret" })),
     setupRetrieve: vi.fn(async (_id: string): Promise<unknown> => ({})),
   };
@@ -123,7 +132,7 @@ function fakeStripe(
       create: calls.priceCreate,
     },
     setupIntents: { create: calls.setupCreate, retrieve: calls.setupRetrieve },
-    customers: { update: calls.customerUpdate },
+    customers: { update: calls.customerUpdate, retrieve: calls.customerRetrieve },
   } as unknown as Api;
   return { stripe, calls };
 }
@@ -158,6 +167,27 @@ describe("reading the subscription", () => {
     expect(past).toMatchObject({ status: "past_due", cancelAtPeriodEnd: true });
     const gone = await overview(fakeStripe(subscription({ status: "canceled" })).stripe, account());
     expect(gone.status).toBe("canceled");
+  });
+
+  it("finds the card on the customer when Checkout did not set one on the subscription", async () => {
+    const f = fakeStripe(subscription({ default_payment_method: null }), {
+      customerCard: { brand: "visa", last4: "4242", exp_month: 12, exp_year: 2030 },
+    });
+    expect((await overview(f.stripe, account())).card).toEqual({
+      brand: "visa",
+      last4: "4242",
+      expMonth: 12,
+      expYear: 2030,
+    });
+    expect(f.calls.customerRetrieve).toHaveBeenCalledWith("cus_1", {
+      expand: ["invoice_settings.default_payment_method"],
+    });
+  });
+
+  it("prefers the subscription's card and does not look further when it has one", async () => {
+    const f = fakeStripe();
+    await overview(f.stripe, account());
+    expect(f.calls.customerRetrieve).not.toHaveBeenCalled();
   });
 
   it("copes with no card on file", async () => {
