@@ -83,6 +83,9 @@ export async function createSubscriptionCheckout(
     mode: "subscription",
     ui_mode: "embedded_page",
     redirect_on_completion: "never",
+    // Shows an "Add promotion code" box. Codes and their rules (amount, uses, expiry) are made in
+    // the Stripe dashboard; nothing is discounted unless a valid code is entered.
+    allow_promotion_codes: true,
     line_items: purchaseLineItems(clean),
     metadata,
     subscription_data: { metadata },
