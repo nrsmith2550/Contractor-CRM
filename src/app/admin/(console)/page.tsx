@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
+import { countNewConsultationRequests } from "@/server/domain/consultations";
 import { dashboardStats } from "@/server/admin/operations";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
-  const s = await dashboardStats();
+  const [s, newRequests] = await Promise.all([dashboardStats(), countNewConsultationRequests()]);
   const cards: [string, number][] = [
     ["Businesses", s.tenants],
     ["Active licenses", s.active],
     ["Issued, not yet activated", s.issued],
     ["Suspended", s.suspended],
     ["Revoked", s.revoked],
+    ["New consultation requests", newRequests],
   ];
   return (
     <main>

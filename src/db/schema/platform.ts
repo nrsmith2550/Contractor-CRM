@@ -131,3 +131,26 @@ export const rateLimit = pgTable("rate_limit", {
   windowStart: timestamp("window_start", { withTimezone: true }).notNull().defaultNow(),
   count: integer("count").notNull().default(0),
 });
+
+// A visitor's request for a consultation call, from the public /consultation page. Not tenant data:
+// it comes from people who are not customers yet. `status` is the owner's own tracking.
+export const consultationRequest = pgTable(
+  "consultation_request",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    phone: text("phone").notNull(),
+    business: text("business").notNull(),
+    trade: text("trade").notNull(),
+    teamSize: text("team_size").notNull(),
+    bestTime: text("best_time").notNull(),
+    timeZone: text("time_zone").notNull(),
+    message: text("message"),
+    status: text("status").notNull().default("new"),
+    notes: text("notes"),
+    handledAt: timestamp("handled_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("consultation_request_created_idx").on(t.createdAt)],
+);

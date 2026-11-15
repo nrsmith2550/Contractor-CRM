@@ -30,6 +30,9 @@ export default async function ConsoleLayout({ children }: { children: ReactNode 
           <Link href="/admin/tenants" style={link}>
             Businesses
           </Link>
+          <a href="/admin/consultations" style={link}>
+            Consultations
+          </a>
           <a href="/admin/audit" style={link}>
             Audit log
           </a>
