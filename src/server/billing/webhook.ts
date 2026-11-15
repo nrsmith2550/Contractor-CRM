@@ -137,6 +137,13 @@ async function onCheckoutPaid(
   if (!email) throw new Error(`No customer email on session ${session.id}`);
   if (!subscriptionId) throw new Error(`No subscription on session ${session.id}`);
 
+  // Everything that can fail comes before the key is emailed. Read the subscription first (a
+  // permissions or network problem with Stripe must not leave a key in someone's inbox), then save
+  // the licence and its details, and send the email last. If the email fails we throw, everything
+  // rolls back, and Stripe retries with a fresh key. A key can never be emailed for a licence that
+  // was not saved, and a saved licence whose key was never delivered cannot happen.
+  const sub = await subscriptionsOf(deps).retrieve(subscriptionId);
+
   const minted = await mintLicense(
     {
       edition: choice.edition,
@@ -152,9 +159,10 @@ async function onCheckoutPaid(
   );
   if (!minted) return "duplicate"; // this subscription already has a licence
 
-  // The key exists only in memory here. Send it before the transaction commits: if sending fails
-  // we throw, the licence rolls back, and Stripe retries with a fresh key. A committed licence whose
-  // key was never delivered cannot happen.
+  await audit(tx, "stripe.license_minted", minted.licenseId, event);
+  // Fill in the renewal date and anything else only the subscription itself knows.
+  await reconcile(tx, event, sub);
+
   const appUrl = deps.appUrl ?? process.env.APP_URL ?? "";
   await (deps.send ?? sendEmail)(
     licenseKeyEmail({
@@ -165,9 +173,6 @@ async function onCheckoutPaid(
       appUrl,
     }),
   );
-  await audit(tx, "stripe.license_minted", minted.licenseId, event);
-  // Fill in the renewal date and anything else only the subscription itself knows.
-  await reconcile(tx, event, await subscriptionsOf(deps).retrieve(subscriptionId));
   return "processed";
 }
 
