@@ -3,6 +3,7 @@ import {
   AREAS,
   AREA_CONTENT,
   EDITIONS,
+  FOUNDING_OFFER,
   PLANS,
   SHARED_CONTENT,
   MAX_SELF_SERVE_USERS,
@@ -161,6 +162,18 @@ export function PlanCards() {
           </tbody>
         </table>
       </div>
+      {FOUNDING_OFFER.active && (
+        <aside className="mk-founding" aria-labelledby="founding-title">
+          <h3 id="founding-title" className="mk-h3">
+            Founding customers: {FOUNDING_OFFER.percentOff}% off your first payment
+          </h3>
+          <p>
+            The first {FOUNDING_OFFER.spots} businesses to join get {FOUNDING_OFFER.percentOff}% off
+            their first payment, which covers the setup fee and the first month. Enter the code{" "}
+            <strong>{FOUNDING_OFFER.code}</strong> at checkout.
+          </p>
+        </aside>
+      )}
       <h3 className="mk-h3">More than {USERS_INCLUDED} people?</h3>
       <p>
         Every plan includes {USERS_INCLUDED} people signing in. Add more for{" "}

@@ -733,3 +733,24 @@
 .mk-consult-done h2 {
   margin-top: 0;
 }
+
+.mk-founding {
+  margin: 24px 0;
+  padding: 16px 20px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.mk-founding h3 {
+  margin: 0 0 6px;
+}
+.mk-founding p {
+  margin: 0;
+}
+.mk-buy-offer {
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
