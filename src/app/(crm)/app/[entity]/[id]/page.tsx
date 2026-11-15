@@ -14,8 +14,11 @@ import { buildCtx } from "@/server/domain/context";
 import { relatedRecords, type RelatedType } from "@/server/domain/related";
 import { SlaBadge } from "@/components/grid/SlaBadge";
 import { CaseCommands, WorkOrderCommands } from "@/components/form/ServiceCommands";
+import { JobPhases, type PhaseView } from "@/components/form/JobPhases";
 import { PartsAndLabour } from "@/components/form/PartsAndLabour";
 import { listWorkOrderLines } from "@/server/domain/work-order-lines";
+import { listJobPhases } from "@/server/domain/job-phases";
+import { jobAcceptsPhases } from "@/server/domain/job-phase-status";
 import { can } from "@/server/security/roles";
 import { ScheduleWorkOrder, type WoBooking } from "@/components/form/ScheduleWorkOrder";
 import { listWorkOrderBookings } from "@/server/domain/bookings";
@@ -55,6 +58,7 @@ export default async function RecordPage({
 
   const hasTimeline = meta.key !== "product";
   const lines = meta.key === "work_order" ? await listWorkOrderLines(ctx, id) : null;
+  const phasesRes = meta.key === "work_order" ? await listJobPhases(ctx, id) : null;
   const woProducts = meta.key === "work_order" ? await listProducts(ctx, { limit: 200 }) : null;
   const sched =
     meta.key === "work_order"
@@ -145,6 +149,20 @@ export default async function RecordPage({
             when: `${utcToZonedInput(b.startAt, sched[4]).replace("T", " ")} – ${utcToZonedInput(b.endAt, sched[4]).slice(11)}`,
             signedByName: b.signedByName,
             hasSignature: Boolean(b.signatureDataUrl),
+          }))}
+        />
+      )}
+      {meta.key === "work_order" && phasesRes && phasesRes.ok && (
+        <JobPhases
+          workOrderId={id}
+          canEdit={can(ctx.subject, "work_order", "write") && jobAcceptsPhases(status)}
+          phases={phasesRes.phases.map((p): PhaseView => ({
+            id: p.id,
+            phaseNumber: p.phaseNumber,
+            title: p.title,
+            instructions: p.instructions,
+            status: p.status as PhaseView["status"],
+            estDurationMin: p.estDurationMin,
           }))}
         />
       )}

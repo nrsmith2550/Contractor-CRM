@@ -33,6 +33,7 @@ export const TENANT_TABLES = [
   "queue",
   "incident",
   "work_order",
+  "job_phase",
   "characteristic",
   "bookable_resource",
   "resource_characteristic",

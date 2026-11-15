@@ -4,6 +4,7 @@ import { withTenant, type Tx } from "@/db/client";
 import { account, workOrder } from "@/db/schema";
 import { can } from "@/server/security/roles";
 import { diffChanges, recordAudit } from "./audit";
+import { cancelOpenPhases, countOpenPhases } from "./job-phases";
 import {
   FORBIDDEN,
   NOT_FOUND,
@@ -223,6 +224,18 @@ export async function setWorkOrderStatus(
         `A ${row.status.replace("_", " ")} job can't go to ${to.replace("_", " ")}.`,
       );
     }
+    // Phases are part of the job: it can't be completed or posted while one is still open, and
+    // cancelling the job cancels the phases that were still open.
+    let cancelledPhases = 0;
+    if (to === "completed" || to === "posted") {
+      const open = await countOpenPhases(tx, id);
+      if (open > 0)
+        return fail(
+          "conflict",
+          `This job still has ${open} open ${open === 1 ? "phase" : "phases"}. Finish or cancel ${open === 1 ? "it" : "them"} first.`,
+        );
+    }
+    if (to === "cancelled") cancelledPhases = await cancelOpenPhases(tx, ctx, id);
     const [updated] = await tx
       .update(workOrder)
       .set({ status: to, modifiedAt: new Date(), modifiedBy: ctx.userId })
@@ -234,7 +247,10 @@ export async function setWorkOrderStatus(
       entity: "work_order",
       recordId: id,
       action: "status",
-      changes: { status: { from: row.status, to } },
+      changes: {
+        status: { from: row.status, to },
+        ...(cancelledPhases > 0 ? { cancelledPhases } : {}),
+      },
     });
     return { ok: true as const, workOrder: updated! };
   });
