@@ -70,6 +70,7 @@ export default async function RecordPage({
           tenantTimeZone(user.tenantId),
         ])
       : null;
+  const woBookings = sched && sched[3].ok ? sched[3].rows : [];
   const oppLinesRes = meta.key === "opportunity" ? await listOpportunityLines(ctx, id) : null;
   const oppLines = oppLinesRes?.ok ? oppLinesRes.lines : null;
   const productsRes = meta.key === "opportunity" ? await listProducts(ctx, { limit: 200 }) : null;
@@ -142,9 +143,31 @@ export default async function RecordPage({
           resources={sched[0].rows.map((r) => ({ id: r.id, name: r.name }))}
           skills={sched[1].ok ? sched[1].rows.map((x) => ({ id: x.id, name: x.name })) : []}
           requiredSkillIds={sched[2].ok ? sched[2].skills.map((x) => x.id) : []}
+          bookablePhases={
+            can(ctx.subject, "work_order", "write") &&
+            jobAcceptsPhases(status) &&
+            phasesRes &&
+            phasesRes.ok
+              ? phasesRes.phases
+                  .filter(
+                    (ph) =>
+                      (ph.status === "unscheduled" || ph.status === "scheduled") &&
+                      !woBookings.some(
+                        (b) =>
+                          b.phaseId === ph.id &&
+                          ["scheduled", "travelling", "in_progress"].includes(b.status),
+                      ),
+                  )
+                  .map((ph) => ({ id: ph.id, label: `Phase ${ph.phaseNumber}: ${ph.title}` }))
+              : []
+          }
+          jobHasLiveVisit={woBookings.some(
+            (b) => !b.phaseId && ["scheduled", "travelling", "in_progress"].includes(b.status),
+          )}
           bookings={sched[3].rows.map((b): WoBooking => ({
             id: b.id,
             status: b.status,
+            phaseLabel: b.phaseNumber ? `Phase ${b.phaseNumber}: ${b.phaseTitle}` : null,
             resourceName: b.resourceName,
             when: `${utcToZonedInput(b.startAt, sched[4]).replace("T", " ")} – ${utcToZonedInput(b.endAt, sched[4]).slice(11)}`,
             signedByName: b.signedByName,

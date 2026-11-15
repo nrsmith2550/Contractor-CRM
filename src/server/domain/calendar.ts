@@ -1,7 +1,14 @@
 import { and, asc, eq, gt, gte, inArray, lt, ne, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { withTenant } from "@/db/client";
-import { activity, bookableResource, resourceBooking, systemUser, workOrder } from "@/db/schema";
+import {
+  activity,
+  bookableResource,
+  jobPhase,
+  resourceBooking,
+  systemUser,
+  workOrder,
+} from "@/db/schema";
 import { recordHref } from "@/lib/calendar";
 import { FORBIDDEN, fail, readScope, type Ctx, type Result } from "./context";
 
@@ -110,11 +117,14 @@ export async function listCalendarEvents(
           resource: bookableResource.name,
           woNumber: workOrder.woNumber,
           woTitle: workOrder.title,
+          phaseNumber: jobPhase.phaseNumber,
+          phaseTitle: jobPhase.title,
           ownerName: systemUser.fullName,
         })
         .from(resourceBooking)
         .innerJoin(bookableResource, eq(bookableResource.id, resourceBooking.resourceId))
         .leftJoin(workOrder, eq(workOrder.id, resourceBooking.workOrderId))
+        .leftJoin(jobPhase, eq(jobPhase.id, resourceBooking.phaseId))
         .leftJoin(systemUser, eq(systemUser.id, resourceBooking.ownerId))
         .where(
           and(
@@ -130,7 +140,13 @@ export async function listCalendarEvents(
         events.push({
           id: r.b.id,
           kind: "booking",
-          title: [r.woNumber, r.woTitle].filter(Boolean).join(" ") || "Visit",
+          title:
+            [
+              [r.woNumber, r.woTitle].filter(Boolean).join(" "),
+              r.phaseNumber ? `Phase ${r.phaseNumber}: ${r.phaseTitle}` : "",
+            ]
+              .filter(Boolean)
+              .join(" · ") || "Visit",
           start: r.b.startAt,
           end: r.b.endAt,
           status: r.b.status,

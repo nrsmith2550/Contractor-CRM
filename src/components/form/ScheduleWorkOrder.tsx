@@ -13,6 +13,8 @@ import {
 export type WoBooking = {
   id: string;
   status: string;
+  /** "Phase 2: Install", or null for a visit for the whole job. */
+  phaseLabel: string | null;
   resourceName: string;
   when: string;
   signedByName: string | null;
@@ -27,20 +29,33 @@ export function ScheduleWorkOrder(props: {
   skills: { id: string; name: string }[];
   requiredSkillIds: string[];
   bookings: WoBooking[];
+  /** Phases that can be booked right now (not started, with no live visit). */
+  bookablePhases?: { id: string; label: string }[];
+  /** Whether the job as a whole already has a live visit of its own. */
+  jobHasLiveVisit?: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [res, setRes] = useState<CmdResult | null>(null);
   const [skillIds, setSkillIds] = useState(props.requiredSkillIds);
   const [v, setV] = useState({
+    phaseId: "",
     resourceId: props.resources[0]?.id ?? "",
     start: "",
     end: "",
     notes: "",
   });
-  const live = props.bookings.some((b) =>
-    ["scheduled", "travelling", "in_progress"].includes(b.status),
-  );
+  const phases = props.bookablePhases ?? [];
+  // The whole job can be booked while it hasn't started and has no visit of its own; a phase can
+  // be booked until the job is done, because other phases may already be under way.
+  const wholeJobFree = props.editable && !props.jobHasLiveVisit;
+  const canBook = wholeJobFree || phases.length > 0;
+  // With no visit possible for the whole job, the form can only be for one of the phases.
+  const phaseId = phases.some((ph) => ph.id === v.phaseId)
+    ? v.phaseId
+    : wholeJobFree
+      ? ""
+      : (phases[0]?.id ?? "");
 
   const run = (fn: () => Promise<CmdResult>) =>
     start(async () => {
@@ -88,6 +103,7 @@ export function ScheduleWorkOrder(props: {
         <thead>
           <tr>
             <th scope="col">Team member</th>
+            <th scope="col">For</th>
             <th scope="col">When</th>
             <th scope="col">Status</th>
             <th scope="col">
@@ -98,12 +114,13 @@ export function ScheduleWorkOrder(props: {
         <tbody>
           {props.bookings.length === 0 && (
             <tr>
-              <td colSpan={4}>Not booked yet.</td>
+              <td colSpan={5}>Not booked yet.</td>
             </tr>
           )}
           {props.bookings.map((b) => (
             <tr key={b.id}>
               <td>{b.resourceName}</td>
+              <td>{b.phaseLabel ?? "Whole job"}</td>
               <td>{b.when}</td>
               <td>
                 <span className="crm-badge">{humanize(b.status)}</span>
@@ -126,15 +143,28 @@ export function ScheduleWorkOrder(props: {
         </tbody>
       </table>
 
-      {props.editable && !live && (
+      {canBook && (
         <form
           className="crm-panel"
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
-            run(() => createBookingAction(props.workOrderId, v));
+            run(() => createBookingAction(props.workOrderId, { ...v, phaseId }));
           }}
         >
+          {phases.length > 0 && (
+            <label>
+              Visit for
+              <select value={phaseId} onChange={(e) => setV({ ...v, phaseId: e.target.value })}>
+                {wholeJobFree && <option value="">The whole job</option>}
+                {phases.map((ph) => (
+                  <option key={ph.id} value={ph.id}>
+                    {ph.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label>
             Team member
             <select

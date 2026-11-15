@@ -1,9 +1,10 @@
-import { and, asc, eq, gt, inArray, lt, ne } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, lt, ne } from "drizzle-orm";
 import { z } from "zod";
 import { withTenant, type Tx } from "@/db/client";
 import {
   bookableResource,
   characteristic,
+  jobPhase,
   resourceBooking,
   resourceCharacteristic,
   workOrder,
@@ -13,6 +14,7 @@ import { tenantTimeZone } from "@/server/entities/tenant";
 import { can } from "@/server/security/roles";
 import { recordAudit } from "./audit";
 import { countOpenPhases } from "./job-phases";
+import { canPhaseTransition, type PhaseStatus } from "./job-phase-status";
 import { validateImageDataUrl } from "./branding";
 import {
   canBookingTransition,
@@ -64,6 +66,8 @@ const timeRange = z
 const createInput = z
   .object({
     workOrderId: z.string().uuid(),
+    /** A phase of that job, when the visit is for one phase only. */
+    phaseId: z.string().uuid().nullable().optional(),
     resourceId: z.string().uuid(),
     notes: text(2000),
     startAt: z.coerce.date(),
@@ -172,8 +176,21 @@ export async function createBooking(
       .for("update");
     const denied = checkRecord(ctx, "work_order", "write", wo);
     if (denied) return denied;
-    if (wo!.status !== "unscheduled" && wo!.status !== "scheduled") {
+    const phaseId = p.data.phaseId ?? null;
+    // A job that is already under way can still take a visit for another of its phases.
+    const bookable = phaseId
+      ? ["unscheduled", "scheduled", "in_progress"]
+      : ["unscheduled", "scheduled"];
+    if (!bookable.includes(wo!.status)) {
       return fail("conflict", `A ${wo!.status.replace("_", " ")} job can't be booked.`);
+    }
+    let phase: typeof jobPhase.$inferSelect | undefined;
+    if (phaseId) {
+      [phase] = await tx.select().from(jobPhase).where(eq(jobPhase.id, phaseId)).for("update");
+      if (!phase || phase.workOrderId !== wo!.id)
+        return fail("invalid", "That phase isn't part of this job.");
+      if (phase.status !== "unscheduled" && phase.status !== "scheduled")
+        return fail("conflict", `A ${phase.status.replace("_", " ")} phase can't be booked.`);
     }
     const active = await tx
       .select({ id: resourceBooking.id })
@@ -181,12 +198,18 @@ export async function createBooking(
       .where(
         and(
           eq(resourceBooking.workOrderId, wo!.id),
+          phaseId ? eq(resourceBooking.phaseId, phaseId) : isNull(resourceBooking.phaseId),
           ne(resourceBooking.status, "cancelled"),
           ne(resourceBooking.status, "completed"),
         ),
       );
     if (active.length > 0)
-      return fail("conflict", "This job is already booked. Cancel or move that visit first.");
+      return fail(
+        "conflict",
+        phaseId
+          ? "This phase is already booked. Cancel or move that visit first."
+          : "This job is already booked. Cancel or move that visit first.",
+      );
 
     const [resource] = await tx
       .select()
@@ -212,11 +235,18 @@ export async function createBooking(
         modifiedBy: ctx.userId,
         resourceId: resource.id,
         workOrderId: wo!.id,
+        phaseId,
         startAt: p.data.startAt,
         endAt: p.data.endAt,
         notes: p.data.notes ?? null,
       })
       .returning();
+    if (phase && phase.status === "unscheduled") {
+      await tx
+        .update(jobPhase)
+        .set({ status: "scheduled", modifiedAt: new Date(), modifiedBy: ctx.userId })
+        .where(eq(jobPhase.id, phase.id));
+    }
     if (wo!.status === "unscheduled" && canTransition("unscheduled", "scheduled")) {
       await tx
         .update(workOrder)
@@ -231,18 +261,21 @@ export async function createBooking(
       action: "create",
       changes: {
         workOrder: wo!.woNumber,
+        ...(phase ? { phase: phase.phaseNumber } : {}),
         resource: resource.name,
         warnings: warnings.map((w) => w.code),
       },
     });
-    await recordAudit(tx, {
-      tenantId: ctx.tenantId,
-      userId: ctx.userId,
-      entity: "work_order",
-      recordId: wo!.id,
-      action: "status",
-      changes: { status: { from: wo!.status, to: "scheduled" }, viaBooking: booking!.id },
-    });
+    if (wo!.status === "unscheduled") {
+      await recordAudit(tx, {
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        entity: "work_order",
+        recordId: wo!.id,
+        action: "status",
+        changes: { status: { from: wo!.status, to: "scheduled" }, viaBooking: booking!.id },
+      });
+    }
     return { ok: true as const, booking: booking!, warnings };
   });
 }
@@ -390,6 +423,60 @@ export async function setBookingStatus(
       .where(eq(resourceBooking.id, id))
       .returning();
 
+    // A visit for one phase moves that phase: starting it starts the phase, finishing it finishes
+    // the phase, and cancelling the last live visit sends the phase back to Unscheduled.
+    if (row!.phaseId) {
+      const [ph] = await tx
+        .select()
+        .from(jobPhase)
+        .where(eq(jobPhase.id, row!.phaseId))
+        .for("update");
+      let phaseTarget: PhaseStatus | null = null;
+      if (to === "in_progress") phaseTarget = "in_progress";
+      if (to === "completed") phaseTarget = "completed";
+      if (to === "cancelled") {
+        const stillBooked = await tx
+          .select({ id: resourceBooking.id })
+          .from(resourceBooking)
+          .where(
+            and(
+              eq(resourceBooking.phaseId, row!.phaseId),
+              ne(resourceBooking.id, id),
+              inArray(resourceBooking.status, ["scheduled", "travelling", "in_progress"]),
+            ),
+          );
+        if (stillBooked.length === 0) phaseTarget = "unscheduled";
+      }
+      if (
+        ph &&
+        phaseTarget &&
+        ph.status !== phaseTarget &&
+        canPhaseTransition(ph.status as PhaseStatus, phaseTarget)
+      ) {
+        await tx
+          .update(jobPhase)
+          .set({
+            status: phaseTarget,
+            completedAt: phaseTarget === "completed" ? now : null,
+            modifiedAt: now,
+            modifiedBy: ctx.userId,
+          })
+          .where(eq(jobPhase.id, ph.id));
+        await recordAudit(tx, {
+          tenantId: ctx.tenantId,
+          userId: ctx.userId,
+          entity: "work_order",
+          recordId: ph.workOrderId,
+          action: "phase_status",
+          changes: {
+            phase: ph.phaseNumber,
+            status: { from: ph.status, to: phaseTarget },
+            viaBooking: id,
+          },
+        });
+      }
+    }
+
     // The work order follows the visit. This is a platform rule applied directly: the technician
     // doesn't need edit rights on the work order itself.
     if (row!.workOrderId) {
@@ -451,6 +538,9 @@ export type BookingRow = Booking & {
   /** What the technician needs on site: the instructions and where the job is. */
   woInstructions: string | null;
   woAddress: string[];
+  /** The phase this visit is for, if any. */
+  phaseNumber: number | null;
+  phaseTitle: string | null;
 };
 
 const bookingSelect = {
@@ -460,6 +550,8 @@ const bookingSelect = {
   woNumber: workOrder.woNumber,
   woTitle: workOrder.title,
   woInstructions: workOrder.instructions,
+  phaseNumber: jobPhase.phaseNumber,
+  phaseTitle: jobPhase.title,
   street: workOrder.addressStreet,
   city: workOrder.addressCity,
   region: workOrder.addressRegion,
@@ -472,6 +564,8 @@ type Joined = {
   woNumber: string | null;
   woTitle: string | null;
   woInstructions: string | null;
+  phaseNumber: number | null;
+  phaseTitle: string | null;
   street: string | null;
   city: string | null;
   region: string | null;
@@ -484,6 +578,8 @@ const flat = (r: Joined): BookingRow => ({
   woNumber: r.woNumber,
   woTitle: r.woTitle,
   woInstructions: r.woInstructions,
+  phaseNumber: r.phaseNumber,
+  phaseTitle: r.phaseTitle,
   woAddress: [r.street, [r.city, r.region, r.postal].filter(Boolean).join(", ")].filter(
     (l): l is string => Boolean(l),
   ),
@@ -497,6 +593,7 @@ export async function getBooking(ctx: Ctx, id: string): Promise<Result<{ booking
       .from(resourceBooking)
       .innerJoin(bookableResource, eq(bookableResource.id, resourceBooking.resourceId))
       .leftJoin(workOrder, eq(workOrder.id, resourceBooking.workOrderId))
+      .leftJoin(jobPhase, eq(jobPhase.id, resourceBooking.phaseId))
       .where(eq(resourceBooking.id, id));
     const denied = checkRecord(ctx, "booking", "read", r?.b);
     return denied ?? { ok: true as const, booking: flat(r!) };
@@ -516,6 +613,7 @@ export async function listBookings(
       .from(resourceBooking)
       .innerJoin(bookableResource, eq(bookableResource.id, resourceBooking.resourceId))
       .leftJoin(workOrder, eq(workOrder.id, resourceBooking.workOrderId))
+      .leftJoin(jobPhase, eq(jobPhase.id, resourceBooking.phaseId))
       .where(
         and(
           scope.where,
@@ -542,6 +640,7 @@ export async function listMyBookings(
       .from(resourceBooking)
       .innerJoin(bookableResource, eq(bookableResource.id, resourceBooking.resourceId))
       .leftJoin(workOrder, eq(workOrder.id, resourceBooking.workOrderId))
+      .leftJoin(jobPhase, eq(jobPhase.id, resourceBooking.phaseId))
       .where(
         and(
           eq(resourceBooking.ownerId, ctx.userId),
@@ -569,6 +668,7 @@ export async function listWorkOrderBookings(
       .from(resourceBooking)
       .innerJoin(bookableResource, eq(bookableResource.id, resourceBooking.resourceId))
       .leftJoin(workOrder, eq(workOrder.id, resourceBooking.workOrderId))
+      .leftJoin(jobPhase, eq(jobPhase.id, resourceBooking.phaseId))
       .where(and(scope.where, eq(resourceBooking.workOrderId, workOrderId)))
       .orderBy(asc(resourceBooking.startAt));
     return { ok: true as const, rows: rows.map(flat) };

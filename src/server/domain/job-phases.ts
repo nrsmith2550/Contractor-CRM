@@ -1,7 +1,7 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { withTenant, type Tx } from "@/db/client";
-import { jobPhase, workOrder } from "@/db/schema";
+import { jobPhase, resourceBooking, workOrder } from "@/db/schema";
 import { say } from "@/lib/vocabulary";
 import { recordAudit } from "./audit";
 import { NOT_FOUND, checkRecord, fail, type Ctx, type Result } from "./context";
@@ -157,6 +157,48 @@ export async function setJobPhaseStatus(
         `A ${row.status.replace("_", " ")} phase can't go to ${to.replace("_", " ")}.`,
       );
     const now = new Date();
+    // Cancelling a phase cancels its booked visits that haven't started. A visit that is under
+    // way has to be finished or cancelled by the technician first.
+    let cancelledVisits = 0;
+    if (to === "cancelled") {
+      const live = await tx
+        .select()
+        .from(resourceBooking)
+        .where(
+          and(
+            eq(resourceBooking.phaseId, phaseId),
+            inArray(resourceBooking.status, ["scheduled", "travelling", "in_progress"]),
+          ),
+        );
+      if (live.some((b) => b.status === "travelling" || b.status === "in_progress"))
+        return fail(
+          "conflict",
+          "A visit for this phase is under way. Finish or cancel the visit first.",
+        );
+      for (const b of live) {
+        await tx
+          .update(resourceBooking)
+          .set({ status: "cancelled", modifiedAt: now, modifiedBy: ctx.userId })
+          .where(eq(resourceBooking.id, b.id));
+      }
+      cancelledVisits = live.length;
+      if (cancelledVisits > 0 && wo.status === "scheduled") {
+        const others = await tx
+          .select({ id: resourceBooking.id })
+          .from(resourceBooking)
+          .where(
+            and(
+              eq(resourceBooking.workOrderId, wo.id),
+              inArray(resourceBooking.status, ["scheduled", "travelling", "in_progress"]),
+            ),
+          );
+        if (others.length === 0)
+          await tx
+            .update(workOrder)
+            .set({ status: "unscheduled", modifiedAt: now, modifiedBy: ctx.userId })
+            .where(eq(workOrder.id, wo.id));
+      }
+    }
     const [phase] = await tx
       .update(jobPhase)
       .set({
@@ -173,7 +215,11 @@ export async function setJobPhaseStatus(
       entity: "work_order",
       recordId: wo.id,
       action: "phase_status",
-      changes: { phase: row.phaseNumber, status: { from: row.status, to } },
+      changes: {
+        phase: row.phaseNumber,
+        status: { from: row.status, to },
+        ...(cancelledVisits > 0 ? { cancelledVisits } : {}),
+      },
     });
     return { ok: true as const, phase: phase! };
   });
