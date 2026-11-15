@@ -1,6 +1,20 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("marketing page", () => {
+  test("promotes the founding-customer offer at the top of the page and in the hero", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const banner = page.getByRole("complementary", { name: "Founding customer offer" });
+    await expect(banner).toContainText("50% off your first payment for the first 50 businesses");
+    await expect(banner).toContainText("FOUNDING50");
+    await expect(banner.getByRole("link", { name: "See pricing" })).toHaveAttribute(
+      "href",
+      "#pricing",
+    );
+    await expect(page.locator(".mk-hero-offer")).toContainText("FOUNDING50");
+  });
+
   test("says what Gantry is, shows the plans and prices, and each plan leads to the buy page", async ({
     page,
   }) => {

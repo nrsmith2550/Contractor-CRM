@@ -192,5 +192,5 @@ export const FOUNDING_OFFER = {
   active: true,
   code: "FOUNDING50",
   percentOff: 50,
-  spots: 10,
+  spots: 50,
 } as const;

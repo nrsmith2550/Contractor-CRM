@@ -754,3 +754,28 @@
   border-radius: 10px;
   background: var(--surface-2);
 }
+
+/* Offer banner above the header, and the line in the hero */
+.mk-banner {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: center;
+}
+.mk-banner p {
+  margin: 0;
+}
+.mk-banner a {
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.mk-hero-offer {
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface);
+}

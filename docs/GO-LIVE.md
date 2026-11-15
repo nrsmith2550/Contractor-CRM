@@ -88,12 +88,12 @@ need someone to look at the real site.
 
 ## Founding-customer offer
 
-- **The offer:** 50% off the first payment (setup and first month) for the first 10 businesses, with
+- **The offer:** 50% off the first payment (setup and first month) for the first 50 businesses, with
   the code `FOUNDING50` (`FOUNDING_OFFER` in `src/lib/plans.ts`).
 - **In Stripe (live mode):** create a coupon named "Founding customer", **50% off, duration Once**; then
-  a promotion code `FOUNDING50` on it with **Limit the total number of redemptions: 10** and
+  a promotion code `FOUNDING50` on it with **Limit the total number of redemptions: 50** and
   **first-time customers only**. Stripe enforces the limit.
-- **When the 10 are gone:** set `active: false` in `FOUNDING_OFFER` so the pricing section and the buy
+- **When the 50 are gone:** set `active: false` in `FOUNDING_OFFER` so the pricing section and the buy
   page stop mentioning it.
 
 ## Legal and brand
