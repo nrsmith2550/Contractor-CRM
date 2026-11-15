@@ -39,6 +39,7 @@ export async function createBookingAction(workOrderId: string, v: V): Promise<Cm
   if (!startAt || !endAt) return { ok: false, message: "Enter a start and end date and time." };
   const r = await createBooking(c, {
     workOrderId,
+    phaseId: v.phaseId || null,
     resourceId: v.resourceId,
     startAt,
     endAt,

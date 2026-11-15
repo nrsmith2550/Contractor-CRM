@@ -14,7 +14,7 @@ import {
   setJobPhaseStatus,
   updateJobPhase,
 } from "@/server/domain/job-phases";
-import { createBooking, setBookingStatus } from "@/server/domain/bookings";
+import { createBooking, listWorkOrderBookings, setBookingStatus } from "@/server/domain/bookings";
 import { createWorkOrder, getWorkOrder, setWorkOrderStatus } from "@/server/domain/work-orders";
 import type { Email } from "@/server/email/mailer";
 import { mintLicense } from "@/server/licensing/mint";
@@ -242,5 +242,136 @@ describe.skipIf(!enabled)("Job phases", () => {
     must(await setJobPhaseStatus(dispatcher, ph.id, "completed"));
     must(await setWorkOrderStatus(dispatcher, wo.id, "completed"));
     expect(await statusOf(dispatcher, wo.id)).toBe("completed");
+  });
+
+  describe("visits for a phase", () => {
+    const visit = (
+      c: Ctx,
+      workOrderId: string,
+      resourceId: string,
+      phaseId: string | null,
+      day = 1,
+    ) =>
+      createBooking(c, {
+        workOrderId,
+        phaseId,
+        resourceId,
+        startAt: `2030-05-0${day}T09:00:00Z`,
+        endAt: `2030-05-0${day}T10:00:00Z`,
+      });
+
+    async function twoTechs() {
+      const base = await setup();
+      const tech2 = await addUser(base.biz, "Field Technician");
+      const resource2 = must(
+        await createResource(base.biz.admin, { name: "Tech B", userId: tech2.userId }),
+      ).resource;
+      return { ...base, tech2, resource2 };
+    }
+
+    it("books a phase, which schedules the phase and the job", async () => {
+      const { dispatcher, resource, wo } = await setup();
+      const ph = must(await addJobPhase(dispatcher, wo.id, { title: "Demo" })).phase;
+      const b = must(await visit(dispatcher, wo.id, resource.id, ph.id)).booking;
+      expect(b.phaseId).toBe(ph.id);
+      expect(
+        (await listJobPhases(dispatcher, wo.id)).ok && (await statusOf(dispatcher, wo.id)),
+      ).toBe("scheduled");
+      const phases = must(await listJobPhases(dispatcher, wo.id)).phases;
+      expect(phases[0]!.status).toBe("scheduled");
+    });
+
+    it("lets two technicians work two phases of one job at the same time", async () => {
+      const { dispatcher, tech, tech2, resource, resource2, wo } = await twoTechs();
+      const one = must(await addJobPhase(dispatcher, wo.id, { title: "Remove" })).phase;
+      const two = must(await addJobPhase(dispatcher, wo.id, { title: "Install" })).phase;
+      const a = must(await visit(dispatcher, wo.id, resource.id, one.id)).booking;
+      const b = must(await visit(dispatcher, wo.id, resource2.id, two.id)).booking;
+
+      // Tech A starts and finishes phase 1; the job is under way, and not finished.
+      must(await setBookingStatus(tech, a.id, "in_progress"));
+      expect(await statusOf(dispatcher, wo.id)).toBe("in_progress");
+      must(await setBookingStatus(tech, a.id, "completed"));
+      let phases = must(await listJobPhases(dispatcher, wo.id)).phases;
+      expect(phases.map((p) => p.status)).toEqual(["completed", "scheduled"]);
+      expect(await statusOf(dispatcher, wo.id)).toBe("in_progress");
+
+      // Tech B finishes phase 2: now nothing is open, so the job completes.
+      must(await setBookingStatus(tech2, b.id, "in_progress"));
+      must(await setBookingStatus(tech2, b.id, "completed"));
+      phases = must(await listJobPhases(dispatcher, wo.id)).phases;
+      expect(phases.map((p) => p.status)).toEqual(["completed", "completed"]);
+      expect(await statusOf(dispatcher, wo.id)).toBe("completed");
+    });
+
+    it("allows one live visit for each phase, and one for the whole job", async () => {
+      const { dispatcher, resource, resource2, wo } = await twoTechs();
+      const ph = must(await addJobPhase(dispatcher, wo.id, { title: "Demo" })).phase;
+      must(await visit(dispatcher, wo.id, resource.id, ph.id));
+      expect(await visit(dispatcher, wo.id, resource2.id, ph.id)).toMatchObject({
+        ok: false,
+        code: "conflict",
+      });
+      // The whole job is a separate booking from the phase.
+      must(await visit(dispatcher, wo.id, resource2.id, null, 2));
+      expect(await visit(dispatcher, wo.id, resource.id, null, 3)).toMatchObject({
+        ok: false,
+        code: "conflict",
+      });
+    });
+
+    it("refuses a phase of another job, and a phase that is already done", async () => {
+      const { dispatcher, resource, wo } = await setup();
+      const other = must(await createWorkOrder(dispatcher, { title: "Other job" })).workOrder;
+      const foreign = must(await addJobPhase(dispatcher, other.id, { title: "Elsewhere" })).phase;
+      expect(await visit(dispatcher, wo.id, resource.id, foreign.id)).toMatchObject({
+        ok: false,
+        code: "invalid",
+      });
+      const done = must(await addJobPhase(dispatcher, wo.id, { title: "Done" })).phase;
+      must(await setJobPhaseStatus(dispatcher, done.id, "in_progress"));
+      must(await setJobPhaseStatus(dispatcher, done.id, "completed"));
+      expect(await visit(dispatcher, wo.id, resource.id, done.id)).toMatchObject({
+        ok: false,
+        code: "conflict",
+      });
+    });
+
+    it("cancelling the visit sends the phase, and the job, back to unscheduled", async () => {
+      const { dispatcher, resource, wo } = await setup();
+      const ph = must(await addJobPhase(dispatcher, wo.id, { title: "Demo" })).phase;
+      const b = must(await visit(dispatcher, wo.id, resource.id, ph.id)).booking;
+      must(await setBookingStatus(dispatcher, b.id, "cancelled"));
+      expect(must(await listJobPhases(dispatcher, wo.id)).phases[0]!.status).toBe("unscheduled");
+      expect(await statusOf(dispatcher, wo.id)).toBe("unscheduled");
+    });
+
+    it("cancelling a phase cancels its booked visit, but not one that is under way", async () => {
+      const { dispatcher, resource, resource2, wo } = await twoTechs();
+      const one = must(await addJobPhase(dispatcher, wo.id, { title: "One" })).phase;
+      const two = must(await addJobPhase(dispatcher, wo.id, { title: "Two" })).phase;
+      const a = must(await visit(dispatcher, wo.id, resource.id, one.id)).booking;
+      const b = must(await visit(dispatcher, wo.id, resource2.id, two.id)).booking;
+      must(await setJobPhaseStatus(dispatcher, one.id, "cancelled"));
+      const bookings = must(await listWorkOrderBookings(dispatcher, wo.id)).rows;
+      expect(bookings.find((x) => x.id === a.id)?.status).toBe("cancelled");
+      expect(bookings.find((x) => x.id === b.id)?.status).toBe("scheduled");
+      expect(await statusOf(dispatcher, wo.id)).toBe("scheduled");
+
+      // Phase 2's visit is under way, so it can't be cancelled out from under the technician.
+      must(await setBookingStatus(dispatcher, b.id, "in_progress"));
+      expect(await setJobPhaseStatus(dispatcher, two.id, "cancelled")).toMatchObject({
+        ok: false,
+        code: "conflict",
+      });
+    });
+
+    it("shows which phase each visit is for", async () => {
+      const { dispatcher, resource, wo } = await setup();
+      const ph = must(await addJobPhase(dispatcher, wo.id, { title: "Rough-in" })).phase;
+      must(await visit(dispatcher, wo.id, resource.id, ph.id));
+      const rows = must(await listWorkOrderBookings(dispatcher, wo.id)).rows;
+      expect(rows[0]).toMatchObject({ phaseNumber: 1, phaseTitle: "Rough-in" });
+    });
   });
 });

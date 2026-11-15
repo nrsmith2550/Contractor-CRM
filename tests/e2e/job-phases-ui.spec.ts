@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { activateLicense } from "@/server/auth/activation";
 import { buildCtx } from "@/server/domain/context";
+import { createResource } from "@/server/domain/resources";
 import { createWorkOrder } from "@/server/domain/work-orders";
 import { mintLicense } from "@/server/licensing/mint";
 
@@ -30,6 +31,8 @@ async function newJob() {
   });
   if (!res.ok) throw new Error(`activation failed: ${res.code}`);
   const ctx = await buildCtx(res.tenantId, res.userId);
+  const crew = await createResource(ctx, { name: "Crew A" });
+  if (!crew.ok) throw new Error("resource not created");
   const made = await createWorkOrder(ctx, { title: "Replace the furnace" });
   if (!made.ok) throw new Error("job not created");
   return { email, jobId: made.workOrder.id };
@@ -83,6 +86,36 @@ test.describe("job phases UI", () => {
 
     await phases.getByRole("button", { name: "Cancel phase 2" }).click();
     await expect(phases).toContainText("1 of 1 phase done");
+  });
+
+  test("a dispatcher books a visit for one phase and it shows which phase", async ({
+    page,
+    context,
+  }) => {
+    await context.setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
+    const { email, jobId } = await newJob();
+    await signIn(page, email);
+    await page.goto(`/app/work-orders/${jobId}`);
+    const phases = page.getByRole("region", { name: "Phases" });
+    await phases.getByLabel("Phase title").fill("Rough-in");
+    await phases.getByRole("button", { name: "Add phase" }).click();
+    await expect(phases).toContainText("Rough-in");
+
+    const scheduling = page.getByRole("region", { name: "Scheduling" });
+    await scheduling
+      .getByRole("combobox", { name: /^Visit for/ })
+      .selectOption({ label: "Phase 1: Rough-in" });
+    await scheduling.getByLabel("Start").fill("2030-05-01T09:00");
+    await scheduling.getByLabel("End").fill("2030-05-01T10:00");
+    await scheduling.getByRole("button", { name: "Book" }).click();
+    await expect(scheduling.getByRole("table", { name: "Visits" })).toContainText(
+      "Phase 1: Rough-in",
+    );
+    // The phase is now scheduled, and has a visit so it isn't offered again.
+    await expect(phases.getByRole("table", { name: "Phases of this job" })).toContainText(
+      "Scheduled",
+    );
+    await expect(scheduling.getByRole("combobox", { name: /^Visit for/ })).toHaveCount(0);
   });
 
   test("has no accessibility violations and fits a phone", async ({ page, context }) => {

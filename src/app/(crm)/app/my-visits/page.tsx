@@ -77,6 +77,7 @@ export default async function MyBookingsPage() {
       when: `${time(b.startAt)} – ${time(b.endAt)}`,
       woNumber: b.woNumber,
       woTitle: b.woTitle,
+      phaseLabel: b.phaseNumber ? `Phase ${b.phaseNumber}: ${b.phaseTitle}` : null,
       instructions: b.woInstructions,
       address: b.woAddress,
       notes: b.notes,

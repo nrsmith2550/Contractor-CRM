@@ -166,6 +166,8 @@ export const resourceBooking = pgTable(
       .notNull()
       .references(() => bookableResource.id),
     workOrderId: uuid("work_order_id").references(() => workOrder.id),
+    /** Set when the visit is for one phase of the job rather than the job as a whole. */
+    phaseId: uuid("phase_id").references(() => jobPhase.id, { onDelete: "set null" }),
     startAt: timestamp("start_at", { withTimezone: true }).notNull(),
     endAt: timestamp("end_at", { withTimezone: true }).notNull(),
     status: text("status").notNull().default("scheduled"), // scheduled | travelling | in_progress | completed | cancelled
@@ -181,6 +183,7 @@ export const resourceBooking = pgTable(
   (t) => [
     index("booking_resource_time_idx").on(t.tenantId, t.resourceId, t.startAt),
     index("booking_work_order_idx").on(t.tenantId, t.workOrderId),
+    index("booking_phase_idx").on(t.phaseId),
   ],
 );
 

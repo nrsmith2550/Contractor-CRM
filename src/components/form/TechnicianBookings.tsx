@@ -17,6 +17,8 @@ export type MyBooking = {
   when: string; // already formatted in the business's time zone
   woNumber: string | null;
   woTitle: string | null;
+  /** "Phase 2: Install" when the visit is for one phase of a job. */
+  phaseLabel?: string | null;
   instructions: string | null;
   address: string[];
   notes: string | null;
@@ -57,6 +59,7 @@ function Card({ b, products }: { b: MyBooking; products: { id: string; label: st
       </header>
       <div>{b.when}</div>
       {b.woNumber && <div className="crm-muted">{b.woNumber}</div>}
+      {b.phaseLabel && <div className="crm-muted">{b.phaseLabel}</div>}
       {b.address.length > 0 && (
         <address style={{ fontStyle: "normal" }}>
           {b.address.map((l) => (
