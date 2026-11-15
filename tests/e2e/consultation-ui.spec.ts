@@ -9,13 +9,17 @@ test.describe("Book a consultation", () => {
       "/consultation",
     );
     await expect(
-      page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "Book a consultation" }),
+      page
+        .getByRole("navigation", { name: "Footer" })
+        .getByRole("link", { name: "Book a consultation" }),
     ).toHaveAttribute("href", "/consultation");
   });
 
   test("it explains the call and asks for what we need", async ({ page }) => {
     await page.goto("/consultation");
-    await expect(page.getByRole("heading", { level: 1, name: "Book a consultation" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Book a consultation" }),
+    ).toBeVisible();
     const main = page.getByRole("main");
     await expect(main).toContainText("30-minute");
     await expect(main).toContainText("weekday evenings and Saturdays");

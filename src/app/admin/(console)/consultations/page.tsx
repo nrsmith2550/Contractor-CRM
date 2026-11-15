@@ -53,7 +53,8 @@ export default async function ConsultationsPage({
           </p>
           <p>
             {tradeLabel(r.trade)} · {teamSizeLabel(r.teamSize)} · call {bestTimeLabel(r.bestTime)} (
-            {timeZoneLabel(r.timeZone)}) · received {r.createdAt.toISOString().slice(0, 16).replace("T", " ")} UTC
+            {timeZoneLabel(r.timeZone)}) · received{" "}
+            {r.createdAt.toISOString().slice(0, 16).replace("T", " ")} UTC
           </p>
           {r.message ? <p style={{ whiteSpace: "pre-wrap" }}>{r.message}</p> : null}
           <details>

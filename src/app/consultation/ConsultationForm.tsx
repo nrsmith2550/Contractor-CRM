@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import {
-  BEST_TIMES,
-  TEAM_SIZES,
-  TIME_ZONES,
-  TRADES,
-  consultationSchema,
-} from "@/lib/consultation";
+import { BEST_TIMES, TEAM_SIZES, TIME_ZONES, TRADES, consultationSchema } from "@/lib/consultation";
 import { requestConsultationAction } from "@/server/actions/consultation";
 
 type Errors = Record<string, string>;

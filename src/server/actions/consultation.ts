@@ -1,11 +1,6 @@
 "use server";
 
-import {
-  bestTimeLabel,
-  teamSizeLabel,
-  timeZoneLabel,
-  tradeLabel,
-} from "@/lib/consultation";
+import { bestTimeLabel, teamSizeLabel, timeZoneLabel, tradeLabel } from "@/lib/consultation";
 import { LEGAL } from "@/lib/legal";
 import { requestContext } from "@/server/auth/http";
 import { submitConsultationRequest } from "@/server/domain/consultations";
@@ -13,8 +8,7 @@ import { sendEmail } from "@/server/email/mailer";
 import { consultationConfirmEmail, consultationNotifyEmail } from "@/server/email/templates";
 
 export type ConsultationResult =
-  | { ok: true }
-  | { ok: false; message: string; errors?: Record<string, string> };
+  { ok: true } | { ok: false; message: string; errors?: Record<string, string> };
 
 /** Public: no sign-in. Validates, stores, and emails the owner and the visitor (best effort). */
 export async function requestConsultationAction(values: unknown): Promise<ConsultationResult> {

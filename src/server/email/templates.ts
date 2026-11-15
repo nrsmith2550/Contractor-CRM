@@ -178,5 +178,11 @@ export function consultationConfirmEmail(args: {
 <p>Thanks for asking about Gantry CRM. We got your request.</p>
 <p>We will call you on <strong>${esc(args.phone)}</strong>, ${esc(when)}, usually within two business days, to talk it through and agree a time for a 30-minute consultation.</p>
 <p>Need to change something? Just reply to this email or write to <a href="mailto:${esc(args.supportEmail)}">${esc(args.supportEmail)}</a>.</p>`;
-  return { to: args.to, subject: "We got your consultation request", text, html, replyTo: args.supportEmail };
+  return {
+    to: args.to,
+    subject: "We got your consultation request",
+    text,
+    html,
+    replyTo: args.supportEmail,
+  };
 }

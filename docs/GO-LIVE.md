@@ -64,11 +64,11 @@ need someone to look at the real site.
 15. [ ] Check each plan on a test business: Gantry Deals, Gantry Jobs and Gantry Complete should
         each show only their own half of the menu and refuse the other half's addresses.
 
-24. [ ] **Consultation requests.** The site has a free 30-minute consultation form at
+16. [ ] **Consultation requests.** The site has a free 30-minute consultation form at
         `/consultation`. A request is stored and appears in the admin console under
         **Consultations**; you get an email at `SUPPORT_EMAIL` (reply goes to the visitor) and the
         visitor gets a confirmation. Phone them within two business days (weekday evenings and
-        Saturdays), agree a time, and set the status to *scheduled*. Try the form once on the live
+        Saturdays), agree a time, and set the status to _scheduled_. Try the form once on the live
         site and check both emails arrive. The page needs database migration `0012`
         (`pnpm db:migrate`, owner role) on production before it is used.
 

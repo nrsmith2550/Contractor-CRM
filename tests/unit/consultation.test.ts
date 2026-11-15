@@ -29,7 +29,9 @@ describe("consultation request rules", () => {
   it("rejects unknown choices and over-long messages", () => {
     expect(consultationSchema.safeParse({ ...good, trade: "wizardry" }).success).toBe(false);
     expect(consultationSchema.safeParse({ ...good, timeZone: "Europe/Paris" }).success).toBe(false);
-    expect(consultationSchema.safeParse({ ...good, message: "x".repeat(1001) }).success).toBe(false);
+    expect(consultationSchema.safeParse({ ...good, message: "x".repeat(1001) }).success).toBe(
+      false,
+    );
   });
 });
 
