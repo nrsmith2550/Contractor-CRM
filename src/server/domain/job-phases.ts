@@ -10,7 +10,15 @@ import {
 } from "@/db/schema";
 import { say } from "@/lib/vocabulary";
 import { recordAudit } from "./audit";
-import { NOT_FOUND, checkRecord, fail, type Ctx, type Result } from "./context";
+import {
+  FORBIDDEN,
+  NOT_FOUND,
+  checkRecord,
+  fail,
+  readScope,
+  type Ctx,
+  type Result,
+} from "./context";
 import { invalid, text } from "./leads";
 import {
   canPhaseTransition,
@@ -309,4 +317,52 @@ export async function cancelOpenPhases(tx: Tx, ctx: Ctx, workOrderId: string): P
       .where(eq(jobPhase.id, ph.id));
   }
   return targets.length;
+}
+
+export type UnscheduledPhase = {
+  phaseId: string;
+  phaseNumber: number;
+  title: string;
+  estDurationMin: number | null;
+  workOrderId: string;
+  woNumber: string;
+  woTitle: string;
+  priority: string;
+};
+
+/**
+ * Phases waiting for a visit: not started, no visit booked, on a job whose own work is still open.
+ * They feed the schedule board's "Unscheduled phases" pane. Only jobs the person can read.
+ */
+export async function listUnscheduledPhases(
+  ctx: Ctx,
+  opts: { limit?: number } = {},
+): Promise<Result<{ rows: UnscheduledPhase[] }>> {
+  const scope = readScope(ctx.subject, "work_order", workOrder.ownerId);
+  if (!scope.allowed) return FORBIDDEN;
+  return withTenant(ctx.tenantId, async (tx) => {
+    const rows = await tx
+      .select({
+        phaseId: jobPhase.id,
+        phaseNumber: jobPhase.phaseNumber,
+        title: jobPhase.title,
+        estDurationMin: jobPhase.estDurationMin,
+        workOrderId: workOrder.id,
+        woNumber: workOrder.woNumber,
+        woTitle: workOrder.title,
+        priority: workOrder.priority,
+      })
+      .from(jobPhase)
+      .innerJoin(workOrder, eq(workOrder.id, jobPhase.workOrderId))
+      .where(
+        and(
+          scope.where,
+          eq(jobPhase.status, "unscheduled"),
+          inArray(workOrder.status, ["unscheduled", "scheduled", "in_progress"]),
+        ),
+      )
+      .orderBy(asc(workOrder.woNumber), asc(jobPhase.phaseNumber))
+      .limit(Math.min(opts.limit ?? 100, 200));
+    return { ok: true as const, rows };
+  });
 }

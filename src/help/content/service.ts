@@ -195,6 +195,7 @@ export const SERVICE: Article[] = [
         `**Drag** a ${N.visit} to move it, or onto another row to give it to someone else. It snaps to 15 minutes in Day view, 30 in Week and an hour in Month.`,
         "**Drag the edges** to make it shorter or longer.",
         `**Drag an unscheduled ${N.job}** from the pane below onto a ${N.member} and time to book it for its estimated length.`,
+        `**Phases:** a ${N.visit} for one [phase](/app/help/job-phases) of a ${N.job} shows the phase name on its block. Phases still waiting for a ${N.visit} are listed under **Unscheduled phases**: drag one onto a ${N.member} and time to book it.`,
         `**Right-click** a ${N.visit} (or press Enter on it) for a menu: open the ${N.job}, change its status or cancel it.`,
       ),
       h("Without a mouse"),

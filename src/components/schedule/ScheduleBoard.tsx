@@ -25,7 +25,11 @@ import { humanize } from "@/lib/format";
 import { utcToZonedInput } from "@/lib/tz";
 import { bookingStatusAction } from "@/server/actions/bookings";
 import type { CmdResult } from "@/server/actions/entities";
-import { rescheduleBookingAction, scheduleWorkOrderAction } from "@/server/actions/schedule";
+import {
+  rescheduleBookingAction,
+  schedulePhaseAction,
+  scheduleWorkOrderAction,
+} from "@/server/actions/schedule";
 import { nextBookingStatuses, type BookingStatus } from "@/server/domain/booking-status";
 
 // The schedule board: resource rows by time. Everything is positioned from lib/board.ts. Blocks
@@ -50,6 +54,19 @@ export type BoardBooking = {
   woId: string | null;
   woNumber: string | null;
   woTitle: string | null;
+  /** Set when the visit is for one phase of the job. */
+  phaseNumber: number | null;
+  phaseTitle: string | null;
+};
+export type BoardUnscheduledPhase = {
+  phaseId: string;
+  workOrderId: string;
+  woNumber: string;
+  woTitle: string;
+  phaseNumber: number;
+  title: string;
+  estDurationMin: number | null;
+  priority: string;
 };
 export type BoardUnscheduled = {
   id: string;
@@ -79,6 +96,7 @@ export function ScheduleBoard(props: {
   resources: BoardResource[];
   bookings: BoardBooking[];
   unscheduled: BoardUnscheduled[];
+  unscheduledPhases: BoardUnscheduledPhase[];
   tz: string;
   canEdit: boolean;
 }) {
@@ -185,7 +203,9 @@ export function ScheduleBoard(props: {
     const py = start.clientY + e.delta.y;
     const rowIndex = rowAtY(py - box.top - HEADER_H + grid.scrollTop, heights);
     const data = e.active.data.current as
-      { kind: "booking"; id: string } | { kind: "wo"; id: string; minutes: number };
+      | { kind: "booking"; id: string }
+      | { kind: "wo"; id: string; minutes: number }
+      | { kind: "phase"; id: string; workOrderId: string; minutes: number };
     if (data.kind === "booking") {
       const b = bookings.find((x) => x.id === data.id)!;
       if (b.status !== "scheduled") {
@@ -204,12 +224,17 @@ export function ScheduleBoard(props: {
       if (x < 0) return; // dropped on the name column
       const startAt = timeAtX(x, range);
       const endAt = new Date(startAt.getTime() + (data.minutes || 60) * 60_000);
-      setBusy(true);
-      void scheduleWorkOrderAction(data.id, {
+      const to = {
         resourceId: rows[rowIndex]!.resource.id,
         startAt: startAt.toISOString(),
         endAt: endAt.toISOString(),
-      })
+      };
+      setBusy(true);
+      void (
+        data.kind === "phase"
+          ? schedulePhaseAction(data.workOrderId, data.id, to)
+          : scheduleWorkOrderAction(data.id, to)
+      )
         .then(report)
         .finally(() => setBusy(false));
     }
@@ -458,6 +483,19 @@ export function ScheduleBoard(props: {
           </>
         )}
       </section>
+      {props.unscheduledPhases.length > 0 && (
+        <section aria-label="Unscheduled phases">
+          <h2>Unscheduled phases</h2>
+          <p className="crm-muted">
+            Parts of a job that still need a visit. Drag one onto a team member and a time.
+          </p>
+          <div className="sb-pane">
+            {props.unscheduledPhases.map((ph) => (
+              <UnscheduledPhaseCard key={ph.phaseId} ph={ph} draggable={props.canEdit && !busy} />
+            ))}
+          </div>
+        </section>
+      )}
     </DndContext>
   );
 }
@@ -479,7 +517,8 @@ function Block(props: {
     disabled: !props.draggable,
   });
   const time = `${utcToZonedInput(b.startD, props.tz).slice(11)}–${utcToZonedInput(b.endD, props.tz).slice(11)}`;
-  const label = `${b.woNumber ?? "Visit"} ${b.woTitle ?? ""}, ${time}, ${humanize(b.status).toLowerCase()}`;
+  const phase = b.phaseNumber ? `Phase ${b.phaseNumber}: ${b.phaseTitle ?? ""}` : "";
+  const label = `${b.woNumber ?? "Visit"} ${b.woTitle ?? ""}${phase ? `, ${phase}` : ""}, ${time}, ${humanize(b.status).toLowerCase()}`;
   return (
     <div
       ref={setNodeRef}
@@ -514,6 +553,7 @@ function Block(props: {
       )}
       <span className="sb-text">
         {b.woNumber} {b.woTitle}
+        {phase && <em className="sb-phase"> · {phase}</em>}
       </span>
       {props.draggable && (
         <span
@@ -553,6 +593,51 @@ function UnscheduledCard({ w, draggable }: { w: BoardUnscheduled; draggable: boo
         </div>
       </div>
       <Link className="sb-card-open" href={`/app/jobs/${w.id}`}>
+        Open
+      </Link>
+    </div>
+  );
+}
+
+function UnscheduledPhaseCard({
+  ph,
+  draggable,
+}: {
+  ph: BoardUnscheduledPhase;
+  draggable: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
+    useDraggable({
+      id: `phase:${ph.phaseId}`,
+      data: {
+        kind: "phase",
+        id: ph.phaseId,
+        workOrderId: ph.workOrderId,
+        minutes: ph.estDurationMin ?? 60,
+      },
+      disabled: !draggable,
+    });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`sb-card${isDragging ? " dragging" : ""}`}
+      data-phase={ph.phaseId}
+      style={{
+        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+        zIndex: isDragging ? 30 : undefined,
+      }}
+    >
+      <div ref={setActivatorNodeRef} {...attributes} {...listeners} className="sb-card-body">
+        <strong>{ph.woNumber}</strong> {ph.woTitle}
+        <div>
+          Phase {ph.phaseNumber}: {ph.title}
+        </div>
+        <div className="crm-muted">
+          {ph.estDurationMin ? `${ph.estDurationMin} min` : "60 min (default)"} ·{" "}
+          {humanize(ph.priority)}
+        </div>
+      </div>
+      <Link className="sb-card-open" href={`/app/jobs/${ph.workOrderId}`}>
         Open
       </Link>
     </div>
