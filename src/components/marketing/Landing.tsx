@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ARTICLES } from "@/help";
 import {
+  FOUNDING_OFFER,
   MAX_SELF_SERVE_USERS,
   PLANS,
   SHARED_CONTENT,
@@ -143,6 +144,15 @@ export function Landing({ support }: { support: string | undefined }) {
       <a href="#main" className="mk-skip">
         Skip to main content
       </a>
+      {FOUNDING_OFFER.active && (
+        <aside className="mk-banner" aria-label="Founding customer offer">
+          <p>
+            <strong>Founding customer offer:</strong> {FOUNDING_OFFER.percentOff}% off your first
+            payment for the first {FOUNDING_OFFER.spots} businesses. Use code{" "}
+            <strong>{FOUNDING_OFFER.code}</strong>. <a href="#pricing">See pricing</a>
+          </p>
+        </aside>
+      )}
       <header className="mk-header">
         <div className="mk-wrap mk-header-row">
           <Link href="/" className="mk-logo" aria-label="Gantry CRM home">
@@ -170,6 +180,12 @@ export function Landing({ support }: { support: string | undefined }) {
                 brands. Keep every prospect, customer, quote and job in one place, without the
                 jargon.
               </p>
+              {FOUNDING_OFFER.active && (
+                <p className="mk-hero-offer">
+                  Join now and get {FOUNDING_OFFER.percentOff}% off your first payment with code{" "}
+                  <strong>{FOUNDING_OFFER.code}</strong>.
+                </p>
+              )}
               <p className="mk-actions">
                 <a className="mk-btn mk-btn-primary" href="#pricing">
                   See pricing
