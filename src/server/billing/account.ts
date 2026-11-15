@@ -86,7 +86,15 @@ export async function overview(stripe: Api, account: Account): Promise<Overview>
     edition: account.edition,
     extraUsers: account.extraUsers,
   };
-  const pm = sub.default_payment_method;
+  // Stripe Checkout saves the card as the customer's default, not on the subscription, so look
+  // there too. A card changed on the Billing page is set on both.
+  let pm: Stripe.Subscription["default_payment_method"] = sub.default_payment_method;
+  if (!pm) {
+    const customer = await stripe.customers.retrieve(account.stripeCustomerId, {
+      expand: ["invoice_settings.default_payment_method"],
+    });
+    if (!customer.deleted) pm = customer.invoice_settings?.default_payment_method ?? null;
+  }
   const card = pm && typeof pm === "object" && "card" in pm && pm.card ? pm.card : null;
   const end = sub.items.data[0]?.current_period_end;
   const status =
