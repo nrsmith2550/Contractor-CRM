@@ -72,6 +72,7 @@ export default async function MyBookingsPage() {
     day.bookings.push({
       id: b.id,
       workOrderId: b.workOrderId,
+      phaseId: b.phaseId,
       parts: b.workOrderId ? (partsByWo.get(b.workOrderId) ?? []) : [],
       status: b.status,
       when: `${time(b.startAt)} – ${time(b.endAt)}`,

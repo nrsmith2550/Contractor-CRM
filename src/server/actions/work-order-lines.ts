@@ -27,6 +27,7 @@ export async function addPartAction(workOrderId: string, v: V): Promise<CmdResul
   const qty = Number(v.quantity);
   if (!Number.isFinite(qty)) return { ok: false, message: "Enter a quantity." };
   const r = await addPart(await ctx(), workOrderId, {
+    phaseId: v.phaseId || null,
     productId: v.productId || null,
     description: v.description,
     quantity: qty,
@@ -42,6 +43,7 @@ export async function addLabourAction(workOrderId: string, v: V): Promise<CmdRes
   if (rate === undefined || rate === null)
     return { ok: false, message: "Enter the hourly rate as an amount." };
   const r = await addLabour(await ctx(), workOrderId, {
+    phaseId: v.phaseId || null,
     description: v.description,
     minutes: Number(v.minutes),
     hourlyRateCents: rate,

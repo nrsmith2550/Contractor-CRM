@@ -118,6 +118,44 @@ test.describe("job phases UI", () => {
     await expect(scheduling.getByRole("combobox", { name: /^Visit for/ })).toHaveCount(0);
   });
 
+  test("parts and labour are recorded by phase, with totals for each phase and the job", async ({
+    page,
+    context,
+  }) => {
+    await context.setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
+    const { email, jobId } = await newJob();
+    await signIn(page, email);
+    await page.goto(`/app/work-orders/${jobId}`);
+    const phases = page.getByRole("region", { name: "Phases" });
+    await phases.getByLabel("Phase title").fill("Install the new furnace");
+    await phases.getByRole("button", { name: "Add phase" }).click();
+    await expect(phases).toContainText("Install the new furnace");
+
+    const lines = page.getByRole("region", { name: "Parts and labour" });
+    // A part for the phase ($250.00) and labour for the whole job (60 minutes at $90 = $90.00).
+    await lines
+      .getByRole("combobox", { name: /^For/ })
+      .first()
+      .selectOption({ label: "Phase 1: Install the new furnace" });
+    await lines.getByLabel("Description").fill("Furnace");
+    await lines.getByLabel("Price ($)").fill("250");
+    await lines.getByRole("button", { name: "Add part" }).click();
+    await expect(lines.getByRole("table", { name: "Parts used" })).toContainText(
+      "Phase 1: Install the new furnace",
+    );
+    await lines.getByLabel("Minutes").fill("60");
+    await lines.getByLabel("Hourly rate ($)").fill("90");
+    await lines.getByRole("button", { name: "Add labour" }).click();
+    await expect(lines.getByRole("table", { name: "Labour" })).toContainText("Whole job");
+
+    await expect(lines.getByLabel("Job totals")).toContainText("$340.00");
+    await expect(lines.getByLabel("Totals by phase")).toContainText("$250.00");
+
+    // A phase with parts recorded can't be removed.
+    await phases.getByRole("button", { name: "Remove phase 1" }).click();
+    await expect(phases.getByText(/can't be removed/)).toBeVisible();
+  });
+
   test("has no accessibility violations and fits a phone", async ({ page, context }) => {
     await context.setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
     const { email, jobId } = await newJob();

@@ -1,7 +1,13 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { withTenant, type Tx } from "@/db/client";
-import { jobPhase, resourceBooking, workOrder } from "@/db/schema";
+import {
+  jobPhase,
+  resourceBooking,
+  workOrder,
+  workOrderProduct,
+  workOrderService,
+} from "@/db/schema";
 import { say } from "@/lib/vocabulary";
 import { recordAudit } from "./audit";
 import { NOT_FOUND, checkRecord, fail, type Ctx, type Result } from "./context";
@@ -244,6 +250,21 @@ export async function removeJobPhase(
       return fail(
         "conflict",
         "Only a phase that hasn't started can be removed. Cancel it instead.",
+      );
+    const [hasPart] = await tx
+      .select({ id: workOrderProduct.id })
+      .from(workOrderProduct)
+      .where(eq(workOrderProduct.phaseId, phaseId))
+      .limit(1);
+    const [hasLabour] = await tx
+      .select({ id: workOrderService.id })
+      .from(workOrderService)
+      .where(eq(workOrderService.phaseId, phaseId))
+      .limit(1);
+    if (hasPart || hasLabour)
+      return fail(
+        "conflict",
+        "This phase has parts or labour recorded, so it can't be removed. Cancel it instead.",
       );
     await tx.delete(jobPhase).where(eq(jobPhase.id, phaseId));
     await recordAudit(tx, {

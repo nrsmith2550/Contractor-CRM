@@ -234,6 +234,8 @@ export const workOrderProduct = pgTable(
       .notNull()
       .references(() => workOrder.id, { onDelete: "cascade" }),
     lineNumber: integer("line_number").notNull(),
+    /** The phase the part was used on, or null for the job as a whole. */
+    phaseId: uuid("phase_id").references(() => jobPhase.id, { onDelete: "set null" }),
     productId: uuid("product_id"),
     description: text("description").notNull(), // product name, or a write-in
     quantityMilli: cents("quantity_milli").notNull(), // 1000 = 1
@@ -256,6 +258,8 @@ export const workOrderService = pgTable(
       .notNull()
       .references(() => workOrder.id, { onDelete: "cascade" }),
     lineNumber: integer("line_number").notNull(),
+    /** The phase the work was done on, or null for the job as a whole. */
+    phaseId: uuid("phase_id").references(() => jobPhase.id, { onDelete: "set null" }),
     resourceId: uuid("resource_id").references(() => bookableResource.id),
     description: text("description").notNull(), // e.g. "Labour"
     minutes: integer("minutes").notNull(),

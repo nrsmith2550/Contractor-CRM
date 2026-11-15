@@ -7,6 +7,7 @@ import { activateLicense } from "@/server/auth/activation";
 import { acceptInvitation, inviteUser } from "@/server/auth/invitations";
 import { buildCtx, type Ctx } from "@/server/domain/context";
 import { createResource } from "@/server/domain/resources";
+import { addLabour, addPart, listWorkOrderLines } from "@/server/domain/work-order-lines";
 import {
   addJobPhase,
   listJobPhases,
@@ -372,6 +373,117 @@ describe.skipIf(!enabled)("Job phases", () => {
       must(await visit(dispatcher, wo.id, resource.id, ph.id));
       const rows = must(await listWorkOrderBookings(dispatcher, wo.id)).rows;
       expect(rows[0]).toMatchObject({ phaseNumber: 1, phaseTitle: "Rough-in" });
+    });
+  });
+
+  describe("parts and labour by phase", () => {
+    it("records parts and labour on a phase, and totals them by phase and for the job", async () => {
+      const { dispatcher, resource, wo } = await setup();
+      const one = must(await addJobPhase(dispatcher, wo.id, { title: "Remove" })).phase;
+      const two = must(await addJobPhase(dispatcher, wo.id, { title: "Install" })).phase;
+      must(
+        await addPart(dispatcher, wo.id, {
+          phaseId: two.id,
+          description: "Furnace",
+          quantity: 1,
+          unitPriceCents: 250_000,
+        }),
+      );
+      must(
+        await addLabour(dispatcher, wo.id, {
+          phaseId: one.id,
+          description: "Removal",
+          minutes: 60,
+          hourlyRateCents: 9000,
+          resourceId: resource.id,
+        }),
+      );
+      must(
+        await addLabour(dispatcher, wo.id, {
+          description: "Travel and set-up",
+          minutes: 30,
+          hourlyRateCents: 9000,
+        }),
+      );
+      const lines = must(await listWorkOrderLines(dispatcher, wo.id));
+      expect(lines.totalCents).toBe(250_000 + 9000 + 4500);
+      const by = (id: string | null) => lines.byPhase.find((b) => b.phaseId === id);
+      expect(by(two.id)).toMatchObject({
+        partsCents: 250_000,
+        labourCents: 0,
+        totalCents: 250_000,
+      });
+      expect(by(one.id)).toMatchObject({ labourCents: 9000, totalCents: 9000 });
+      expect(by(null)).toMatchObject({ totalCents: 4500 }); // the job as a whole
+      expect(lines.parts[0]!.phaseId).toBe(two.id);
+    });
+
+    it("refuses a phase from another job, and a cancelled phase", async () => {
+      const { dispatcher, wo } = await setup();
+      const other = must(await createWorkOrder(dispatcher, { title: "Other" })).workOrder;
+      const foreign = must(await addJobPhase(dispatcher, other.id, { title: "Elsewhere" })).phase;
+      const input = { description: "Bolts", quantity: 1, unitPriceCents: 100 };
+      expect(await addPart(dispatcher, wo.id, { ...input, phaseId: foreign.id })).toMatchObject({
+        ok: false,
+        code: "invalid",
+      });
+      const dead = must(await addJobPhase(dispatcher, wo.id, { title: "Dead" })).phase;
+      must(await setJobPhaseStatus(dispatcher, dead.id, "cancelled"));
+      expect(await addPart(dispatcher, wo.id, { ...input, phaseId: dead.id })).toMatchObject({
+        ok: false,
+        code: "invalid",
+      });
+      expect(
+        (
+          await addLabour(dispatcher, wo.id, {
+            phaseId: dead.id,
+            description: "x",
+            minutes: 5,
+            hourlyRateCents: 100,
+          })
+        ).ok,
+      ).toBe(false);
+    });
+
+    it("a phase with parts or labour can't be removed, only cancelled", async () => {
+      const { dispatcher, wo } = await setup();
+      const ph = must(await addJobPhase(dispatcher, wo.id, { title: "Demo" })).phase;
+      must(
+        await addPart(dispatcher, wo.id, {
+          phaseId: ph.id,
+          description: "Bolts",
+          quantity: 2,
+          unitPriceCents: 100,
+        }),
+      );
+      expect(await removeJobPhase(dispatcher, ph.id)).toMatchObject({
+        ok: false,
+        code: "conflict",
+      });
+    });
+
+    it("a technician's part lands on the phase they pass, within their own job", async () => {
+      const { dispatcher, tech, resource, wo } = await setup();
+      const ph = must(await addJobPhase(dispatcher, wo.id, { title: "Install" })).phase;
+      must(
+        await createBooking(dispatcher, {
+          workOrderId: wo.id,
+          phaseId: ph.id,
+          resourceId: resource.id,
+          startAt: "2030-05-01T09:00:00Z",
+          endAt: "2030-05-01T10:00:00Z",
+        }),
+      );
+      must(
+        await addPart(tech, wo.id, {
+          phaseId: ph.id,
+          description: "Gasket",
+          quantity: 1,
+          unitPriceCents: 1500,
+        }),
+      );
+      const lines = must(await listWorkOrderLines(dispatcher, wo.id));
+      expect(lines.parts[0]).toMatchObject({ phaseId: ph.id, extendedCents: 1500 });
     });
   });
 });

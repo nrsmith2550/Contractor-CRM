@@ -15,6 +15,8 @@ import { InlineForm } from "./InlineForm";
 export type PartView = {
   id: string;
   lineNumber: number;
+  /** "Phase 2: Install", or null when the part is for the job as a whole. */
+  phaseLabel?: string | null;
   description: string;
   quantityMilli: number;
   unitPriceCents: number;
@@ -23,6 +25,7 @@ export type PartView = {
 export type LabourView = {
   id: string;
   lineNumber: number;
+  phaseLabel?: string | null;
   description: string;
   minutes: number;
   hourlyRateCents: number;
@@ -39,10 +42,28 @@ export function PartsAndLabour(props: {
   labour: LabourView[];
   products: { id: string; label: string }[];
   resources: { id: string; name: string }[];
+  /** The job's phases a line can be recorded against (cancelled ones left out). */
+  phases?: { id: string; label: string }[];
+  /** Totals split by phase, so each phase shows what it cost. */
+  phaseTotals?: { label: string; cents: number }[];
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [err, setErr] = useState<CmdResult | null>(null);
+  const phases = props.phases ?? [];
+  const hasPhases =
+    phases.length > 0 ||
+    props.parts.some((x) => x.phaseLabel) ||
+    props.labour.some((x) => x.phaseLabel);
+  const phaseField = {
+    name: "phaseId",
+    label: "For",
+    type: "select" as const,
+    options: [
+      { value: "", label: "The whole job" },
+      ...phases.map((ph) => ({ value: ph.id, label: ph.label })),
+    ],
+  };
   const partsTotal = props.parts.reduce((s, p) => s + p.extendedCents, 0);
   const labourTotal = props.labour.reduce((s, l) => s + l.extendedCents, 0);
 
@@ -62,6 +83,7 @@ export function PartsAndLabour(props: {
         <thead>
           <tr>
             <th scope="col">Part</th>
+            {hasPhases && <th scope="col">For</th>}
             <th scope="col">Qty</th>
             <th scope="col">Price</th>
             <th scope="col">Amount</th>
@@ -75,12 +97,13 @@ export function PartsAndLabour(props: {
         <tbody>
           {props.parts.length === 0 && (
             <tr>
-              <td colSpan={5}>No parts recorded.</td>
+              <td colSpan={hasPhases ? 6 : 5}>No parts recorded.</td>
             </tr>
           )}
           {props.parts.map((p) => (
             <tr key={p.id}>
               <td>{p.description}</td>
+              {hasPhases && <td>{p.phaseLabel ?? "Whole job"}</td>}
               <td>{p.quantityMilli / 1000}</td>
               <td>{formatMoney(p.unitPriceCents)}</td>
               <td>{formatMoney(p.extendedCents)}</td>
@@ -105,6 +128,7 @@ export function PartsAndLabour(props: {
           submitLabel="Add part"
           action={(v) => addPartAction(props.workOrderId, v)}
           fields={[
+            ...(phases.length > 0 ? [phaseField] : []),
             {
               name: "productId",
               label: "Product or service",
@@ -131,6 +155,7 @@ export function PartsAndLabour(props: {
         <thead>
           <tr>
             <th scope="col">Work</th>
+            {hasPhases && <th scope="col">For</th>}
             <th scope="col">Who</th>
             <th scope="col">Minutes</th>
             <th scope="col">Rate / hour</th>
@@ -145,12 +170,13 @@ export function PartsAndLabour(props: {
         <tbody>
           {props.labour.length === 0 && (
             <tr>
-              <td colSpan={6}>No labour recorded.</td>
+              <td colSpan={hasPhases ? 7 : 6}>No labour recorded.</td>
             </tr>
           )}
           {props.labour.map((l) => (
             <tr key={l.id}>
               <td>{l.description}</td>
+              {hasPhases && <td>{l.phaseLabel ?? "Whole job"}</td>}
               <td>{l.resourceName ?? ""}</td>
               <td>{l.minutes}</td>
               <td>{formatMoney(l.hourlyRateCents)}</td>
@@ -176,6 +202,7 @@ export function PartsAndLabour(props: {
           submitLabel="Add labour"
           action={(v) => addLabourAction(props.workOrderId, v)}
           fields={[
+            ...(phases.length > 0 ? [phaseField] : []),
             { name: "description", label: "Work done", defaultValue: "Labour" },
             {
               name: "resourceId",
@@ -211,6 +238,20 @@ export function PartsAndLabour(props: {
           </div>
         ))}
       </dl>
+      {props.phaseTotals && props.phaseTotals.length > 0 && (
+        <dl
+          className="crm-header"
+          aria-label="Totals by phase"
+          style={{ justifyContent: "flex-end" }}
+        >
+          {props.phaseTotals.map((t) => (
+            <div key={t.label}>
+              <dt>{t.label}</dt>
+              <dd>{formatMoney(t.cents)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </section>
   );
 }

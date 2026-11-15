@@ -81,7 +81,8 @@ describe.skipIf(!enabled)("Per-customer export and restore", () => {
     expect(counts.account).toBe(12);
     expect(counts.lead).toBe(14);
     expect(counts.system_user).toBe(6);
-    expect(counts.resource_booking).toBe(7);
+    expect(counts.resource_booking).toBe(8);
+    expect(counts.job_phase).toBe(3); // the demo furnace job is split into phases
     // Every exported row belongs to this business.
     for (const rows of Object.values(data.tables)) {
       for (const r of rows) expect(r.tenant_id).toBe(a.tenantId);
