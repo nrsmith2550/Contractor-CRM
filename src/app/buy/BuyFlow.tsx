@@ -14,6 +14,7 @@ import {
   monthlyCentsFor,
   type Edition,
 } from "@/lib/plans";
+import { LEGAL } from "@/lib/legal";
 import { createCheckoutSessionAction } from "@/server/actions/billing";
 
 type Step = "choose" | "pay" | "done";
@@ -280,6 +281,11 @@ export function BuyFlow({
             >
               {busy ? "One moment…" : "3. Continue to payment"}
             </button>
+            <p className="mk-muted mk-buy-legal">
+              By paying you agree to our <Link href="/terms">Terms of Service</Link> and{" "}
+              <Link href="/privacy">Privacy Policy</Link>. Not happy? You have a {LEGAL.refundDays}
+              -day money-back guarantee.
+            </p>
           </form>
         ) : (
           <section aria-labelledby="buy-pay">

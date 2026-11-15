@@ -363,6 +363,8 @@ export function Landing({ support }: { support: string | undefined }) {
             <a href="#pricing">Pricing</a>
             <Link href="/login">Sign in</Link>
             <Link href="/activate">Activate a licence</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/privacy">Privacy</Link>
           </nav>
         </div>
       </footer>
