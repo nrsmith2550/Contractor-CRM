@@ -190,6 +190,34 @@ describe.skipIf(!enabled)("Stripe webhook (real Postgres, fabricated events)", (
       expect(send).toHaveBeenCalledTimes(1);
     });
 
+    it("if Stripe cannot be read, no key is emailed and nothing is saved, so the retry starts clean", async () => {
+      const p = purchase();
+      const send = vi.fn(async (_e: Email) => {});
+      const broken = {
+        subscriptions: {
+          retrieve: async () => {
+            throw new Error("Permission denied: Subscriptions Read");
+          },
+        },
+      };
+      await expect(
+        handleStripeEvent(p.event, { send, appUrl: APP_URL, ...broken }),
+      ).rejects.toThrow(/Permission denied/);
+      expect(send).not.toHaveBeenCalled(); // no key in anyone's inbox
+      expect(await bySub(p.subId)).toBeUndefined(); // no licence saved
+      const recorded = await withPlatform((tx) =>
+        tx.select().from(stripeEvent).where(eq(stripeEvent.id, p.event.id)),
+      );
+      expect(recorded).toEqual([]); // the event can be retried
+
+      // Once Stripe can be read again, the same event goes through and sends exactly one key.
+      expect(await handleStripeEvent(p.event, { send, appUrl: APP_URL, ...fakeStripe() })).toBe(
+        "processed",
+      );
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(await bySub(p.subId)).toMatchObject({ status: "issued", billingStatus: "active" });
+    });
+
     it("ignores unpaid sessions, one-off payments, other kinds and unrelated events", async () => {
       const send = vi.fn(async (_e: Email) => {});
       const deps = { send, ...fakeStripe() };
