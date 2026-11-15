@@ -111,9 +111,9 @@ const SECTIONS: LegalSection[] = [
         <p>
           <strong>{LEGAL.refundDays}-day money-back guarantee.</strong> If you ask us within{" "}
           {LEGAL.refundDays} days of your first purchase, we will refund the setup fee and your
-          first monthly payment in full to the card you paid with, and end your access. Email us at{" "}
-          {mail}. Refunds usually appear within 5 to 10 business days, depending on your card
-          issuer.
+          first monthly payment, in the amount you actually paid (including after any promotion
+          code), to the card you paid with, and end your access. Email us at {mail}. Refunds usually
+          appear within 5 to 10 business days, depending on your card issuer.
         </p>
         <p>
           After those {LEGAL.refundDays} days, payments are not refundable, including the setup fee

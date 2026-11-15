@@ -19,6 +19,8 @@ test.describe("buy page", () => {
     await expect(order.getByText("One-time setup fee")).toBeVisible();
     await expect(order).toContainText("$300");
     await expect(order.locator("div", { hasText: /^Due today/ })).toContainText("$345");
+    // The founding-customer code is mentioned next to the button, so it is not missed.
+    await expect(page.locator(".mk-buy-offer")).toContainText("FOUNDING50");
     // The test-mode note is shown while a test key is in use, so nobody enters a real card.
     await expect(page.getByText("No real money moves")).toBeVisible();
   });
