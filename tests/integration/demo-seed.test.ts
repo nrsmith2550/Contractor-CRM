@@ -5,13 +5,15 @@ import { auditLog, product, resourceBooking, systemUser, workOrderProduct } from
 import { seedDemo, type DemoResult } from "@/db/seed/demo";
 import { buildCtx } from "@/server/domain/context";
 import { listAccounts } from "@/server/domain/accounts";
-import { listBookings } from "@/server/domain/bookings";
+import { listBookings, listWorkOrderBookings } from "@/server/domain/bookings";
 import { listCalendarEvents } from "@/server/domain/calendar";
 import { listCases } from "@/server/domain/cases";
 import { salesDashboard, serviceDashboard } from "@/server/domain/dashboards";
 import { listLeads } from "@/server/domain/leads";
 import { listOpportunities } from "@/server/domain/opportunities";
 import { listOrders, listQuotes } from "@/server/domain/quotes";
+import { listJobPhases } from "@/server/domain/job-phases";
+import { listWorkOrderLines } from "@/server/domain/work-order-lines";
 import { listWorkOrders } from "@/server/domain/work-orders";
 import { randomBytes } from "node:crypto";
 
@@ -127,7 +129,7 @@ describe.skipIf(!enabled)("Demo seed", () => {
     const completed = rows.filter((b) => b.status === "completed");
     expect(completed).toHaveLength(1);
     expect(completed[0]).toMatchObject({ signedByName: "Mei Chen" });
-    expect(rows.filter((b) => b.status === "scheduled")).toHaveLength(6);
+    expect(rows.filter((b) => b.status === "scheduled")).toHaveLength(7);
     expect(
       must(
         await listBookings(owner, {
@@ -135,7 +137,25 @@ describe.skipIf(!enabled)("Demo seed", () => {
           to: new Date("2030-05-20T00:00:00Z"),
         }),
       ).rows,
-    ).toHaveLength(7);
+    ).toHaveLength(8);
+  });
+
+  it("splits the furnace replacement into phases with their own visits and parts", async () => {
+    const r = await seed();
+    const owner = await asUser(r, "Jordan Rivers");
+    const jobs = must(await listWorkOrders(owner, { view: "all", limit: 50 })).rows;
+    const furnace = jobs.find((j) => j.title.startsWith("Replace furnace"))!;
+    const phases = must(await listJobPhases(owner, furnace.id)).phases;
+    expect(phases.map((p) => [p.phaseNumber, p.status])).toEqual([
+      [1, "scheduled"],
+      [2, "scheduled"],
+      [3, "unscheduled"],
+    ]);
+    const bookings = must(await listWorkOrderBookings(owner, furnace.id)).rows;
+    expect(bookings.map((b) => b.phaseNumber).sort()).toEqual([1, 2]);
+    expect(new Set(bookings.map((b) => b.resourceName)).size).toBe(2); // two technicians
+    const lines = must(await listWorkOrderLines(owner, furnace.id));
+    expect(lines.parts[0]!.phaseId).toBe(phases[1]!.id);
   });
 
   it("each role sees what it should, and nothing more", async () => {

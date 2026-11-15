@@ -12,6 +12,8 @@ import { SignaturePad } from "./SignaturePad";
 export type MyBooking = {
   id: string;
   workOrderId: string | null;
+  /** Set when the visit is for one phase, so parts added here are recorded on that phase. */
+  phaseId?: string | null;
   parts: { id: string; description: string; quantityMilli: number }[];
   status: string;
   when: string; // already formatted in the business's time zone
@@ -144,7 +146,14 @@ function Card({ b, products }: { b: MyBooking; products: { id: string; label: st
           )}
           <InlineForm
             submitLabel="Add part"
-            action={(v) => addPartAction(b.workOrderId!, { ...v, description: "", unitPrice: "" })}
+            action={(v) =>
+              addPartAction(b.workOrderId!, {
+                ...v,
+                description: "",
+                unitPrice: "",
+                phaseId: b.phaseId ?? "",
+              })
+            }
             fields={[
               {
                 name: "productId",

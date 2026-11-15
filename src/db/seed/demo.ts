@@ -21,6 +21,7 @@ import {
 } from "@/server/domain/opportunities";
 import { activateQuote, addLine, createQuote, winQuote } from "@/server/domain/quotes";
 import { createCharacteristic, createResource } from "@/server/domain/resources";
+import { addJobPhase } from "@/server/domain/job-phases";
 import { addLabour, addPart } from "@/server/domain/work-order-lines";
 import { createWorkOrder } from "@/server/domain/work-orders";
 import { mintLicense } from "@/server/licensing/mint";
@@ -547,9 +548,56 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   await book(jobFurnace, rRiley, 0, "13:00", "14:30");
   await book(jobPressure, rSam, 0, "09:30", "10:30");
   await book(jobTune, rSam, 1, "10:00", "11:00");
-  await book(jobInstall, rRiley, 1, "08:00", "11:00");
+  // The furnace replacement is split into phases: Sam removes the old unit in the morning, Riley
+  // installs the new one, and the final inspection is still to be booked.
+  const phase = async (title: string, instructions: string, minutes: number) =>
+    must(
+      `phase ${title}`,
+      await addJobPhase(support, jobInstall.id, {
+        title,
+        instructions,
+        estDurationMin: minutes,
+      }),
+    ).phase;
+  const phaseRemove = await phase(
+    "Remove the old furnace",
+    "Shut off gas and power first. Cap the gas line and haul the old unit away.",
+    90,
+  );
+  const phaseInstall = await phase(
+    "Install and test the new furnace",
+    "Set the new unit, connect gas, venting and ductwork, then run a full heating cycle.",
+    180,
+  );
+  await phase("Final inspection", "Check combustion and airflow readings with the customer.", 30);
+  const bookPhase = async (
+    ph: { id: string },
+    r: { id: string },
+    day: number,
+    from: string,
+    to: string,
+  ) =>
+    must(
+      `phase booking ${ph.id}`,
+      await createBooking(owner, {
+        workOrderId: jobInstall.id,
+        phaseId: ph.id,
+        resourceId: r.id,
+        startAt: at(day, from),
+        endAt: at(day, to),
+      }),
+    ).booking;
+  await bookPhase(phaseRemove, rSam, 1, "08:00", "09:30");
+  await bookPhase(phaseInstall, rRiley, 1, "10:00", "13:00");
   await book(jobInspect, rVan, 2, "09:00", "11:00");
-  must("part", await addPart(riley, jobInstall.id, { productId: prod["SYS-FURN"], quantity: 1 }));
+  must(
+    "part",
+    await addPart(riley, jobInstall.id, {
+      phaseId: phaseInstall.id,
+      productId: prod["SYS-FURN"],
+      quantity: 1,
+    }),
+  );
 
   // A finished visit from yesterday: travelled, worked, parts and labour logged, customer signed.
   const done = await book(jobDone, rRiley, -1, "09:00", "10:00");

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withTenant, type Tx } from "@/db/client";
 import {
   bookableResource,
+  jobPhase,
   product,
   resourceBooking,
   workOrder,
@@ -29,6 +30,8 @@ const money = z.number().int().min(0).max(1e12);
 const LOCKED = ["posted", "cancelled"];
 
 export const partFields = z.object({
+  /** A phase of the job the part was used on; leave out for the job as a whole. */
+  phaseId: z.string().uuid().nullable().optional(),
   productId: z.string().uuid().nullable().optional(),
   description: z.string().trim().max(300).optional(),
   quantity: z.number().min(0.001).max(1_000_000),
@@ -36,6 +39,7 @@ export const partFields = z.object({
 });
 
 export const labourFields = z.object({
+  phaseId: z.string().uuid().nullable().optional(),
   description: z.string().trim().min(1, "Describe the work").max(300),
   minutes: z.number().int().min(1, "Enter the minutes worked").max(100_000),
   hourlyRateCents: money,
@@ -73,6 +77,17 @@ async function authorize(tx: Tx, ctx: Ctx, workOrderId: string, what: "part" | "
   return { denied: FORBIDDEN };
 }
 
+/** A phase can take lines when it belongs to this job and hasn't been cancelled. */
+async function checkPhase(tx: Tx, workOrderId: string, phaseId: string | null | undefined) {
+  if (!phaseId) return null;
+  const [ph] = await tx.select().from(jobPhase).where(eq(jobPhase.id, phaseId));
+  if (!ph || ph.workOrderId !== workOrderId)
+    return fail("invalid", "That phase isn't part of this job.");
+  if (ph.status === "cancelled")
+    return fail("invalid", "That phase is cancelled, so nothing can be added to it.");
+  return null;
+}
+
 export async function addPart(
   ctx: Ctx,
   workOrderId: string,
@@ -84,6 +99,8 @@ export async function addPart(
   return withTenant(ctx.tenantId, async (tx) => {
     const { wo, denied } = await authorize(tx, ctx, workOrderId, "part");
     if (denied) return denied;
+    const badPhase = await checkPhase(tx, workOrderId, p.data.phaseId);
+    if (badPhase) return badPhase;
     let description = p.data.description?.trim() ?? "";
     let price = p.data.unitPriceCents;
     if (p.data.productId) {
@@ -104,6 +121,7 @@ export async function addPart(
       .values({
         tenantId: ctx.tenantId,
         workOrderId,
+        phaseId: p.data.phaseId ?? null,
         lineNumber: Number(last!.n) + 1,
         productId: p.data.productId ?? null,
         description,
@@ -119,7 +137,12 @@ export async function addPart(
       entity: "work_order",
       recordId: wo!.id,
       action: "add_part",
-      changes: { line: part!.lineNumber, description, extendedCents: part!.extendedCents },
+      changes: {
+        line: part!.lineNumber,
+        description,
+        extendedCents: part!.extendedCents,
+        ...(part!.phaseId ? { phaseId: part!.phaseId } : {}),
+      },
     });
     return { ok: true as const, part: part! };
   });
@@ -136,6 +159,8 @@ export async function addLabour(
   return withTenant(ctx.tenantId, async (tx) => {
     const { wo, denied } = await authorize(tx, ctx, workOrderId, "labour");
     if (denied) return denied;
+    const badPhase = await checkPhase(tx, workOrderId, p.data.phaseId);
+    if (badPhase) return badPhase;
     if (p.data.resourceId) {
       const [r] = await tx
         .select({ id: bookableResource.id })
@@ -152,6 +177,7 @@ export async function addLabour(
       .values({
         tenantId: ctx.tenantId,
         workOrderId,
+        phaseId: p.data.phaseId ?? null,
         lineNumber: Number(last!.n) + 1,
         resourceId: p.data.resourceId ?? null,
         description: p.data.description,
@@ -171,6 +197,7 @@ export async function addLabour(
         line: labour!.lineNumber,
         minutes: labour!.minutes,
         extendedCents: labour!.extendedCents,
+        ...(labour!.phaseId ? { phaseId: labour!.phaseId } : {}),
       },
     });
     return { ok: true as const, labour: labour! };
@@ -259,6 +286,13 @@ export async function listWorkOrderLines(
     partsCents: number;
     labourCents: number;
     totalCents: number;
+    /** The same totals split by phase (null is the job as a whole), only where lines exist. */
+    byPhase: {
+      phaseId: string | null;
+      partsCents: number;
+      labourCents: number;
+      totalCents: number;
+    }[];
   }>
 > {
   if (!isUuid(workOrderId)) return NOT_FOUND;
@@ -278,6 +312,14 @@ export async function listWorkOrderLines(
       .orderBy(asc(workOrderService.lineNumber));
     const partsCents = parts.reduce((s, l) => s + l.extendedCents, 0);
     const labourCents = labour.reduce((s, l) => s + l.extendedCents, 0);
+    const split = new Map<string | null, { partsCents: number; labourCents: number }>();
+    const bucket = (id: string | null) => {
+      let b = split.get(id);
+      if (!b) split.set(id, (b = { partsCents: 0, labourCents: 0 }));
+      return b;
+    };
+    for (const l of parts) bucket(l.phaseId).partsCents += l.extendedCents;
+    for (const l of labour) bucket(l.phaseId).labourCents += l.extendedCents;
     return {
       ok: true as const,
       parts,
@@ -285,6 +327,11 @@ export async function listWorkOrderLines(
       partsCents,
       labourCents,
       totalCents: partsCents + labourCents,
+      byPhase: [...split.entries()].map(([phaseId, b]) => ({
+        phaseId,
+        ...b,
+        totalCents: b.partsCents + b.labourCents,
+      })),
     };
   });
 }

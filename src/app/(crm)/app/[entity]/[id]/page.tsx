@@ -70,6 +70,11 @@ export default async function RecordPage({
           tenantTimeZone(user.tenantId),
         ])
       : null;
+  const phaseLabelOf = (id: string | null) => {
+    if (!id || !phasesRes || !phasesRes.ok) return null;
+    const ph = phasesRes.phases.find((x) => x.id === id);
+    return ph ? `Phase ${ph.phaseNumber}: ${ph.title}` : null;
+  };
   const woBookings = sched && sched[3].ok ? sched[3].rows : [];
   const oppLinesRes = meta.key === "opportunity" ? await listOpportunityLines(ctx, id) : null;
   const oppLines = oppLinesRes?.ok ? oppLinesRes.lines : null;
@@ -194,9 +199,27 @@ export default async function RecordPage({
           workOrderId={id}
           editable={status !== "posted" && status !== "cancelled"}
           canLabour={can(ctx.subject, "work_order", "write")}
-          parts={lines.parts}
+          phases={
+            phasesRes && phasesRes.ok
+              ? phasesRes.phases
+                  .filter((ph) => ph.status !== "cancelled")
+                  .map((ph) => ({ id: ph.id, label: `Phase ${ph.phaseNumber}: ${ph.title}` }))
+              : []
+          }
+          phaseTotals={lines.byPhase
+            .filter((t) => t.phaseId)
+            .map((t) => {
+              const ph =
+                phasesRes && phasesRes.ok ? phasesRes.phases.find((x) => x.id === t.phaseId) : null;
+              return {
+                label: ph ? `Phase ${ph.phaseNumber}: ${ph.title}` : "A removed phase",
+                cents: t.totalCents,
+              };
+            })}
+          parts={lines.parts.map((x) => ({ ...x, phaseLabel: phaseLabelOf(x.phaseId) }))}
           labour={lines.labour.map((l) => ({
             ...l,
+            phaseLabel: phaseLabelOf(l.phaseId),
             resourceName:
               (sched && sched[0].ok
                 ? sched[0].rows.find((r) => r.id === l.resourceId)?.name

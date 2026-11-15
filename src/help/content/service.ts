@@ -107,7 +107,46 @@ export const SERVICE: Article[] = [
         `Jobs that need particular skills (for example *HVAC certified*) can say so; the ${N.Schedule} warns you if you book someone without them.`,
       ),
     ],
-    related: ["scheduling-visits", "parts-and-labour", "technician-visits"],
+    related: ["job-phases", "scheduling-visits", "parts-and-labour", "technician-visits"],
+  },
+  {
+    slug: "job-phases",
+    title: `Splitting a ${N.job} into phases`,
+    summary: `Give each piece of a big ${N.job} its own ${N.member}, time and costs.`,
+    category: "service",
+    who: `Customer service reps and the owner add and change phases. Technicians run the ${N.visits} for their own phase.`,
+    body: [
+      p(
+        `A **phase** is a small ${N.job} inside a main ${N.job}. Use phases when one ${N.job} needs different people or different days, for example *Remove the old furnace*, *Install the new furnace* and *Final inspection*, or one phase for each technician.`,
+      ),
+      h("Add phases"),
+      steps(
+        `Open the ${N.job} and find **Phases**.`,
+        "Give the phase a title, any instructions for whoever does it, and an estimate in minutes. Choose **Add phase**.",
+        "Repeat for each piece of work. Phases are numbered 1, 2, 3 in the order you add them.",
+      ),
+      h(`Book a ${N.visit} for a phase`),
+      steps(
+        `Under **Scheduling**, choose which phase the ${N.visit} is for (or *The whole ${N.job}*), the ${N.member} and the time, then **Book**.`,
+        `Each phase has its own ${N.visit}, so two ${N.members} can work two phases of the same ${N.job} at the same time.`,
+        `The ${N.Schedule}, the ${N.job} and **My visits** all show which phase a ${N.visit} is for.`,
+      ),
+      h("How phases and the job work together"),
+      list(
+        `Starting a phase's ${N.visit} starts the phase. Finishing it finishes the phase. Cancelling the ${N.visit} puts the phase back to *Unscheduled*.`,
+        `The ${N.job} is *In progress* as soon as any ${N.visit} starts. It can't be completed or posted while a phase is still open: finish or cancel each phase first. When the last open phase finishes, the ${N.job} completes.`,
+        `Cancelling a phase cancels its booked ${N.visits}, unless a ${N.visit} is already under way. Cancelling the ${N.job} cancels every phase that is still open.`,
+        "A phase that hasn't started can be removed. A completed or cancelled phase is locked.",
+      ),
+      h("Parts and labour by phase"),
+      p(
+        `When you add parts or labour you can choose which phase they are for. The ${N.job} totals still add up everything, and each phase shows its own total. A technician's parts added from **My visits** go on the phase they are working.`,
+      ),
+      tip(
+        `Small ${N.jobs} don't need phases. Leave them out and the ${N.job} works exactly as before.`,
+      ),
+    ],
+    related: ["jobs", "scheduling-visits", "parts-and-labour", "technician-visits"],
   },
   {
     slug: "scheduling-visits",
@@ -229,7 +268,7 @@ export const SERVICE: Article[] = [
         "Under labour, describe the work, the minutes and the hourly rate, and who did it.",
       ),
       list(
-        `The **${N.Job} totals** add up parts and labour.`,
+        `The **${N.Job} totals** add up parts and labour. If the ${N.job} has [phases](/app/help/job-phases), choose which phase each line is for and each phase shows its own total.`,
         "Technicians can add parts to their own visits. The office records labour.",
         "Parts and labour can be changed only while the job is still open.",
       ),
