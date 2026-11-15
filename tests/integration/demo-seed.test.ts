@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { withTenant } from "@/db/client";
-import { auditLog, resourceBooking, systemUser } from "@/db/schema";
+import { auditLog, product, resourceBooking, systemUser, workOrderProduct } from "@/db/schema";
 import { seedDemo, type DemoResult } from "@/db/seed/demo";
 import { buildCtx } from "@/server/domain/context";
 import { listAccounts } from "@/server/domain/accounts";
@@ -84,6 +84,38 @@ describe.skipIf(!enabled)("Demo seed", () => {
     expect(service.breachCount).toBe(1);
     expect(service.casesByPriority!.reduce((a, s) => a + s.count, 0)).toBe(5);
     expect(service.bookingsTotal).toBe(3);
+  });
+
+  it("is an HVAC and plumbing company: HVAC calls, equipment and parts", async () => {
+    const r = await seed();
+    expect(r.companyName).toBe("Summit Heating, Cooling & Plumbing");
+    const owner = await asUser(r, "Jordan Rivers");
+
+    // The active requests are real service calls, across all four priorities.
+    const active = must(await listCases(owner, { view: "all_active", limit: 50 }));
+    expect(active.rows.map((c) => c.title)).toEqual(
+      expect.arrayContaining(["No heat, Brightside Daycare", "Furnace making a banging noise"]),
+    );
+    expect(new Set(active.rows.map((c) => c.priority))).toEqual(
+      new Set(["urgent", "high", "normal", "low"]),
+    );
+
+    // The price list has HVAC equipment and parts, and no leftover generic items.
+    const names = (
+      await withTenant(r.tenantId, (tx) => tx.select({ name: product.name }).from(product))
+    ).map((p) => p.name);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "AC tune-up",
+        "Run capacitor, 45/5 uF",
+        "Refrigerant R-410A, per lb",
+      ]),
+    );
+    expect(names).not.toContain("Kitchen faucet");
+
+    // Parts are recorded against at least two jobs.
+    const parts = await withTenant(r.tenantId, (tx) => tx.select().from(workOrderProduct));
+    expect(new Set(parts.map((p) => p.workOrderId)).size).toBeGreaterThanOrEqual(2);
   });
 
   it("includes a finished, signed visit with parts and labour, and upcoming bookings", async () => {

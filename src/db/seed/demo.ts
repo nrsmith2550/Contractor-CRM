@@ -26,8 +26,9 @@ import { createWorkOrder } from "@/server/domain/work-orders";
 import { mintLicense } from "@/server/licensing/mint";
 import type { Email } from "@/server/email/mailer";
 
-// A realistic demo business ("Summit Plumbing & Heating"): a few people in different roles,
-// customers, a sales pipeline, quotes and orders, support cases, jobs, a crew and a schedule.
+// A realistic demo business ("Summit Heating, Cooling & Plumbing", an HVAC and plumbing service
+// company): a few people in different roles, customers, a sales pipeline, quotes and orders,
+// support requests, jobs, a crew and a schedule.
 // Everything goes through the same domain functions the app uses, so it obeys every rule (stage
 // requirements, numbering, permissions, audit) and the data is exactly what a real business
 // would have. Dates are relative to "now", so the dashboards and calendar look alive whenever it
@@ -104,32 +105,36 @@ const PEOPLE = [
 ] as const;
 
 const PRODUCTS = [
-  ["SVC-CALL", "Service call (first hour)", "service", 12500],
-  ["SVC-HOUR", "Labour hour", "service", 9500],
-  ["SVC-DRAIN", "Drain cleaning", "service", 18500],
+  ["SVC-CALL", "Diagnostic visit (first hour)", "service", 12900],
+  ["SVC-HOUR", "Labour hour", "service", 10500],
   ["SVC-TUNE", "AC tune-up", "service", 14900],
+  ["SVC-FURN", "Furnace tune-up and safety check", "service", 13900],
+  ["SVC-DRAIN", "Drain cleaning", "service", 18500],
   ["SVC-BOILER", "Boiler inspection", "service", 22000],
-  ["WH-40", "Water heater, 40 gal", "product", 118000],
-  ["PIPE-CU10", "Copper pipe, 10 ft", "product", 4200],
+  ["SYS-AC3", "3-ton AC condenser and coil, installed", "product", 520000],
+  ["SYS-FURN", "96% gas furnace, 80k BTU, installed", "product", 410000],
+  ["REF-410", "Refrigerant R-410A, per lb", "product", 7500],
+  ["CAP-45", "Run capacitor, 45/5 uF", "product", 6800],
   ["FLT-16", "Furnace filter, 16x25", "product", 1850],
   ["THERM-S", "Smart thermostat", "product", 17900],
-  ["FAUCET-K", "Kitchen faucet", "product", 21900],
+  ["WH-40", "Water heater, 40 gal", "product", 118000],
+  ["PIPE-CU10", "Copper pipe, 10 ft", "product", 4200],
 ] as const;
 
 const LEADS = [
-  ["Alvarez", "Alvarez Residence", "web", "hot", 450000],
+  ["Alvarez", "Alvarez Residence", "web", "hot", 890000],
   ["Brennan", "Brennan Auto Repair", "referral", "warm", 800000],
   ["Cho", "Cho's Noodle House", "web", "warm", 320000],
   ["Dubois", "Dubois Dental", "trade_show", "hot", 1500000],
   ["Evans", "Evans Storage", "web", "cold", 90000],
-  ["Fischer", "Fischer Bakery", "referral", "warm", 270000],
-  ["Gupta", "Gupta Realty", "phone", "warm", 600000],
-  ["Hughes", "Hughes Landscaping", "web", "cold", 120000],
+  ["Fischer", "Fischer Residence", "referral", "warm", 540000],
+  ["Gupta", "Gupta Rentals", "phone", "warm", 600000],
+  ["Hughes", "Hughes Residence", "web", "cold", 120000],
   ["Ibarra", "Ibarra Tire & Lube", "referral", "hot", 940000],
   ["Jensen", "Jensen Orthodontics", "trade_show", "warm", 1100000],
   ["Kowalski", "Kowalski Deli", "web", "cold", 60000],
-  ["Lindqvist", "Lindqvist Salon", "phone", "warm", 210000],
-  ["Mbeki", "Mbeki Imports", "web", "cold", 80000],
+  ["Lindqvist", "Lindqvist Residence", "phone", "warm", 380000],
+  ["Mbeki", "Mbeki Residence", "web", "cold", 80000],
   ["Novak", "Novak Pharmacy", "referral", "hot", 760000],
 ] as const;
 
@@ -137,7 +142,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   const log = async (m: string) => void (await o.log?.(m));
   const now = o.now ?? new Date();
   const tz = o.timeZone ?? "America/New_York";
-  const companyName = o.companyName ?? "Summit Plumbing & Heating";
+  const companyName = o.companyName ?? "Summit Heating, Cooling & Plumbing";
   const ymd = (days: number) => localDate(new Date(now.getTime() + days * DAY), tz);
   /** A local wall-clock time on a day relative to today, as a UTC instant. */
   const at = (days: number, hhmm: string) => zonedToUtc(`${ymd(days)}T${hhmm}`, tz)!.toISOString();
@@ -278,14 +283,14 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   // ── Opportunities, quotes and orders ────────────────────────────────────────────────────
   await log("Building the pipeline…");
   const deals = [
-    ["Water heater replacement, Maple St", 0, 118000, 14, 0],
-    ["Annual maintenance contract", 1, 480000, 30, 0],
+    ["Furnace and AC replacement, Maple St", 0, 2600000, 14, 0],
+    ["Annual maintenance agreement", 1, 480000, 30, 0],
     ["Boiler overhaul", 2, 2400000, 45, 1],
-    ["Kitchen remodel plumbing", 3, 850000, 21, 1],
+    ["Walk-in cooler and make-up air", 3, 850000, 21, 1],
     ["Backflow testing programme", 4, 360000, 10, 2],
-    ["Restroom retrofit", 5, 1900000, 35, 2],
+    ["Rooftop unit replacement", 5, 1900000, 35, 2],
     ["Emergency generator hookup", 6, 640000, 7, 3],
-    ["New-build rough-in", 7, 3200000, 28, 3],
+    ["New-build HVAC rough-in", 7, 3200000, 28, 3],
   ] as const;
   const oppIds: string[] = [];
   const oppOwner: Ctx[] = [];
@@ -320,21 +325,21 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   // Two won through the quote -> order flow, so "won this quarter" has real revenue.
   const wonDeals = [
     [
-      "Furnace install, Oakwood",
+      "Furnace replacements, Oakwood",
       5,
       [
-        ["WH-40", 4],
-        ["SVC-HOUR", 42],
-        ["PIPE-CU10", 30],
+        ["SYS-FURN", 2],
+        ["SVC-HOUR", 24],
+        ["THERM-S", 2],
       ],
     ],
     [
-      "Fixture upgrade, Riverbend",
+      "AC replacement, Riverbend",
       6,
       [
-        ["FAUCET-K", 14],
-        ["SVC-HOUR", 28],
-        ["PIPE-CU10", 24],
+        ["SYS-AC3", 1],
+        ["SVC-HOUR", 16],
+        ["REF-410", 8],
       ],
     ],
   ] as const;
@@ -386,17 +391,17 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   const draft = must(
     "draft quote",
     await createQuote(draftBy, {
-      name: "Restroom retrofit: draft",
+      name: "Rooftop unit replacement: draft",
       opportunityId: oppIds[5],
       customerAccountId: accounts[5]!.id,
       freightCents: 4500,
     }),
   ).quote;
-  must("line", await addLine(draftBy, draft.id, { productId: prod["FAUCET-K"], quantity: 6 }));
+  must("line", await addLine(draftBy, draft.id, { productId: prod["THERM-S"], quantity: 6 }));
   const lost = must(
     "lost opp",
     await createOpportunity(sales, {
-      name: "Warehouse heating",
+      name: "Warehouse heating upgrade",
       customerAccountId: accounts[1]!.id,
       estRevenueCents: 1_400_000,
       estCloseDate: ymd(-10),
@@ -416,7 +421,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
       name: "Riley Ortiz",
       userId: riley.userId,
       color: "#0f6cbd",
-      skillIds: [skill["Licensed plumber"]!, skill["Gas fitter"]!],
+      skillIds: [skill["HVAC certified"]!, skill["Gas fitter"]!],
     }),
   ).resource;
   const rSam = must(
@@ -439,14 +444,14 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
 
   await log("Creating support cases and jobs…");
   const caseDefs = [
-    ["No hot water, Brightside Daycare", 4, "urgent", "phone"],
-    ["Leaking faucet in unit 3B", 0, "normal", "web"],
-    ["Furnace making noise", 1, "high", "phone"],
+    ["No heat, Brightside Daycare", 4, "urgent", "phone"],
+    ["AC not cooling, unit 3B", 0, "normal", "web"],
+    ["Furnace making a banging noise", 1, "high", "phone"],
     ["Slow drain in kitchen", 3, "normal", "email"],
     ["Request: annual boiler inspection", 5, "low", "email"],
-    ["Low water pressure, second floor", 2, "high", "phone"],
+    ["Upstairs rooms will not cool", 2, "high", "phone"],
     ["Quote follow-up question", 6, "low", "email"],
-    ["Toilet running constantly", 7, "normal", "web"],
+    ["Thermostat screen is blank", 7, "normal", "web"],
   ] as const;
   const caseIds: string[] = [];
   for (const [title, ai, priority, origin] of caseDefs) {
@@ -491,15 +496,17 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
       }),
     ).workOrder;
   const jobTune = await standalone("Spring AC tune-up, Lakeshore Fitness", "maintenance", 7, 60);
-  const jobInstall = await standalone("Install water heater, Maple St", "installation", 0, 180);
+  const jobInstall = await standalone("Replace furnace, Maple St", "installation", 0, 180);
   const jobInspect = await standalone("Boiler inspection, Cedar Ridge", "inspection", 2, 120);
-  const jobDone = await standalone("Replace kitchen faucet, Harbor View", "repair", 1, 60);
-  await standalone("Unscheduled: gutter drain check", "inspection", 3, 45); // left for the "waiting to schedule" pane
+  const jobDone = await standalone("Replace capacitor and recharge, Harbor View", "repair", 1, 60);
+  await standalone("Unscheduled: condensate drain check", "inspection", 3, 45); // left for the "waiting to schedule" pane
 
   // Support cases move on: some resolved, one waiting on the customer, one past its due time.
   must(
     "resolve",
-    await resolveCase(support, caseIds[1]!, { resolution: "Replaced the cartridge." }),
+    await resolveCase(support, caseIds[1]!, {
+      resolution: "Replaced the failed capacitor; the unit is cooling again.",
+    }),
   );
   must(
     "resolve",
@@ -507,7 +514,9 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   );
   must(
     "resolve",
-    await resolveCase(support, caseIds[7]!, { resolution: "Replaced the flapper valve." }),
+    await resolveCase(support, caseIds[7]!, {
+      resolution: "Replaced the batteries and reset the thermostat.",
+    }),
   );
   must("hold", await setCaseStatus(support, caseIds[4]!, "waiting_on_customer"));
   await withTenant(tenantId, (tx) =>
@@ -540,17 +549,19 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   await book(jobTune, rSam, 1, "10:00", "11:00");
   await book(jobInstall, rRiley, 1, "08:00", "11:00");
   await book(jobInspect, rVan, 2, "09:00", "11:00");
+  must("part", await addPart(riley, jobInstall.id, { productId: prod["SYS-FURN"], quantity: 1 }));
 
   // A finished visit from yesterday: travelled, worked, parts and labour logged, customer signed.
   const done = await book(jobDone, rRiley, -1, "09:00", "10:00");
   for (const status of ["travelling", "in_progress"]) {
     must(status, await setBookingStatus(riley, done.id, status));
   }
-  must("part", await addPart(riley, jobDone.id, { productId: prod["FAUCET-K"], quantity: 1 }));
+  must("part", await addPart(riley, jobDone.id, { productId: prod["CAP-45"], quantity: 1 }));
+  must("part", await addPart(riley, jobDone.id, { productId: prod["REF-410"], quantity: 2 }));
   must(
     "labour",
     await addLabour(support, jobDone.id, {
-      description: "Replace faucet and test",
+      description: "Diagnose, replace capacitor, recharge and test",
       minutes: 55,
       hourlyRateCents: 9500,
       resourceId: rRiley.id,
@@ -561,7 +572,8 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
     await setBookingStatus(riley, done.id, "completed", {
       signatureDataUrl: SIGNATURE,
       signedByName: "Mei Chen",
-      notes: "Replaced the faucet; no leaks after a 10-minute test.",
+      notes:
+        "Replaced the capacitor and topped up refrigerant; cooling normally after a 10-minute test.",
     }),
   );
 
@@ -569,13 +581,13 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
   await log("Adding activities…");
   const tasks = [
     [sales, "Call Dubois Dental back", 1, "high"],
-    [sales, "Send maintenance contract draft", 2, "normal"],
+    [sales, "Send maintenance agreement draft", 2, "normal"],
     [manager, "Review boiler overhaul proposal", 1, "normal"],
-    [manager, "Approve parts order", 3, "low"],
-    [support, "Follow up: waiting on customer approval", 2, "normal"],
+    [manager, "Approve parts order: refrigerant and capacitors", 3, "low"],
+    [support, "Call last year's tune-up customers about booking", 2, "normal"],
     [owner, "Review this month's profit report", 2, "normal"],
     [owner, "Renew the contractor's licence", 9, "high"],
-    [owner, "Order truck stock: copper fittings", 4, "low"],
+    [owner, "Order truck stock: filters and capacitors", 4, "low"],
   ] as const;
   for (const [who, subject, days, priority] of tasks) {
     must(
@@ -629,7 +641,7 @@ export async function seedDemo(o: DemoOptions): Promise<DemoResult> {
     await addNote(support, {
       regardingType: "case",
       regardingId: caseIds[0]!,
-      body: "Customer says the daycare has no hot water for hand-washing. Treat as urgent; dispatching Riley.",
+      body: "Customer says the daycare has no heat and children arrive at 7am. Treat as urgent; dispatching Riley.",
     }),
   );
 
