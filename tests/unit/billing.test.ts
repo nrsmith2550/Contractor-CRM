@@ -70,6 +70,7 @@ describe("embedded checkout", () => {
     expect(p.mode).toBe("subscription");
     expect(p.ui_mode).toBe("embedded_page");
     expect(p.redirect_on_completion).toBe("never");
+    expect(p.allow_promotion_codes).toBe(true); // customers can enter a code from Stripe
     expect(p).not.toHaveProperty("success_url");
     expect(p.metadata).toEqual({ kind: "subscription", edition: "complete", extraUsers: "4" });
     expect(p.subscription_data?.metadata).toEqual(p.metadata);
