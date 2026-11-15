@@ -50,6 +50,12 @@ test.describe("marketing page", () => {
     await expect(bySize.getByRole("row", { name: /^50/ })).toContainText("$270");
     await expect(bySize.getByRole("row", { name: /^50/ })).toContainText("$165");
 
+    // The founding-customer offer is shown with its code.
+    await expect(
+      pricing.getByRole("heading", { name: /Founding customers: 50% off your first payment/ }),
+    ).toBeVisible();
+    await expect(pricing).toContainText("FOUNDING50");
+
     // Each plan's button opens the buy page for that plan. Nothing is charged from this page.
     await expect(page.getByRole("button", { name: /buy|checkout|pay/i })).toHaveCount(0);
     for (const [name, id] of [

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   EDITIONS,
+  FOUNDING_OFFER,
   MAX_SELF_SERVE_USERS,
   PLANS,
   USERS_INCLUDED,
@@ -281,6 +282,12 @@ export function BuyFlow({
             >
               {busy ? "One moment…" : "3. Continue to payment"}
             </button>
+            {FOUNDING_OFFER.active && (
+              <p className="mk-buy-offer">
+                <strong>Founding customer?</strong> Enter <strong>{FOUNDING_OFFER.code}</strong> on
+                the payment form for {FOUNDING_OFFER.percentOff}% off your first payment.
+              </p>
+            )}
             <p className="mk-muted mk-buy-legal">
               By paying you agree to our <Link href="/terms">Terms of Service</Link> and{" "}
               <Link href="/privacy">Privacy Policy</Link>. Not happy? You have a {LEGAL.refundDays}

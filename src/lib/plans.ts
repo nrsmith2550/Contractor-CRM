@@ -181,3 +181,16 @@ export function dueTodayCents(edition: Edition, extraUsers = 0): number {
 export function setupDifferenceCents(from: Edition, to: Edition): number {
   return Math.max(0, PLANS[to].setupCents - PLANS[from].setupCents);
 }
+
+/**
+ * The founding-customer offer: a share off the first payment (setup and first month) for the first
+ * few businesses, taken with a promotion code made in the Stripe dashboard. Stripe enforces the
+ * number of uses, so when the spots are gone the code stops working. Set `active` to false to hide
+ * the offer everywhere (the pricing section and the buy page) once it has run out.
+ */
+export const FOUNDING_OFFER = {
+  active: true,
+  code: "FOUNDING50",
+  percentOff: 50,
+  spots: 10,
+} as const;

@@ -78,6 +78,16 @@ need someone to look at the real site.
 19. [ ] **Whether to keep the demo business** on production.
 20. [ ] **Who answers `SUPPORT_EMAIL`**, and how quickly.
 
+## Founding-customer offer
+
+- **The offer:** 50% off the first payment (setup and first month) for the first 10 businesses, with
+  the code `FOUNDING50` (`FOUNDING_OFFER` in `src/lib/plans.ts`).
+- **In Stripe (live mode):** create a coupon named "Founding customer", **50% off, duration Once**; then
+  a promotion code `FOUNDING50` on it with **Limit the total number of redemptions: 10** and
+  **first-time customers only**. Stripe enforces the limit.
+- **When the 10 are gone:** set `active: false` in `FOUNDING_OFFER` so the pricing section and the buy
+  page stop mentioning it.
+
 ## Legal and brand
 
 21. [x] **Terms of Service and Privacy Policy:** drafted and live at `/terms` and `/privacy` (seller: you as a sole proprietor, 14-day money-back guarantee, Pennsylvania law; values in `src/lib/legal.ts`). **Still to do: have a lawyer review them**, and update them if you add analytics, a company entity or marketing emails.

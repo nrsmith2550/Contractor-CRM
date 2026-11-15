@@ -3,6 +3,7 @@ import {
   AREAS,
   EDITIONS,
   ENTITY_AREA,
+  FOUNDING_OFFER,
   PLANS,
   MAX_EXTRA_USERS,
   MAX_SELF_SERVE_USERS,
@@ -127,6 +128,24 @@ describe("plans", () => {
       expect(dueTodayCents("deals", 15)).toBe(30_000 + 4_500 + 15 * 300);
       for (const e of EDITIONS) {
         expect(dueTodayCents(e, 7)).toBe(PLANS[e].setupCents + monthlyCentsFor(e, 7));
+      }
+    });
+  });
+
+  describe("founding-customer offer", () => {
+    it("is a sensible percentage for a small number of businesses, with a code a person can type", () => {
+      expect(FOUNDING_OFFER.percentOff).toBeGreaterThan(0);
+      expect(FOUNDING_OFFER.percentOff).toBeLessThanOrEqual(100);
+      expect(Number.isInteger(FOUNDING_OFFER.spots)).toBe(true);
+      expect(FOUNDING_OFFER.spots).toBeGreaterThan(0);
+      expect(FOUNDING_OFFER.code).toMatch(/^[A-Z0-9]{4,20}$/);
+    });
+
+    it("never takes the first payment below Stripe's 50 cent minimum, on any plan", () => {
+      for (const e of EDITIONS) {
+        const first = PLANS[e].setupCents + PLANS[e].monthlyCents;
+        const after = Math.round((first * (100 - FOUNDING_OFFER.percentOff)) / 100);
+        expect(after).toBeGreaterThanOrEqual(50);
       }
     });
   });
