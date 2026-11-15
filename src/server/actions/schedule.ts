@@ -48,3 +48,21 @@ export async function scheduleWorkOrderAction(
   revalidatePath("/app", "layout");
   return { ok: true, message: "Booked.", warnings: r.warnings.map((w) => w.message) };
 }
+
+/** Drop an unscheduled phase onto a resource and time: books a visit for that phase. */
+export async function schedulePhaseAction(
+  workOrderId: string,
+  phaseId: string,
+  v: { resourceId: string; startAt: string; endAt: string },
+): Promise<CmdResult> {
+  const r = await createBooking(await ctx(), {
+    workOrderId,
+    phaseId,
+    resourceId: v.resourceId,
+    startAt: v.startAt,
+    endAt: v.endAt,
+  });
+  if (!r.ok) return failed(r);
+  revalidatePath("/app", "layout");
+  return { ok: true, message: "Booked.", warnings: r.warnings.map((w) => w.message) };
+}

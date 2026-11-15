@@ -4,6 +4,7 @@ import { BOARD_VIEWS, boardRange, isDate, localDate, shiftDate, type BoardView }
 import { requireUser } from "@/server/auth/http";
 import { listBookings } from "@/server/domain/bookings";
 import { buildCtx } from "@/server/domain/context";
+import { listUnscheduledPhases } from "@/server/domain/job-phases";
 import { listCharacteristics, listResources } from "@/server/domain/resources";
 import { listWorkOrders } from "@/server/domain/work-orders";
 import { tenantTimeZone } from "@/server/entities/tenant";
@@ -30,11 +31,12 @@ export default async function SchedulePage({
   const date = isDate(sp.date) ? sp.date : today;
   const range = boardRange(view, date, tz);
 
-  const [resources, skills, bookings, unscheduled] = await Promise.all([
+  const [resources, skills, bookings, unscheduled, phasesWaiting] = await Promise.all([
     listResources(ctx),
     listCharacteristics(ctx),
     listBookings(ctx, { from: range.start, to: range.end }),
     listWorkOrders(ctx, { view: "unscheduled", limit: 100 }),
+    listUnscheduledPhases(ctx),
   ]);
   if (!resources.ok || !bookings.ok) {
     return (
@@ -146,6 +148,8 @@ export default async function SchedulePage({
             woId: b.workOrderId,
             woNumber: b.woNumber,
             woTitle: b.woTitle,
+            phaseNumber: b.phaseNumber,
+            phaseTitle: b.phaseTitle,
           }))}
         unscheduled={
           unscheduled.ok
@@ -155,6 +159,20 @@ export default async function SchedulePage({
                 title: w.title,
                 estDurationMin: w.estDurationMin,
                 priority: w.priority,
+              }))
+            : []
+        }
+        unscheduledPhases={
+          phasesWaiting.ok
+            ? phasesWaiting.rows.map((ph) => ({
+                phaseId: ph.phaseId,
+                workOrderId: ph.workOrderId,
+                woNumber: ph.woNumber,
+                woTitle: ph.woTitle,
+                phaseNumber: ph.phaseNumber,
+                title: ph.title,
+                estDurationMin: ph.estDurationMin,
+                priority: ph.priority,
               }))
             : []
         }

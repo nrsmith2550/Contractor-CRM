@@ -11,6 +11,7 @@ import { addLabour, addPart, listWorkOrderLines } from "@/server/domain/work-ord
 import {
   addJobPhase,
   listJobPhases,
+  listUnscheduledPhases,
   removeJobPhase,
   setJobPhaseStatus,
   updateJobPhase,
@@ -484,6 +485,51 @@ describe.skipIf(!enabled)("Job phases", () => {
       );
       const lines = must(await listWorkOrderLines(dispatcher, wo.id));
       expect(lines.parts[0]).toMatchObject({ phaseId: ph.id, extendedCents: 1500 });
+    });
+  });
+
+  describe("phases waiting for a visit", () => {
+    it("lists unstarted, unbooked phases of open jobs, and drops them once booked or done", async () => {
+      const { dispatcher, tech, resource, wo } = await setup();
+      const one = must(await addJobPhase(dispatcher, wo.id, { title: "One" })).phase;
+      const two = must(
+        await addJobPhase(dispatcher, wo.id, { title: "Two", estDurationMin: 45 }),
+      ).phase;
+      const titles = async () =>
+        must(await listUnscheduledPhases(dispatcher)).rows.map((r) => r.title);
+      expect(await titles()).toEqual(["One", "Two"]);
+      const row = must(await listUnscheduledPhases(dispatcher)).rows[1]!;
+      expect(row).toMatchObject({
+        phaseNumber: 2,
+        estDurationMin: 45,
+        workOrderId: wo.id,
+        woNumber: wo.woNumber,
+      });
+
+      // Booking a phase takes it off the list.
+      must(
+        await createBooking(dispatcher, {
+          workOrderId: wo.id,
+          phaseId: one.id,
+          resourceId: resource.id,
+          startAt: "2030-05-01T09:00:00Z",
+          endAt: "2030-05-01T10:00:00Z",
+        }),
+      );
+      expect(await titles()).toEqual(["Two"]);
+
+      // A cancelled phase, and the phases of a cancelled job, are not waiting for anything.
+      must(await setJobPhaseStatus(dispatcher, two.id, "cancelled"));
+      expect(await titles()).toEqual([]);
+      void tech;
+    });
+
+    it("only shows phases of jobs the person can read, in their own business", async () => {
+      const { dispatcher, wo } = await setup();
+      must(await addJobPhase(dispatcher, wo.id, { title: "Mine" }));
+      const stranger = (await setup()).dispatcher;
+      const theirs = must(await listUnscheduledPhases(stranger)).rows;
+      expect(theirs.map((r) => r.title)).not.toContain("Mine");
     });
   });
 });

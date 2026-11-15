@@ -6,6 +6,7 @@ import { resourceBooking, workOrder } from "@/db/schema";
 import { activateLicense } from "@/server/auth/activation";
 import { createBooking } from "@/server/domain/bookings";
 import { buildCtx } from "@/server/domain/context";
+import { addJobPhase } from "@/server/domain/job-phases";
 import { createCharacteristic, createResource, updateResource } from "@/server/domain/resources";
 import { createWorkOrder } from "@/server/domain/work-orders";
 import { mintLicense } from "@/server/licensing/mint";
@@ -76,6 +77,61 @@ const hhmm = (d: Date) => d.toISOString().slice(11, 16);
 
 test.describe("schedule board", () => {
   test.skip(!process.env.DATABASE_URL, "DATABASE_URL not set");
+
+  test("shows which phase a visit is for, and phases waiting for a visit can be dragged on", async ({
+    page,
+    context,
+  }) => {
+    await context.setExtraHTTPHeaders({ "x-real-ip": fakeIp() });
+    await page.setViewportSize({ width: 1800, height: 1000 });
+    const biz = await newBusiness();
+    const admin = await buildCtx(biz.tenantId, biz.ownerId);
+    const alpha = ok(await createResource(admin, { name: "Alpha", color: "#3366cc" })).resource;
+    ok(await createResource(admin, { name: "Bravo", color: "#cc6633" }));
+    const job = ok(await createWorkOrder(admin, { title: "Replace the furnace" })).workOrder;
+    const remove = ok(await addJobPhase(admin, job.id, { title: "Remove old unit" })).phase;
+    const install = ok(
+      await addJobPhase(admin, job.id, { title: "Install new unit", estDurationMin: 120 }),
+    ).phase;
+    ok(
+      await createBooking(admin, {
+        workOrderId: job.id,
+        phaseId: remove.id,
+        resourceId: alpha.id,
+        startAt: `${DAY}T09:00:00Z`,
+        endAt: `${DAY}T11:00:00Z`,
+      }),
+    );
+
+    await signIn(page, biz.email);
+    await page.goto(url());
+    // The booked phase's block names the phase.
+    const block = page.locator(`[data-booking]`).filter({ hasText: job.woNumber });
+    await expect(block).toHaveAttribute("aria-label", /Phase 1: Remove old unit, 09:00–11:00/);
+    await expect(block).toContainText("Phase 1: Remove old unit");
+
+    // The other phase is waiting for a visit; the booked one is not listed.
+    const waiting = page.getByRole("region", { name: "Unscheduled phases" });
+    await expect(waiting).toContainText("Phase 2: Install new unit");
+    await expect(waiting).toContainText("120 min");
+    await expect(waiting).not.toContainText("Remove old unit");
+
+    // Drag it onto Alpha at 13:00: it is booked for its 120 minutes, for that phase.
+    await drag(page, await center(page.locator(`[data-phase="${install.id}"]`)), {
+      x: (await xAt(page, "Alpha", 13)) + 4,
+      y: await rowY(page, "Alpha"),
+    });
+    await expect(
+      page.locator(`[data-booking]`).filter({ hasText: "Phase 2: Install new unit" }),
+    ).toBeVisible();
+    await expect(page.getByRole("region", { name: "Unscheduled phases" })).toHaveCount(0);
+    const rows = await withTenant(biz.tenantId, (tx) =>
+      tx.select().from(resourceBooking).where(eq(resourceBooking.workOrderId, job.id)),
+    );
+    const mine = rows.find((r) => r.phaseId === install.id)!;
+    expect(hhmm(mine.startAt)).toBe("13:00");
+    expect(hhmm(mine.endAt)).toBe("15:00");
+  });
 
   test("drop, move, reassign, resize, keyboard, menu, warnings and views", async ({
     page,
