@@ -1596,3 +1596,170 @@
   text-align: left;
   white-space: nowrap;
 }
+
+/* ───────────── "Work ticket" look ─────────────
+   Warm paper, charcoal menu, and orange kept for the one main action. Status is carried by a
+   coloured edge (blue scheduled, orange under way, green done, grey waiting), and record numbers
+   read as tags. Colours come from theme.css; this layer only shapes things. */
+:root {
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --edge-scheduled: var(--ev-blue);
+  --edge-live: var(--accent);
+  --edge-done: var(--ok);
+}
+.crm-sitemap a {
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+}
+.crm-sitemap a[aria-current="page"] {
+  background: var(--nav-hover);
+  color: #fff;
+  border-left-color: var(--accent);
+}
+.crm-sitemap h2 {
+  letter-spacing: 0.12em;
+  font-size: 11px;
+}
+.crm-main h1 {
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+.crm-main h2 {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.crm-btn {
+  border-radius: 8px;
+  font-weight: 600;
+}
+/* Lists and tables: a framed sheet with quiet headings and tabular figures. */
+.crm-grid {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+.crm-grid th,
+.crm-grid td {
+  padding: 10px 14px;
+}
+.crm-grid th {
+  letter-spacing: 0.08em;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--surface);
+}
+.crm-grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+.crm-grid tbody tr:hover td {
+  background: var(--hover);
+}
+/* Record numbers (the first column of a list) read as a tag. */
+.crm-grid tbody td:first-child > a {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  letter-spacing: 0.02em;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  padding: 1px 6px;
+  text-decoration: none;
+  color: var(--text);
+  white-space: nowrap;
+}
+.crm-grid tbody td:first-child > a:hover {
+  border-color: var(--accent);
+}
+.crm-badge {
+  border-radius: 99px;
+  font-weight: 600;
+  padding: 2px 9px;
+}
+/* A phase row carries its status on its left edge. */
+.crm-grid tr[data-status] td:first-child {
+  border-left: 4px solid var(--grid-line-strong);
+  font-family: var(--mono);
+  font-weight: 700;
+}
+.crm-grid tr[data-status="scheduled"] td:first-child {
+  border-left-color: var(--edge-scheduled);
+}
+.crm-grid tr[data-status="in_progress"] td:first-child {
+  border-left-color: var(--edge-live);
+}
+.crm-grid tr[data-status="in_progress"] td {
+  background: var(--today-bg);
+}
+.crm-grid tr[data-status="completed"] td:first-child {
+  border-left-color: var(--edge-done);
+}
+.crm-panel,
+.crm-section {
+  background: var(--surface);
+  border-color: var(--border);
+  border-radius: 10px;
+}
+.crm-panel {
+  padding: 12px 14px;
+}
+/* The record header reads like the top of a ticket. */
+.crm-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.crm-header dt {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+/* Home: figures as one ruled strip rather than floating cards. */
+.crm-tile {
+  border-radius: 10px;
+  border-color: var(--border);
+  box-shadow: none;
+}
+.crm-tile:hover {
+  transform: none;
+  border-color: var(--accent);
+}
+.crm-tile-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.crm-tile-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.home-steps,
+.dash-card {
+  border-color: var(--border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+/* Schedule and cards: status on the edge, squarer corners. */
+.sb-block {
+  border-radius: 5px;
+}
+.sb-card,
+.crm-card {
+  border-radius: 8px;
+}
+/* Totals inside a section reuse the header list; they stay plain. */
+section .crm-header {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 0 12px;
+}

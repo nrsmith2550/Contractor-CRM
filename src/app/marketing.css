@@ -779,3 +779,34 @@
   border-radius: 10px;
   background: var(--surface);
 }
+
+/* "Work ticket" look for the public pages: ruled sections, tighter headings, squarer buttons. */
+.mk h1 {
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+.mk h2 {
+  letter-spacing: -0.02em;
+}
+.mk-eyebrow {
+  letter-spacing: 0.14em;
+}
+.mk-btn {
+  border-radius: 8px;
+  font-weight: 600;
+}
+.mk-header {
+  border-bottom-color: var(--border);
+}
+.mk-banner {
+  background: var(--nav-bg);
+  color: #fff;
+  border-bottom: 0;
+}
+.mk-banner strong:last-of-type {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #ffb38a;
+}
+.mk-banner a {
+  color: #ffb38a;
+}
