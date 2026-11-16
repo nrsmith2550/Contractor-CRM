@@ -87,7 +87,7 @@ export function JobPhases(props: {
           </thead>
           <tbody>
             {props.phases.map((p) => (
-              <tr key={p.id}>
+              <tr key={p.id} data-status={p.status}>
                 <td>{p.phaseNumber}</td>
                 <td>
                   <strong>{p.title}</strong>

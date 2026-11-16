@@ -38,8 +38,8 @@ async function signIn(page: Page, email: string) {
 }
 
 const bg = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-const LIGHT = "rgb(245, 246, 250)";
-const DARK = "rgb(11, 18, 32)";
+const LIGHT = "rgb(246, 243, 237)";
+const DARK = "rgb(21, 23, 26)";
 
 test.describe("themes", () => {
   test.skip(!process.env.DATABASE_URL, "DATABASE_URL not set");
@@ -80,7 +80,7 @@ test.describe("themes", () => {
     expect(await bg(page)).toBe(DARK);
     // Text stays readable: the page text is light on the dark background.
     const color = await page.evaluate(() => getComputedStyle(document.body).color);
-    expect(color).toBe("rgb(230, 234, 244)");
+    expect(color).toBe("rgb(236, 235, 231)");
 
     // Back to light, even on a dark device.
     await page.getByLabel("Theme").selectOption("light");
